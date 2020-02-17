@@ -3,10 +3,9 @@ package MipsNPC
 import chisel3._
 import chisel3.util._
 
-import ModuleConsts._
-import MemConsts._
+import Consts._
 import Configure._
-import ModuleIO._
+import IO._
 
 class WBU extends Module {
   val io = IO(new Bundle {
@@ -14,7 +13,6 @@ class WBU extends Module {
     val mdu = Flipped(DecoupledIO(new MDU_WBU_IO));
     val lsu = Flipped(DecoupledIO(new LSU_WBU_IO));
     val bru = Flipped(DecoupledIO(new BRU_WBU_IO));
-    val cmovu = Flipped(DecoupledIO(new CMOVU_WBU_IO));
     val wb = ValidIO(new WriteBackIO);
     val flush = ValidIO(new FlushIO);
   });
@@ -29,21 +27,19 @@ class WBU extends Module {
   val mdu_valid = RegNext(next=io.mdu.fire(), init=false.B);
   val lsu_valid = RegNext(next=io.lsu.fire(), init=false.B);
   val bru_valid = RegNext(next=io.bru.fire(), init=false.B);
-  val cmovu_valid = RegNext(next=io.cmovu.fire(), init=false.B);
 
   // flush_valid
   val flush_valid = RegEnable(next=io.bru.bits.need_br, init=false.B, enable=io.bru.fire());
 
   // fu_valid
-  val fu_valid = alu_valid || mdu_valid || lsu_valid || bru_valid || cmovu_valid;
+  val fu_valid = alu_valid || mdu_valid || lsu_valid || bru_valid
 
-  assert(AtMost1H(io.alu.valid, io.mdu.valid, io.lsu.valid, io.bru.valid, io.cmovu.valid));
+  assert(AtMost1H(io.alu.valid, io.mdu.valid, io.lsu.valid, io.bru.valid));
 
   io.alu.ready := true.B;
   io.mdu.ready := true.B;
   io.lsu.ready := true.B;
   io.bru.ready := true.B;
-  io.cmovu.ready := true.B;
 
   // wb
   io.wb.bits.npc := wb_npc;
@@ -93,15 +89,6 @@ class WBU extends Module {
     wb_addr := io.bru.bits.reg_dest_idx;
     wb_data := io.bru.bits.data;
     wb_wen := io.bru.bits.need_wb;
-  }
-
-  when(io.cmovu.fire()) {
-    log("[WBU] [CPC] >>>>>> %x <<<<<<\n", io.cmovu.bits.npc - 4.U);
-    log("[WBU] <- [CMOVU]: addr:%x, data:%x\n", io.cmovu.bits.reg_dest_idx, io.cmovu.bits.data);
-    wb_npc := io.cmovu.bits.npc;
-    wb_addr := io.cmovu.bits.reg_dest_idx;
-    wb_data := io.cmovu.bits.data;
-    wb_wen := io.cmovu.bits.need_wb;
   }
 
   when(io.wb.valid) {

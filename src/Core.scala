@@ -3,10 +3,9 @@ package MipsNPC
 import chisel3._
 import chisel3.util._
 
-import ModuleConsts._
-import MemConsts._
+import Consts._
 import Configure._
-import ModuleIO._
+import IO._
 
 class Core extends Module {
   val io = new CoreIO

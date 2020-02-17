@@ -4,9 +4,8 @@ import chisel3._
 import chisel3.util._
 
 import Configure._
-import ModuleConsts._
-import ModuleIO._
-import MemConsts._
+import Consts._
+import IO._
 
 case class CacheParam(id_width:Int, data_width:Int)
 

@@ -3,10 +3,9 @@ package MipsNPC
 import chisel3._
 import chisel3.util._
 
-import ModuleConsts._
-import MemConsts._
+import Consts._
 import Configure._
-import ModuleIO._
+import IO._
 
 class LSU extends Module with UnitOpConsts {
   val io = IO(new Bundle {

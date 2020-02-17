@@ -4,8 +4,20 @@ import chisel3._
 import chisel3.util._
 
 import Configure._
-import MemConsts._
 
+trait MemConsts {
+  // MX
+  val MX_SZ = 1
+  val MX_X  = 0.U(MX_SZ.W)
+  val MX_RD = 0.U(MX_SZ.W)
+  val MX_WR = 1.U(MX_SZ.W)
+
+  val MT_SZ = 2
+  val MT_X  = 0.U(MT_SZ.W)
+  val MT_B  = 1.U(MT_SZ.W)
+  val MT_H  = 2.U(MT_SZ.W)
+  val MT_W  = 3.U(MT_SZ.W)
+}
 
 trait InstrConsts {
   val REG_SZ    = 5;
@@ -104,7 +116,7 @@ trait InstrPattern {
   val MOVZ  = BitPat("b000000???????????????00000001010")
 }
 
-trait LSUConsts {
+trait LSUConsts extends MemConsts {
   // LSU Operation Signal
   val LSU_E_SZ = 1
   val LSU_XE  = 0.U(LSU_E_SZ.W)
@@ -150,7 +162,6 @@ trait ISUConsts extends MDUConsts with LSUConsts
   val FU_BRU = 2.U(FU_TYPE_SZ.W)
   val FU_LSU = 3.U(FU_TYPE_SZ.W)
   val FU_MDU = 4.U(FU_TYPE_SZ.W)
-  val FU_CMOVU = 5.U(FU_TYPE_SZ.W); // contitional move unit
 
   // RS Operand Select Signal
   val OP1_SEL_SZ = 2
@@ -181,7 +192,7 @@ import ISUConstsImpl._
 
 
 // UInt definition cannot occur in Bundle subclass
-class LSUOp(_align:UInt, _func:UInt, _dt:UInt, _ext:UInt) extends Bundle
+class LSUOp(_align:UInt, _func:UInt, _dt:UInt, _ext:UInt) extends Bundle with MemConsts
 {
   val align = _align
   val func = _func
@@ -247,7 +258,7 @@ class MDUOp(_mf_reg:UInt, _func:UInt, _sign:UInt, _wb_reg:UInt) extends Bundle
   }
 }
 
-trait UnitOpConsts extends ISUConsts {
+trait UnitOpConsts extends ISUConsts with MemConsts {
   // Branch Operation Signal
   val BR_EQ   = 0.U(FU_OP_SZ.W);  // Branch on Equal
   val BR_NE   = 1.U(FU_OP_SZ.W);  // Branch on NotEqual
@@ -298,14 +309,11 @@ trait UnitOpConsts extends ISUConsts {
   val MDU_MULTU = new MDUOp(MF_X,  F_MUL, N, WB_HL).toUInt
   val MDU_DIV   = new MDUOp(MF_X,  F_DIV, Y, WB_HL).toUInt
   val MDU_DIVU  = new MDUOp(MF_X,  F_DIV, N, WB_HL).toUInt
-
-  // CMOVU Operation Signal
-  val CMOVU_MOVN = 0.U(FU_OP_SZ.W)
-  val CMOVU_MOVZ = 1.U(FU_OP_SZ.W)
 }
 
-object ModuleConsts extends InstrPattern
+object Consts extends InstrPattern
   with ISUConsts
   with InstrConsts
+  with MemConsts
 {
 }

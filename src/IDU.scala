@@ -3,10 +3,9 @@ package MipsNPC
 import chisel3._
 import chisel3.util._
 
-import ModuleConsts._
-import MemConsts._
+import Consts._
 import Configure._
-import ModuleIO._
+import IO._
 
 class IDU extends Module with UnitOpConsts {
   val io = IO(new Bundle {
@@ -86,10 +85,6 @@ class IDU extends Module with UnitOpConsts {
      MULTU   -> List(Y, FU_MDU,  MDU_MULTU,  OP1_RS,   OP2_RT,  DEST_X),
      DIV     -> List(Y, FU_MDU,  MDU_DIV,    OP1_RS,   OP2_RT,  DEST_X),
      DIVU    -> List(Y, FU_MDU,  MDU_DIVU,   OP1_RS,   OP2_RT,  DEST_X),
-
-     // CMOVU instructions
-     MOVN    -> List(Y, FU_CMOVU,CMOVU_MOVN, OP1_RS,   OP2_RT,   DEST_RD),
-     MOVZ    -> List(Y, FU_CMOVU,CMOVU_MOVZ, OP1_RS,   OP2_RT,   DEST_RD)
   ));
 
   val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: dest_sel :: Nil = csignals;

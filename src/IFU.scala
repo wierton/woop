@@ -3,10 +3,9 @@ package MipsNPC
 import chisel3._
 import chisel3.util._
 
-import ModuleConsts._
-import MemConsts._
+import Consts._
 import Configure._
-import ModuleIO._
+import IO._
 
 class IFU extends Module {
   val io = IO(new Bundle {
@@ -16,7 +15,7 @@ class IFU extends Module {
   })
 
   // init to be valid, the first instruction
-  val pc = Reg(UInt(conf.xprlen.W), init=conf.start_addr)
+  val pc = RegInit(UInt(conf.xprlen.W), init=conf.start_addr)
   val pc_next = pc + 4.U(conf.xprlen.W)
 
   val req_fire = io.mem.req.fire()
