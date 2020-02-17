@@ -2,8 +2,8 @@ SCALA_DIR := src
 SCALA_FILES != find $(SCALA_DIR) -name "*.scala"
 
 EMU_OBJ_DIR := $(OBJ_DIR)/emu
-EMU_SRC_DIR := $(abspath ./emu)
-EMU_TOP_MODULE := SimTop
+EMU_SRC_DIR := $(abspath ./soc/emu)
+EMU_TOP_MODULE := SOC_EMU_TOP
 EMU_TOP_V := $(EMU_OBJ_DIR)/emu_top.v
 EMU_MK := $(EMU_OBJ_DIR)/emu.mk
 EMU_BIN := $(EMU_OBJ_DIR)/emulator

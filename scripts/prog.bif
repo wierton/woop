@@ -1,4 +1,0 @@
-all:
-{
-  fpga_top.bit
-}
