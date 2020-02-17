@@ -15,9 +15,10 @@
 
 #define GPRS(X)                                                               \
   X(0)                                                                        \
-  X(1) X(2) X(3) X(4) X(5) X(6) X(7) X(8) X(9) X(10) X(11) X(12) X(13) X(14)  \
-      X(15) X(16) X(17) X(18) X(19) X(20) X(21) X(22) X(23) X(24) X(25) X(26) \
-          X(27) X(28) X(29) X(30) X(31)
+  X(1)                                                                        \
+  X(2) X(3) X(4) X(5) X(6) X(7) X(8) X(9) X(10) X(11) X(12) X(13) X(14) X(15) \
+      X(16) X(17) X(18) X(19) X(20) X(21) X(22) X(23) X(24) X(25) X(26) X(27) \
+          X(28) X(29) X(30) X(31)
 
 // wrappers for nemu-mips32 library
 
@@ -40,16 +41,17 @@ class Emulator {
     abort();                                                               \
   }
 
-    check(nemu_ptr->pc() == dut_ptr->io_nemu_pc, "cycle: %lu pc %08x <> %08x\n",
-        cycles, nemu_ptr->pc(), dut_ptr->io_nemu_pc);
-    check(nemu_ptr->get_instr() == dut_ptr->io_nemu_instr,
+    check(nemu_ptr->pc() == dut_ptr->io_commit_pc,
+        "cycle: %lu pc %08x <> %08x\n", cycles, nemu_ptr->pc(),
+        dut_ptr->io_commit_pc);
+    check(nemu_ptr->get_instr() == dut_ptr->io_commit_instr,
         "cycle: %lu instr %08x <> %08x\n", cycles, nemu_ptr->get_instr(),
-        dut_ptr->io_nemu_instr);
+        dut_ptr->io_commit_instr);
 
-#define GPR_TEST(i)                                   \
-  check(nemu_ptr->gpr(i) == dut_ptr->io_nemu_gpr_##i, \
-      "gpr[%d] %08x <> %08x\n", i, nemu_ptr->gpr(i),  \
-      dut_ptr->io_nemu_gpr_##i);
+#define GPR_TEST(i)                                     \
+  check(nemu_ptr->gpr(i) == dut_ptr->io_commit_gpr_##i, \
+      "gpr[%d] %08x <> %08x\n", i, nemu_ptr->gpr(i),    \
+      dut_ptr->io_commit_gpr_##i);
     GPRS(GPR_TEST);
 #undef GPR_TEST
   }
@@ -57,7 +59,7 @@ class Emulator {
   uint32_t get_dut_gpr(uint32_t r) {
     switch (r) {
 #define GET_GPR(i) \
-  case i: return dut_ptr->io_nemu_gpr_##i;
+  case i: return dut_ptr->io_commit_gpr_##i;
       GPRS(GET_GPR);
 #undef GET_GPR
     }
@@ -147,10 +149,10 @@ public:
       abort();
     }
 
-    if (dut_ptr->io_nemu_valid) {
+    if (dut_ptr->io_commit_valid) {
       silent_cycles = 0;
       uint32_t dest_reg;
-      if (get_mfc0_c0_count(dut_ptr->io_nemu_instr, &dest_reg)) {
+      if (get_mfc0_c0_count(dut_ptr->io_commit_instr, &dest_reg)) {
         nemu_ptr->set_c0_count(get_dut_gpr(dest_reg) - 1);
       }
 

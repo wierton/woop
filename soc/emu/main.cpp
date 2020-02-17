@@ -16,13 +16,19 @@
 #define MX_WR 0
 #define GPIO_TRAP 0x10000000
 
-const uint8_t ddr_mem[128 * 1024 * 1024];
+uint8_t ddr_mem[128 * 1024 * 1024];
+
+static bool finished = false;
+static int ret_code = 0;
+
+bool is_finished(void) { return finished; }
+int get_exit_code(void) { return ret_code; }
 
 extern "C" {
 
 void ddr_io(unsigned char in_req_valid, int in_req_bits_addr,
-    int in_req_bits_data, unsigned char in_req_bits_fcn,
-    unsigned char in_req_bits_wstrb, int *in_resp_bits_data) {
+    int in_req_bits_data, char in_req_bits_fcn, char in_req_bits_wstrb,
+    int *in_resp_bits_data) {
   if (!in_req_valid) return;
 
   if (in_req_bits_fcn == 0) {
@@ -38,8 +44,8 @@ void ddr_io(unsigned char in_req_valid, int in_req_bits_addr,
 }
 
 void device_io(unsigned char in_req_valid, int in_req_bits_addr,
-    int in_req_bits_data, unsigned char in_req_bits_fcn,
-    unsigned char in_req_bits_wstrb, int *in_resp_bits_data) {
+    int in_req_bits_data, char in_req_bits_fcn, char in_req_bits_wstrb,
+    int *in_resp_bits_data) {
   if (!in_req_valid) return;
 
   /* deal with read */
@@ -52,6 +58,8 @@ void device_io(unsigned char in_req_valid, int in_req_bits_addr,
   /* deal with write */
   switch (in_req_bits_addr) {
   case GPIO_TRAP:
+    finished = true;
+    ret_code = in_req_bits_data;
     if (in_req_bits_data == 0)
       printf(ANSI_COLOR_GREEN "EMU: HIT GOOD TRAP" ANSI_COLOR_RESET "\n");
     else

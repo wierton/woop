@@ -3,6 +3,13 @@ package Configure
 import chisel3._
 import chisel3.util._
 
+object GTimer {
+  def apply(): UInt = {
+    val (t, c) = Counter(true.B, 0x7fffffff)
+    t
+  }
+}
+
 object conf {
   val xprlen = 32;
   val addr_width = 32;
@@ -90,6 +97,22 @@ class Tie(data:Bits*) {
 
 object Tie {
   def apply(data:Bits*) = new Tie(data:_*);
+}
+
+// filter bits, left 1 way
+object BitsOneWay {
+  def apply(data:UInt):UInt = {
+    if (data.getWidth <= 1) {
+      data
+    } else {
+      val OneToN = Cat(for (i <- 1 until data.getWidth) yield
+        (data(i) && !Cat(for (i <- 0 until i) yield
+          data(i)).orR)
+      )
+      printf(":data(0) %x, OneToN %x\n", data(0), OneToN);
+      Cat(data(0), OneToN)
+    }
+  }
 }
 
 object Only1H {

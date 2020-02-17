@@ -26,5 +26,6 @@ class SOC_EMU_TOP extends Module {
 }
 
 object Main extends App {
-  chisel3.Driver.execute(args, () => new SOC_EMU_TOP);
+  chisel3.Driver.execute(args, () => new TestBitsOneWay);
+  // chisel3.Driver.execute(args, () => new SOC_EMU_TOP);
 }
