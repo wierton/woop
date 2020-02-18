@@ -17,13 +17,20 @@ class IFU extends Module {
 
   // init to be valid, the first instruction
   val pc = RegInit(UInt(conf.xprlen.W), init=conf.start_addr)
+  val s1_valid = RegInit(N)
   val s2_valid = RegInit(N)
 
+  when (io.imem.req.ready || !s1_valid) { pc := pc + 4.U }
+
   /* stage 1: synchronize */
-  io.iaddr.req.valid := Y
+  io.iaddr.req.valid := io.imem.req.ready || !s1_valid
   io.iaddr.req.bits.func := MX_RD
   io.iaddr.req.bits.vaddr := pc
-  when (io.imem.req.ready || !s2_valid) { pc := pc + 4.U }
+  when (io.flush.valid || (!io.iaddr.req.fire() && io.imem.req.fire())) {
+    s1_valid := N
+  } .elsewhen(!io.flush.valid && io.iaddr.req.fire()) {
+    s1_valid := Y
+  }
 
   /* stage 2: blocking */
   io.imem.req.valid := io.iaddr.resp.valid
