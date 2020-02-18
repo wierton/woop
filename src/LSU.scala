@@ -14,7 +14,7 @@ class LSUOp extends Bundle
   val dt    = UInt(2.W)
   val ext   = UInt(1.W)
 
-  def isAlign()  = align =/= 0.U
+  def isAligned()  = align =/= 0.U
   def isRead()   = func === MX_RD
   def isWrite()  = func === MX_WR
   def isSExt()   = ext === LSU_XE
@@ -24,108 +24,93 @@ class LSUOp extends Bundle
   def getDtExt() = Cat(dt, ext)
 }
 
+class LSUStage2Data extends Bundle {
+  val op = new LSUOp
+  val rd_idx = UInt(REG_SZ.W)
+  val data = UInt(conf.xprlen.W)
+  val addr = UInt(conf.xprlen.W)
+
+  def this(lsu:ISU_LSU_IO, _addr:UInt):Unit {
+    this()
+    this := Cat(_addr, lsu.data, lsu.rd_idx, lsu.fu_op).asTypeOf(this)
+  }
+}
+
 class LSU extends Module with UnitOpConsts {
   val io = IO(new Bundle {
     val dmem = new MemIO
+    val daddr = new TLBTransaction
     val isu = Flipped(DecoupledIO(new ISU_LSU_IO))
     val wbu = DecoupledIO(new LSU_WBU_IO)
     val bypass = ValidIO(new BypassIO)
+    val bp_failed = Input(Bool())
     val flush = Flipped(ValidIO(new FlushIO))
   })
 
-  val isu_valid = RegNext(next=io.isu.fire(), init=false.B)
-  val in_stage_1 = isu_valid
-  val datain = RegEnable(io.isu.bits, io.isu.fire())
-  val fu_op = datain.fu_op
-  val data = datain.data
-  val addr = datain.base + io.isu.bits.offset
-  val rd_idx = datain.rd_idx
+  /* branch prediction */
+  val bp_failed = RegInit(N)
+  when (io.flush.valid) { bp_failed := N }
+  .elsewhen(io.bp_failed) { bp_failed := Y }
 
-  val lsuop = fu_op.asTypeOf(new LSUOp)
-
-  val mem_resp_data = io.dmem.resp.bits.data
-
-  val addr_ul  = Cat(addr(31, 2), 0.U(2.W))
-  val addr_l2 = addr(1, 0)
-  val is_ul = !lsuop.isAlign() && lsuop.isLeft()
-  val u_dt = Mux(lsuop.isLeft(), addr_l2, ~addr_l2)
-
-  val req_data = Mux(is_ul, data >> (~addr_l2 << 3), data)
-
-  io.dmem.req.valid := isu_valid && !io.flush.valid
-  io.dmem.req.bits.func  := lsuop.func
-  io.dmem.req.bits.addr  := Mux(is_ul, addr_ul, addr)
-  io.dmem.req.bits.wstrb := 0.U
-  io.dmem.req.bits.data  := req_data
-
-  import ExtOperation._
-  val dat_b_se = mem_resp_data(7, 0).SExt(32)
-  val dat_b_ze = mem_resp_data(7, 0).ZExt(32)
-  val dat_h_se = mem_resp_data(15, 0).SExt(32)
-  val dat_h_ze = mem_resp_data(15, 0).ZExt(32)
-
-  val align_data = Mux1H(Array(
-    (lsuop.getDtExt === LSU_B_SE) -> dat_b_se,
-    (lsuop.getDtExt === LSU_B_ZE) -> dat_b_ze,
-    (lsuop.getDtExt === LSU_H_SE) -> dat_h_se,
-    (lsuop.getDtExt === LSU_H_ZE) -> dat_h_ze,
-    (lsuop.getDtExt === LSU_W_SE) -> mem_resp_data,
-    (lsuop.getDtExt === LSU_W_ZE) -> mem_resp_data,
-    ))
-
-  val ul_mask = Mux(addr_l2(1),
-    Mux(addr_l2(0), "b1111".U(4.W), "b1110".U(4.W)),
-    Mux(addr_l2(0), "b1100".U(4.W), "b1000".U(4.W)))
-
-  val ur_mask = Mux(addr_l2(1),
-    Mux(addr_l2(0), "b0001".U(4.W), "b0011".U(4.W)),
-    Mux(addr_l2(0), "b0111".U(4.W), "b1111".U(4.W)))
-
-  val mask = Mux(lsuop.isLeft(), ul_mask, ur_mask)
-
-  val ul_data = mem_resp_data << ((~addr_l2) << 3)
-  val u_data = Mux(lsuop.isLeft(), ul_data, mem_resp_data)
-  val unalign_data = Cat(for(i <- 3 to 0 by -1) yield Mux(mask(i), u_data(i * 8 + 7, i * 8), data(i * 8 + 7, i * 8)))
-
-  val wb_data = Mux(lsuop.isAlign(), align_data, unalign_data)
-
-  when(io.isu.fire()) {
-    log("[LSU] [CPC] >>>>>> %x <<<<<<\n", io.isu.bits.npc - 4.U)
-  }
-  when(isu_valid) {
-    log("[LSU] fu_op:%x, func:%x, dt:%x, ext:%x, getDtExt:%x\n", fu_op, lsuop.func, lsuop.dt, lsuop.ext, lsuop.getDtExt)
-    log("[LSU] dat_b_se:%x, dat_b_ze:%x, dat_h_se:%x, dat_h_ze:%x\n", dat_b_se, dat_b_ze, dat_h_se, dat_h_ze)
+  /* stage 1: synchronize */
+  val s1_valid = RegInit(N)
+  io.isu.ready := io.dmem.req.ready || !s1_valid
+  io.daddr.req.valid := io.isu.valid
+  io.daddr.req.bits.func := io.isu.bits.fu_op.asTypeOf(new LSUOp).func
+  io.daddr.req.bits.vaddr := io.isu.bits.addr + io.isu.bits.offset
+  assert (!(s1_valid && io.daddr.req.ready && !io.daddr.resp.fire()))
+  when (io.flush.valid || (!io.daddr.req.fire() && io.dmem.req.fire())) {
+    s1_valid := N
+  } .elsewhen(!io.flush.valid && io.daddr.req.fire()) {
+    s1_valid := Y
   }
 
-  when(io.dmem.req.fire()) {
-    log("[LSU] ul_mask:%x, ur_mask:%x, ul_data:%x, u_data:%x\n", ul_mask, ur_mask, ul_data(31, 0), u_data)
-    log("[LSU] align_data:%x, unalign_data:%x, wb_data:%x\n", align_data, unalign_data, wb_data)
+  /* stage 2: send memory request */
+  val mio_cycles = 2
+  val s2_in = new LSUStage2Data(io.isu.bits, io.daddr.resp.bits.paddr)
+  val s2_datas = Mem(mio_cycles, new LSUStage2Data)
+  val s2_valids = RegInit(0.U(mio_cycles.W))
+  val s2_blocking = s2_valids(0) && !io.wbu.fire()
+  assert (!s2_blocking || !io.dmem.req.ready)
+  io.dmem.req.valid := io.daddr.resp.valid
+  io.dmem.req.bits.is_aligned := s2_in.op.isAligned()
+  io.dmem.req.bits.addr  := Mux(s2_in.op.isAligned(),
+    s2_in.addr, s2_in.addr & ~(3.U(32.W)))
+  io.dmem.req.bits.func  := s2_in.op.func
+  // L: 0 -> b1111, 1 -> b1110, 2 -> b1100, 3 -> b1000
+  // R: 0 -> b0001, 1 -> b0011, 2 -> b0111, 3 -> b1111
+  io.dmem.req.bits.wstrb := Mux(s2_in.op.isAligned(),
+    0.U, Mux(s2_in.op.ext == LSU_L,
+      "b1111000" >> (~s2_in.addr(0, 1)),
+      "b0001111" >> (~s2_in.addr(0, 1))))
+  io.dmem.req.bits.data := s2_in.data
+  io.dmem.resp.ready := io.wbu.ready
+  assert (!(s2_valids(0) && io.dmem.req.ready && !io.dmem.resp.fire()))
+  when (io.flush.valid) {
+    s2_valids := 0.U
+  } .elsewhen (!s2_blocking) {
+    s2_valids := Cat(io.dmem.req.fire(), s2_valids >> 1)
+    for (i <- 0 until mio_cycles - 1) {
+      s2_datas(i) := s2_datas(i + 1)
+    }
+    s2_datas(mio_cycles - 1) := s2_in
   }
-  when(io.dmem.resp.valid) {
-    log("[LSU] mem_resp_data:%x\n", mem_resp_data)
-  }
-  when(io.wbu.fire()) {
-    log("[LSU] need_wb:%x, wb_data:%x, wb_idx:%x\n", lsuop.func === MX_RD, wb_data, rd_idx)
-  }
 
-  io.dmem.resp.ready := true.B
+  /* stage 3: recv contents */
+  val s3_in = s2_datas(0)
+  val s3_data = io.dmem.resp.bits.data
+  io.wbu.valid := io.dmem.resp.valid
+  io.wbu.bits.npc := pc
+  io.wbu.bits.need_wb := Y
+  io.wbu.bits.rd_idx := s3_in.rd_idx
 
-  io.isu.ready := !in_stage_1 || io.wbu.ready
-
-  // bypass signals
-  io.bypass.valid := io.wbu.valid
-  io.bypass.bits.wen := io.wbu.bits.need_wb
-  io.bypass.bits.rd_idx := io.wbu.bits.rd_idx
-  io.bypass.bits.data := io.wbu.bits.data
-
-  // wbu signals
-  io.wbu.bits.npc := datain.npc
-  io.wbu.bits.need_wb := lsuop.func === MX_RD
-  io.wbu.bits.data := wb_data
-  io.wbu.bits.rd_idx := rd_idx
-  io.wbu.valid := (
-    (lsuop.func === MX_WR && io.dmem.req.fire()) ||
-    (lsuop.func === MX_RD && io.dmem.resp.valid)
-  ) && !io.flush.valid
+  val lwstrb = "b1111000" >> (~s3_in.addr(0, 1))
+  val lmask = Cat(for (i <- 0 until 4) yield l_mask(i).asTypeOf(SInt(8.W)))
+  val rwstrb = "b0001111" >> (~s3_in.addr(0, 1))
+  val rmask = Cat(for (i <- 0 until 4) yield l_mask(i).asTypeOf(SInt(8.W)))
+  io.wbu.bits.data := Mux(s3_in.op.isAligned(),
+    io.dmem.resp.bits.data, Mux(s3_in.op.ext == LSU_L,
+      (lmask & s3_data) | (~lmask & s3_in.data),
+      (rmask & s3_data) | (~rmask & s3_in.data)))
 }
 

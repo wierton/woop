@@ -281,7 +281,7 @@ trait UnitOpConsts extends ISUConsts with MemConsts {
   val LSU_SW   = Cat(Y, MX_WR, MT_W, LSU_SE)
   val LSU_SB   = Cat(Y, MX_WR, MT_B, LSU_SE)
   val LSU_SH   = Cat(Y, MX_WR, MT_H, LSU_SE)
-  //                       1    1      2     1
+  //                 1    1      2     1
   val LSU_LWL  = Cat(N, MX_RD, MT_W, LSU_L)
   val LSU_LWR  = Cat(N, MX_RD, MT_W, LSU_R)
   val LSU_SWL  = Cat(N, MX_WR, MT_W, LSU_L)

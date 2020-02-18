@@ -44,7 +44,7 @@ class PiplineUnitAtLeast1Cycle extends Module {
   m.io.out.ready := io.out.ready
   io.out.valid := m.io.valid
   io.out.bits := m.io.bits
-
+  assert (!(fu_valid && m.io.in.ready && !io.out.fire()))
   when (io.flush || (!io.in.fire() && io.out.fire())) {
     fu_valid := N
   } .elsewhen (!io.flush && io.in.fire()) {
@@ -60,8 +60,9 @@ class PiplineUnitAtLeastNCycles extends Module {
     val flush = Input(Bool())
   })
 
-  val ncycles = 12
   val m = Module(new AtLeastNCyclesModule)
+
+  val ncycles = 12
   val fu_valids = RegInit(0.U(ncycles.W))
   val blocking = fu_valids(0) && !io.out.fire()
 
@@ -74,7 +75,7 @@ class PiplineUnitAtLeastNCycles extends Module {
   m.io.out.ready := io.out.ready
   io.out.valid := m.io.valid
   io.out.bits := m.io.bits
-
+  assert (!(fu_valids(0) && m.io.in.ready && !io.out.fire()))
   when (io.flush) {
     fu_valids := 0.U
   } .elsewhen (!blocking) {
