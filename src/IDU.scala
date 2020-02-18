@@ -12,7 +12,6 @@ class IDU extends Module with UnitOpConsts {
     val ifu = Flipped(DecoupledIO(new IFU_IDU_IO));
     val isu = DecoupledIO(new IDU_ISU_IO);
     val flush = Flipped(ValidIO(new FlushIO));
-    val gpio = new IDU_GPIO_IO;
   });
 
   val ifu_fire = io.ifu.fire();
@@ -89,10 +88,6 @@ class IDU extends Module with UnitOpConsts {
 
   val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: dest_sel :: Nil = csignals;
 
-
-  io.gpio.invalid_instr := !valid;
-  io.gpio.npc := npc;
-  io.gpio.instr := instr;
 
   //               not busy        pipelined
   io.ifu.ready := !in_stage_1 || io.isu.ready;

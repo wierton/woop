@@ -7,12 +7,10 @@ import Configure._
 import Consts._
 import IO._
 
-case class CacheParam(id_width:Int, data_width:Int)
-
-class DCache(param:CacheParam) extends Module {
+class DCache extends Module {
   val io = IO(new Bundle {
     val in = Flipped(new MemIO)
-    val out = new AXI4IO(param.id_width, param.data_width)
+    val out = new AXI4IO(4, 32)
   })
 
   io.out.ar.valid := io.in.req.valid

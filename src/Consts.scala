@@ -192,72 +192,6 @@ import ISUConstsImpl._
 
 
 // UInt definition cannot occur in Bundle subclass
-class LSUOp(_align:UInt, _func:UInt, _dt:UInt, _ext:UInt) extends Bundle with MemConsts
-{
-  val align = _align
-  val func = _func
-  val dt = _dt
-  val ext = _ext
-
-  override def cloneType = new LSUOp(_align, _func, _dt, _ext).asInstanceOf[this.type]
-
-  require(align.getWidth == 1)
-  require(func.getWidth == 1)
-  require(dt.getWidth == 2)
-  require(ext.getWidth == 1)
-
-  def isAlign()  = align =/= 0.U
-  def isRead()   = func === MX_RD
-  def isWrite()  = func === MX_WR
-  def isSExt()   = ext === LSU_XE
-  def isZExt()   = ext === LSU_ZE
-  def isLeft()   = ext(0) === LSU_L
-  def isRight()  = ext(0) === LSU_R
-  def getDtExt() = Cat(dt, ext)
-
-  def toUInt() = Cat(ext, dt, func, align)
-
-  def :=(that:UInt):Unit = Tie(ext, dt, func, align) := that
-
-  def this() {
-    this(UInt(1.W), UInt(1.W), UInt(2.W), UInt(1.W))
-  }
-}
-
-
-class MDUOp(_mf_reg:UInt, _func:UInt, _sign:UInt, _wb_reg:UInt) extends Bundle
-{
-  val mf_reg = _mf_reg
-  val func = _func
-  val sign = _sign
-  val wb_reg = _wb_reg
-
-  // why ?
-  override def cloneType = { new MDUOp(_mf_reg, _func, _sign, _wb_reg).asInstanceOf[this.type]; }
-
-  assert(mf_reg.getWidth == 1)
-  assert(func.getWidth == 2)
-  assert(sign.getWidth == 1)
-  assert(wb_reg.getWidth == 1)
-
-  def isSigned() = sign =/= 0.U
-  def isDiv() = func === F_DIV
-  def isMul() = func === F_MUL
-  def isMove() = func === F_MV
-  def isWB_HL() = wb_reg === WB_HL
-  def isWB_RD() = wb_reg === WB_RD
-
-  def toUInt() = Cat(wb_reg, sign, func, mf_reg)
-
-  def :=(that:UInt):Unit = {
-    Tie(wb_reg, sign, func, mf_reg) := that
-  }
-
-  def this() {
-    this(UInt(1.W), UInt(2.W), UInt(1.W), UInt(1.W))
-  }
-}
-
 trait UnitOpConsts extends ISUConsts with MemConsts {
   // Branch Operation Signal
   val BR_EQ   = 0.U(FU_OP_SZ.W);  // Branch on Equal
@@ -284,31 +218,31 @@ trait UnitOpConsts extends ISUConsts with MemConsts {
   val ALU_SLTU = 10.U(FU_OP_SZ.W)
   val ALU_COPY1 = 11.U(FU_OP_SZ.W)
 
+  //                 1    1      2     1
+  val LSU_OP_X = Cat(Y, MX_X,  MT_X, LSU_XE)
+  val LSU_LW   = Cat(Y, MX_RD, MT_W, LSU_SE)
+  val LSU_LB   = Cat(Y, MX_RD, MT_B, LSU_SE)
+  val LSU_LBU  = Cat(Y, MX_RD, MT_B, LSU_ZE)
+  val LSU_LH   = Cat(Y, MX_RD, MT_H, LSU_SE)
+  val LSU_LHU  = Cat(Y, MX_RD, MT_H, LSU_ZE)
+  val LSU_SW   = Cat(Y, MX_WR, MT_W, LSU_SE)
+  val LSU_SB   = Cat(Y, MX_WR, MT_B, LSU_SE)
+  val LSU_SH   = Cat(Y, MX_WR, MT_H, LSU_SE)
   //                       1    1      2     1
-  val LSU_OP_X = new LSUOp(Y, MX_X,  MT_X, LSU_XE).toUInt
-  val LSU_LW   = new LSUOp(Y, MX_RD, MT_W, LSU_SE).toUInt
-  val LSU_LB   = new LSUOp(Y, MX_RD, MT_B, LSU_SE).toUInt
-  val LSU_LBU  = new LSUOp(Y, MX_RD, MT_B, LSU_ZE).toUInt
-  val LSU_LH   = new LSUOp(Y, MX_RD, MT_H, LSU_SE).toUInt
-  val LSU_LHU  = new LSUOp(Y, MX_RD, MT_H, LSU_ZE).toUInt
-  val LSU_SW   = new LSUOp(Y, MX_WR, MT_W, LSU_SE).toUInt
-  val LSU_SB   = new LSUOp(Y, MX_WR, MT_B, LSU_SE).toUInt
-  val LSU_SH   = new LSUOp(Y, MX_WR, MT_H, LSU_SE).toUInt
-  //                       1    1      2     1
-  val LSU_LWL  = new LSUOp(N, MX_RD, MT_W, LSU_L).toUInt
-  val LSU_LWR  = new LSUOp(N, MX_RD, MT_W, LSU_R).toUInt
-  val LSU_SWL  = new LSUOp(N, MX_WR, MT_W, LSU_L).toUInt
-  val LSU_SWR  = new LSUOp(N, MX_WR, MT_W, LSU_R).toUInt
+  val LSU_LWL  = Cat(N, MX_RD, MT_W, LSU_L)
+  val LSU_LWR  = Cat(N, MX_RD, MT_W, LSU_R)
+  val LSU_SWL  = Cat(N, MX_WR, MT_W, LSU_L)
+  val LSU_SWR  = Cat(N, MX_WR, MT_W, LSU_R)
 
 
   // MDU Operation Signal   1     2      1     1
-  val MDU_MFHI  = new MDUOp(MF_HI, F_MV,  Y, WB_RD).toUInt
-  val MDU_MFLO  = new MDUOp(MF_LO, F_MV,  Y, WB_RD).toUInt
-  val MDU_MUL   = new MDUOp(MF_X,  F_MUL, Y, WB_RD).toUInt
-  val MDU_MULT  = new MDUOp(MF_X,  F_MUL, Y, WB_HL).toUInt
-  val MDU_MULTU = new MDUOp(MF_X,  F_MUL, N, WB_HL).toUInt
-  val MDU_DIV   = new MDUOp(MF_X,  F_DIV, Y, WB_HL).toUInt
-  val MDU_DIVU  = new MDUOp(MF_X,  F_DIV, N, WB_HL).toUInt
+  val MDU_MFHI  = Cat(MF_HI, F_MV,  Y, WB_RD)
+  val MDU_MFLO  = Cat(MF_LO, F_MV,  Y, WB_RD)
+  val MDU_MUL   = Cat(MF_X,  F_MUL, Y, WB_RD)
+  val MDU_MULT  = Cat(MF_X,  F_MUL, Y, WB_HL)
+  val MDU_MULTU = Cat(MF_X,  F_MUL, N, WB_HL)
+  val MDU_DIV   = Cat(MF_X,  F_DIV, Y, WB_HL)
+  val MDU_DIVU  = Cat(MF_X,  F_DIV, N, WB_HL)
 }
 
 object Consts extends InstrPattern

@@ -8,7 +8,13 @@ import Configure._
 import IO._
 
 class Core extends Module {
-  val io = new CoreIO
+  val io = IO(new Bundle {
+    val imem = new MemIO
+    val dmem = new MemIO
+    val commit = new CommitIO
+  })
+
+  io.commit := DontCare
 
   val ifu = Module(new IFU)
   val idu = Module(new IDU)
@@ -34,8 +40,8 @@ class Core extends Module {
   mdu.io.flush <> wbu.io.flush
   bru.io.flush <> wbu.io.flush
 
-  ifu.io.mem <> io.imem
-  lsu.io.mem <> io.dmem
+  ifu.io.imem <> io.imem
+  lsu.io.dmem <> io.dmem
 
   ifu.io.idu <> idu.io.ifu
   idu.io.isu <> isu.io.idu

@@ -15,17 +15,40 @@ class SOC_EMU_TOP extends Module {
   })
 
   val core = Module(new Core)
-  val mc = Module(new SRAM_EMU_MC)
+  val as = Array(
+    new AddrSpace("h80000000".U, "h90000000".U),
+    new AddrSpace("hA0000000".U, "hC0000000".U))
+  val crossbar = Module(new MemCrossbar(2, as))
 
-  core.io.imem <> mc.io.imem
-  core.io.dmem <> mc.io.dmem
+  crossbar.io.in(0) <> core.io.imem
+  crossbar.io.in(1) <> core.io.dmem
+  crossbar.io.out(0) <> io.ddr
+  crossbar.io.out(1) <> io.mmio
+
   core.io.commit <> io.commit
-
-  mc.io.ddr <> io.ddr
-  mc.io.mmio <> io.mmio
 }
 
+class AXI4_EMU_TOP extends Module {
+  val io = IO(new Bundle {
+    val in = new MemIO
+  })
+}
+
+class ZEDBOARD_TOP extends Module {
+  val io = IO(new Bundle {
+    val in = new MemIO
+  })
+}
+
+class LOONGSON_TOP extends Module {
+  val io = IO(new Bundle {
+    val in = new MemIO
+  })
+}
+
+import MipsNPCTest._
+
 object Main extends App {
-  chisel3.Driver.execute(args, () => new TestBitsOneWay);
+  chisel3.Driver.execute(args, () => new SOC_EMU_TOP);
   // chisel3.Driver.execute(args, () => new SOC_EMU_TOP);
 }

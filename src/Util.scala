@@ -117,7 +117,7 @@ object BitsOneWay {
 
 object Only1H {
   // Only1H(a_valid, b_valid) -> a & b' | a' & b
-  def apply(data:Bits*) = {
+  def apply(data:Bool*) = {
     Cat(for(i <- 0 until data.length) yield
       Cat(for(j <- 0 until data.length) yield
         if(i == j) data(j).asUInt.orR else !(data(j).asUInt)).andR
@@ -126,5 +126,5 @@ object Only1H {
 }
 
 object AtMost1H {
-  def apply(data:Bits*) = !Cat(data).orR || Only1H(data:_*);
+  def apply(data:Bool*) = !Cat(data).orR || Only1H(data:_*);
 }

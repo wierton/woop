@@ -7,6 +7,21 @@ import Consts._
 import Configure._
 import IO._
 
+class MDUOp extends Bundle
+{
+  val mf_reg = UInt(1.W)
+  val func   = UInt(2.W)
+  val sign   = UInt(1.W)
+  val wb_reg = UInt(1.W)
+
+  def isSigned() = sign =/= 0.U
+  def isDiv() = func === F_DIV
+  def isMul() = func === F_MUL
+  def isMove() = func === F_MV
+  def isWB_HL() = wb_reg === WB_HL
+  def isWB_RD() = wb_reg === WB_RD
+}
+
 class MDU extends Module with UnitOpConsts {
   val io = IO(new Bundle {
     val bypass = ValidIO(new BypassIO);
@@ -29,8 +44,7 @@ class MDU extends Module with UnitOpConsts {
   val whi = WireInit(0.U(conf.xprlen.W));
   val wlo = WireInit(0.U(conf.xprlen.W));
 
-  val mduop = Wire(new MDUOp());
-  mduop := fu_op;
+  val mduop = fu_op.asTypeOf(new MDUOp);
 
   io.isu.ready := !in_stage_1 || io.wbu.ready;
 
@@ -61,20 +75,20 @@ class MDU extends Module with UnitOpConsts {
   when(mduop.isMul()) {
     val result = Wire(UInt((2 * conf.xprlen).W));
     when(mduop.isSigned()) {
-      result := (op1.asSInt * op2.asSInt).asUInt;
+      result := (op1.asSInt + op2.asSInt).asUInt;
       } .otherwise {
-        result := op1.asUInt * op2.asUInt;
+        result := op1.asUInt + op2.asUInt;
       }
 
       whi := result(2 * conf.xprlen - 1, conf.xprlen);
       wlo := result(conf.xprlen - 1, 0);
       } .elsewhen(mduop.isDiv()) {
         when(mduop.isSigned()) {
-          whi := (op1.asSInt % op2.asSInt).asUInt;
-          wlo := (op1.asSInt / op2.asSInt).asUInt;
+          whi := (op1.asSInt + op2.asSInt).asUInt;
+          wlo := (op1.asSInt + op2.asSInt).asUInt;
           } .otherwise {
-            whi := op1.asUInt % op2.asUInt;
-            wlo := op1.asUInt / op2.asUInt;
+            whi := op1.asUInt + op2.asUInt;
+            wlo := op1.asUInt + op2.asUInt;
           }
           } .otherwise {
             when(mduop.mf_reg === MF_LO) {

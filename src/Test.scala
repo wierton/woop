@@ -3,9 +3,10 @@ package MipsNPCTest
 import chisel3._
 import chisel3.util._
 
+import Configure._
 import MipsNPC.Consts._
-import MipsNPC.Configure._
 import MipsNPC.IO._
+import MipsNPC._
 
 class TestBitsOneWay extends Module {
   val io = IO(new Bundle {
@@ -41,6 +42,9 @@ class RespYourReq extends Module {
   io.in.req.ready := Y
   io.in.resp.valid := RegNext(io.in.req.valid)
   io.in.resp.bits.data := RegNext(io.in.req.bits.data)
+  when (io.in.req.fire()) {
+    printf("%d: resp %x\n", GTimer(), io.in.resp.bits.data);
+  }
 }
 
 class TestMemCrossbar extends Module {
@@ -49,4 +53,17 @@ class TestMemCrossbar extends Module {
   })
 
   io.commit := DontCare
+
+  val resp_1 = new RespYourReq
+  val as_1 = Array(new AddrSpace(0.U, 0x100.U))
+  val crossbar_1 = new MemCrossbar(1, as_1)
+  crossbar_1.io.out(0) <> resp_1.io.in
+
+  when (GTimer() === 0.U) {
+    crossbar_1.io.in(0).req.valid := Y
+    crossbar_1.io.in(0).req.bits.data := 0xdeadbeef.U
+  }
+
+  when (GTimer() === 1.U) {
+  }
 }
