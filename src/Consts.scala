@@ -19,6 +19,59 @@ trait MemConsts {
   val MT_W  = 3.U(MT_SZ.W)
 }
 
+trait CP0Constants {
+  val AM_EVL = 0x10000020.U // exception vector location
+
+  val EXC_WIDTH = 5
+  // EXC code
+  val EXC_INTR    = 0.U(EXC_WIDTH.W)   // - Interrupt
+  val EXC_Mod     = 1.U(EXC_WIDTH.W)   // * TLB modification
+  val EXC_TLBL    = 2.U(EXC_WIDTH.W)   // * TLB load
+  val EXC_TLBS    = 3.U(EXC_WIDTH.W)   // * TLB store
+  val EXC_AdEL    = 4.U(EXC_WIDTH.W)   // * Address Load
+  val EXC_AdES    = 5.U(EXC_WIDTH.W)   // * Address Store
+  val EXC_IBE     = 6.U(EXC_WIDTH.W)   //   Bus error(IF)
+  val EXC_DBE     = 7.U(EXC_WIDTH.W)   //   Bus error(data)
+  val EXC_SYSCALL = 8.U(EXC_WIDTH.W)   // * Syscall
+  val EXC_BP      = 9.U(EXC_WIDTH.W)   //   Break Point
+  val EXC_RI      = 10.U(EXC_WIDTH.W)  // * Reserved instruction
+  val EXC_CPU     = 11.U(EXC_WIDTH.W)  // * Coprocessor unusable
+  val EXC_OV      = 12.U(EXC_WIDTH.W)  // * Arithmetic overflow
+  val EXC_TRAP    = 13.U(EXC_WIDTH.W)  // * Trap
+
+  // exception type
+  val ETW_WIDTH = 32
+  val ET_NONE     =  0x0.U(ETW_WIDTH.W)    // no excepttion
+  val ET_INT      =  0x1.U(ETW_WIDTH.W)    // interruptions
+  val ET_AdEL_IF  =  0x2.U(ETW_WIDTH.W)    // pc[1:0]  != 2'b00, AdEl occurs in if stage 
+  val ET_SYSCALL  =  0x4.U(ETW_WIDTH.W)    // syscall instruction
+  val ET_INVOP    =  0x8.U(ETW_WIDTH.W)    // invalid opcode
+  val ET_OV       =  0x10.U(ETW_WIDTH.W)   // overflow
+  val ET_TRAP     =  0x20.U(ETW_WIDTH.W)   // trap instruction     
+  val ET_BP       =  0x40.U(ETW_WIDTH.W)   // breakpoint
+  val ET_AdEL_LD  =  0x80.U(ETW_WIDTH.W)   // unaligned address when loading
+  val ET_AdES     =  0x100.U(ETW_WIDTH.W)  // unaligned address when storing
+  val ET_eret     =  0x200.U(ETW_WIDTH.W)  // eret
+  val ET_Mod      =  0x400.U(ETW_WIDTH.W)  // TLB modification
+  val ET_TLBL     =  0x800.U(ETW_WIDTH.W)  // TLB load/IF
+  val ET_TLBS     =  0x1000.U(ETW_WIDTH.W) // TLB store
+
+  // exception bit
+  val ETB_INT     =  0         // interruptions
+  val ETB_AdEL_IF =  1         // pc[1:0]  != 2'b00, AdEl occurs in if stage 
+  val ETB_SYSCALL =  2         // syscall instruction
+  val ETB_INVOP   =  3         // invalid opcode
+  val ETB_OV      =  4         // overflow
+  val ETB_TRAP    =  5         // trap instruction     
+  val ETB_BP      =  6         // breakpoint
+  val ETB_AdEL_LD =  7         // unaligned address when loading
+  val ETB_AdES    =  8         // unaligned address when storing
+  val ETB_eret    =  9         // eret
+  val ETB_Mod     =  10        // TLB modification
+  val ETB_TLBL    =  11        // TLB load/IF
+  val ETB_TLBS    =  12        // TLB store
+}
+
 trait InstrConsts {
   val REG_SZ    = 5;
   val OP_MSB    = 31;
@@ -249,5 +302,6 @@ object Consts extends InstrPattern
   with ISUConsts
   with InstrConsts
   with MemConsts
+  with CP0Constants
 {
 }

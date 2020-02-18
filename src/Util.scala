@@ -36,24 +36,6 @@ object IFill {
   }
 }
 
-/*
-object MuxN {
-  def apply(n:Int, data:UInt, sel:UInt*):UInt = {
-    assert(data.getWidth == n);
-    if(n > 1)
-      return Mux(data(n - 1),
-        MuxN(n - 1, data(n - 2, 0), sel.slice(n - 1, 0)),
-        MuxN(n - 1, data(n - 2, 0), sel.slice(2 * n - 1, n))
-        );
-      return Mux(data(0), sel(0), sel(1));
-  }
-}
-
-object Mux2 {
-  def apply(data:Data, sel:Data*) = MuxN(2, data, sel:_*);
-}
-*/
-
 object CyclicShift {
   implicit class RShift(lhs:UInt) {
     def %>>(rhs:UInt) = {

@@ -26,44 +26,48 @@ class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
     val out = Vec(n, new MemIO)
   })
 
-  val valids = Cat(for (i <- 0 until m) yield io.in(i).req.valid)
-  val valids_1H = BitsOneWay(valids)
-  val has_req = valids_1H.orR
+  val in_valids = Cat(for (i <- 0 until m) yield io.in(i).req.valid)
+  val in_readys = Cat(for (i <- 0 until m) yield io.in(i).req.ready)
+  val in_valids_1H = BitsOneWay(in_valids)
+  val has_req = (in_valids_1H & in_readys).orR
 
   val reqing = RegEnable(next=Y, enable=has_req)
   val resping = RegInit(N)
   val working = reqing || resping
-  val resp_data = WireInit(0.U.asTypeOf(io.in(0).resp.bits))
 
-  val cached_valids_1H = RegEnable(next=valids_1H, enable=has_req)
-  val cached_req = RegEnable(next=Mux1H(for (i <- 0 until m) yield valids_1H(i) -> io.in(i).req.bits), enable=has_req)
+  val cached_in_valids_1H = RegEnable(next=in_valids_1H, enable=has_req)
+  val cached_req = RegEnable(next=Mux1H(for (i <- 0 until m) yield in_valids_1H(i) -> io.in(i).req.bits), enable=has_req)
+
+  val cached_out_valids = RegEnable(next=Cat(for (i <- 0 until n) yield
+      nAddrSpace(i).st <= cached_req.addr &&
+      cached_req.addr < nAddrSpace(i).ed
+    ), enable=has_req)
 
   for (i <- 0 until m) {
-    io.in(i).req.ready := !working && valids_1H(i)
-    io.in(i).resp.valid := resping && cached_valids_1H(i)
-    io.in(i).resp.bits := resp_data
+    io.in(i).req.ready := !working && in_valids_1H(i)
+    io.in(i).resp.valid := resping && cached_in_valids_1H(i)
+    io.in(i).resp.bits := Mux1H(for (i <- 0 until n) yield
+      cached_out_valids(i) -> io.out(i).resp.bits)
 
     when (io.in(i).resp.fire()) { resping := N }
   }
 
-  val out_req_valids = for (i <- 0 until n) yield io.out(i).req.fire()
-  assert (AtMost1H(out_req_valids:_*))
+  val out_req_fire = for (i <- 0 until n) yield io.out(i).req.fire()
+  assert (AtMost1H(out_req_fire:_*))
   for (i <- 0 until n) {
     io.out(i).resp.ready := reqing
-    io.out(i).req.valid := reqing &&
-      nAddrSpace(i).st <= cached_req.addr &&
-      cached_req.addr < nAddrSpace(i).ed
-    io.out(i).req.bits := cached_req
+    io.out(i).req.valid := reqing && cached_out_valids(i)
+    io.out(i).req.bits.addr := cached_req.addr - nAddrSpace(i).st
+    io.out(i).req.bits.data := cached_req.data
+    io.out(i).req.bits.func := cached_req.func
+    io.out(i).req.bits.wstrb := cached_req.wstrb
     when (io.out(i).req.fire()) {
       reqing := N
       resping := Y
-      resp_data := io.out(i).resp.bits
     }
   }
 
   /* no matched output */
-  when (reqing && !Cat(out_req_valids).orR) {
-    reqing := N
-  }
+  when (reqing && !cached_out_valids.orR) { reqing := N }
 }
 

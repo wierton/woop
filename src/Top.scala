@@ -16,8 +16,8 @@ class SOC_EMU_TOP extends Module {
 
   val core = Module(new Core)
   val as = Array(
-    new AddrSpace("h80000000".U, "h90000000".U),
-    new AddrSpace("hA0000000".U, "hC0000000".U))
+    new AddrSpace("h00000000".U, "h10000000".U),
+    new AddrSpace("h10000000".U, "h20000000".U))
   val crossbar = Module(new MemCrossbar(2, as))
 
   crossbar.io.in(0) <> core.io.imem
