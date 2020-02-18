@@ -39,7 +39,7 @@ class LSU extends Module with UnitOpConsts {
   val fu_op = datain.fu_op
   val data = datain.data
   val addr = datain.base + io.isu.bits.offset
-  val reg_dest_idx = datain.reg_dest_idx
+  val rd_idx = datain.rd_idx
 
   val lsuop = fu_op.asTypeOf(new LSUOp)
 
@@ -105,7 +105,7 @@ class LSU extends Module with UnitOpConsts {
     log("[LSU] mem_resp_data:%x\n", mem_resp_data)
   }
   when(io.wbu.fire()) {
-    log("[LSU] need_wb:%x, wb_data:%x, wb_idx:%x\n", lsuop.func === MX_RD, wb_data, reg_dest_idx)
+    log("[LSU] need_wb:%x, wb_data:%x, wb_idx:%x\n", lsuop.func === MX_RD, wb_data, rd_idx)
   }
 
   io.dmem.resp.ready := true.B
@@ -115,14 +115,14 @@ class LSU extends Module with UnitOpConsts {
   // bypass signals
   io.bypass.valid := io.wbu.valid
   io.bypass.bits.wen := io.wbu.bits.need_wb
-  io.bypass.bits.reg_dest_idx := io.wbu.bits.reg_dest_idx
+  io.bypass.bits.rd_idx := io.wbu.bits.rd_idx
   io.bypass.bits.data := io.wbu.bits.data
 
   // wbu signals
   io.wbu.bits.npc := datain.npc
   io.wbu.bits.need_wb := lsuop.func === MX_RD
   io.wbu.bits.data := wb_data
-  io.wbu.bits.reg_dest_idx := reg_dest_idx
+  io.wbu.bits.rd_idx := rd_idx
   io.wbu.valid := (
     (lsuop.func === MX_WR && io.dmem.req.fire()) ||
     (lsuop.func === MX_RD && io.dmem.resp.valid)

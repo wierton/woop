@@ -25,7 +25,7 @@ class BRU extends Module with UnitOpConsts {
   val rt_data = datain.rt_data;
   val addr = datain.addr;
   val se_off = datain.se_off;
-  val reg_dest_idx = datain.reg_dest_idx;
+  val rd_idx = datain.rd_idx;
 
   val I = (npc + (se_off << 2))(31, 0);
   val J = Cat(Seq(npc(OP_MSB, OP_LSB + 2), addr, 0.U(2.W)));
@@ -44,7 +44,7 @@ class BRU extends Module with UnitOpConsts {
     log("[BRU] rt_data:%x\n", io.isu.bits.rt_data);
     log("[BRU] addr:%x\n", io.isu.bits.addr);
     log("[BRU] se_off:%x\n", io.isu.bits.se_off);
-    log("[BRU] reg_dest_idx:%x\n", io.isu.bits.reg_dest_idx);
+    log("[BRU] rd_idx:%x\n", io.isu.bits.rd_idx);
   }
 
   when(io.wbu.fire()) {
@@ -82,7 +82,7 @@ class BRU extends Module with UnitOpConsts {
   // bypass signals
   io.bypass.valid := io.wbu.valid;
   io.bypass.bits.wen := io.wbu.bits.need_wb;
-  io.bypass.bits.reg_dest_idx := io.wbu.bits.reg_dest_idx;
+  io.bypass.bits.rd_idx := io.wbu.bits.rd_idx;
   io.bypass.bits.data := io.wbu.bits.data;
 
   // wbu signals
@@ -92,7 +92,7 @@ class BRU extends Module with UnitOpConsts {
   io.wbu.bits.br_target := mux_result.br_target;
   io.wbu.bits.need_wb := mux_result.need_wb;
   io.wbu.bits.data := npc + 4.U;
-  io.wbu.bits.reg_dest_idx := Mux(fu_op === BR_JAL, 31.U, reg_dest_idx);
+  io.wbu.bits.rd_idx := Mux(fu_op === BR_JAL, 31.U, rd_idx);
   io.wbu.valid := in_stage_1 && !io.flush.valid;
 }
 

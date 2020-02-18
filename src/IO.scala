@@ -8,28 +8,15 @@ import Configure._
 import Consts._
 
 class Instr {
-  val op     = Wire(UInt(OP_SZ.W))
-  val rs_idx = Wire(UInt(REG_SZ.W))
-  val rt_idx = Wire(UInt(REG_SZ.W))
-  val rd_idx = Wire(UInt(REG_SZ.W))
-  val shamt  = Wire(UInt(SHAMT_SZ.W))
-  val func   = Wire(UInt(FUNC_SZ.W))
+  val op     = UInt(OP_SZ.W)
+  val rs_idx = UInt(REG_SZ.W)
+  val rt_idx = UInt(REG_SZ.W)
+  val rd_idx = UInt(REG_SZ.W)
+  val shamt  = UInt(SHAMT_SZ.W)
+  val func   = UInt(FUNC_SZ.W)
 
   def imm    = Cat(rd_idx, shamt, func)
   def addr   = Cat(rs_idx, rt_idx, imm)
-
-  private val SeqAll = Seq(op, rs_idx, rt_idx, rd_idx, shamt, func)
-
-  def this(in:UInt) {
-    this()
-    Tie(SeqAll:_*) := in
-  }
-
-  def := (in:UInt):Unit = {
-    Tie(SeqAll:_*) := in
-  }
-
-  def asUInt() = Cat(SeqAll)
 }
 
 class CP0Exception extends Bundle {
@@ -71,13 +58,16 @@ class FlushIO extends Bundle {
 }
 
 class BypassIO extends Bundle {
+  val rd = Output(UInt(REG_SZ.W))
   val wen = Output(Bool()); // need bypass
-  val reg_dest_idx = Output(UInt(REG_SZ.W))
   val data = Output(UInt(conf.xprlen.W))
 }
 
 class WriteBackIO extends BypassIO {
   val npc = Output(UInt(conf.xprlen.W))
+  val wen = Output(Bool())
+  val rd_idx = Output(UInt(REG_SZ.W))
+  val data = Output(UInt(conf.xprlen.W))
 }
 
 class IFU_IDU_IO extends Bundle {
@@ -103,7 +93,7 @@ class ISU_ALU_IO extends Bundle {
   val npc = Output(UInt(conf.xprlen.W)); // deleted by dce
   val op1 = Output(UInt(conf.xprlen.W))
   val op2 = Output(UInt(conf.xprlen.W))
-  val reg_dest_idx = Output(UInt(REG_SZ.W))
+  val rd_idx = Output(UInt(REG_SZ.W))
 }
 
 class ISU_MDU_IO extends ISU_ALU_IO { }
@@ -115,7 +105,7 @@ class ISU_BRU_IO extends Bundle {
   val rt_data = Output(UInt(conf.xprlen.W))
   val addr = Output(UInt(ADDR_SZ.W))
   val se_off = Output(UInt(conf.xprlen.W))
-  val reg_dest_idx = Output(UInt(REG_SZ.W))
+  val rd_idx = Output(UInt(REG_SZ.W))
 }
 
 class ISU_LSU_IO extends Bundle {
@@ -124,7 +114,7 @@ class ISU_LSU_IO extends Bundle {
   val base = Output(UInt(conf.xprlen.W))
   val offset = Output(UInt(conf.xprlen.W))
   val data = Output(UInt(conf.xprlen.W))
-  val reg_dest_idx = Output(UInt(REG_SZ.W))
+  val rd_idx = Output(UInt(REG_SZ.W))
 }
 
 
@@ -134,20 +124,20 @@ class ISU_LSU_IO extends Bundle {
 class LSU_WBU_IO extends Bundle {
   val npc = Output(UInt(conf.xprlen.W)); // deleted by dce
   val need_wb = Output(Bool())
-  val reg_dest_idx = Output(UInt(REG_SZ.W))
+  val rd_idx = Output(UInt(REG_SZ.W))
   val data = Output(UInt(conf.xprlen.W))
 }
 
 class ALU_WBU_IO extends Bundle {
   val npc = Output(UInt(conf.xprlen.W)); // deleted by dce
-  val reg_dest_idx = Output(UInt(REG_SZ.W))
+  val rd_idx = Output(UInt(REG_SZ.W))
   val data = Output(UInt(conf.xprlen.W))
 }
 
 class MDU_WBU_IO extends Bundle {
   val npc = Output(UInt(conf.xprlen.W)); // deleted by dce
   val need_wb = Output(Bool())
-  val reg_dest_idx = Output(UInt(REG_SZ.W))
+  val rd_idx = Output(UInt(REG_SZ.W))
   val data = Output(UInt(conf.xprlen.W))
 }
 
@@ -156,7 +146,7 @@ class BRU_WBU_IO extends Bundle {
   val need_br = Output(Bool())
   val br_target = Output(UInt(conf.xprlen.W))
   val need_wb = Output(Bool())
-  val reg_dest_idx = Output(UInt(REG_SZ.W))
+  val rd_idx = Output(UInt(REG_SZ.W))
   val data = Output(UInt(conf.xprlen.W))
 }
 

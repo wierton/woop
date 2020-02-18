@@ -43,7 +43,7 @@ class WBU extends Module {
 
   // wb
   io.wb.bits.npc := wb_npc;
-  io.wb.bits.reg_dest_idx := wb_addr;
+  io.wb.bits.rd_idx := wb_addr;
   io.wb.bits.data := wb_data;
   io.wb.bits.wen := wb_wen;
   io.wb.valid := fu_valid;
@@ -57,36 +57,36 @@ class WBU extends Module {
   // writeback signals
   when(io.alu.fire()) {
     log("[WBU] [CPC] >>>>>> %x <<<<<<\n", io.alu.bits.npc - 4.U);
-    log("[WBU] <- [ALU]: addr:%x, data:%x\n", io.alu.bits.reg_dest_idx, io.alu.bits.data);
+    log("[WBU] <- [ALU]: addr:%x, data:%x\n", io.alu.bits.rd_idx, io.alu.bits.data);
     wb_npc := io.alu.bits.npc;
-    wb_addr := io.alu.bits.reg_dest_idx;
+    wb_addr := io.alu.bits.rd_idx;
     wb_data := io.alu.bits.data;
     wb_wen := true.B;
   }
 
   when(io.mdu.fire()) {
     log("[WBU] [CPC] >>>>>> %x <<<<<<\n", io.mdu.bits.npc - 4.U);
-    log("[WBU] <- [MDU]: addr:%x, data:%x\n", io.mdu.bits.reg_dest_idx, io.mdu.bits.data);
+    log("[WBU] <- [MDU]: addr:%x, data:%x\n", io.mdu.bits.rd_idx, io.mdu.bits.data);
     wb_npc := io.mdu.bits.npc;
-    wb_addr := io.mdu.bits.reg_dest_idx;
+    wb_addr := io.mdu.bits.rd_idx;
     wb_data := io.mdu.bits.data;
     wb_wen := io.mdu.bits.need_wb;
   }
 
   when(io.lsu.fire()) {
     log("[WBU] [CPC] >>>>>> %x <<<<<<\n", io.lsu.bits.npc - 4.U);
-    log("[WBU] <- [LSU]: addr:%x, data:%x\n", io.lsu.bits.reg_dest_idx, io.lsu.bits.data);
+    log("[WBU] <- [LSU]: addr:%x, data:%x\n", io.lsu.bits.rd_idx, io.lsu.bits.data);
     wb_npc := io.lsu.bits.npc;
-    wb_addr := io.lsu.bits.reg_dest_idx;
+    wb_addr := io.lsu.bits.rd_idx;
     wb_data := io.lsu.bits.data;
     wb_wen := io.lsu.bits.need_wb;
   }
 
   when(io.bru.fire()) {
     log("[WBU] [CPC] >>>>>> %x <<<<<<\n", io.bru.bits.npc - 4.U);
-    log("[WBU] <- [BRU]: addr:%x, data:%x\n", io.bru.bits.reg_dest_idx, io.bru.bits.data);
+    log("[WBU] <- [BRU]: addr:%x, data:%x\n", io.bru.bits.rd_idx, io.bru.bits.data);
     wb_npc := io.bru.bits.npc;
-    wb_addr := io.bru.bits.reg_dest_idx;
+    wb_addr := io.bru.bits.rd_idx;
     wb_data := io.bru.bits.data;
     wb_wen := io.bru.bits.need_wb;
   }
