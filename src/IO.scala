@@ -32,6 +32,11 @@ class Instr {
   def asUInt() = Cat(SeqAll)
 }
 
+class CP0Exception extends Bundle {
+  val offset = UInt(12.W)
+  val code = UInt(ETW_WIDTH.W)
+}
+
 class MemReq extends Bundle {
   val addr = Output(UInt(conf.xprlen.W)); // enable s
   val data  = Output(UInt(conf.xprlen.W))

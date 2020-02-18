@@ -10,6 +10,7 @@ import IO._
 class IFU extends Module {
   val io = IO(new Bundle {
     val imem = new MemIO
+    val iaddr = new TLBTransaction
     val idu = DecoupledIO(new IFU_IDU_IO)
     val flush = Flipped(ValidIO(new FlushIO))
   })
