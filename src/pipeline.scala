@@ -1,5 +1,3 @@
-package MipsNPC
-
 import chisel3._
 import chisel3.util._
 
@@ -15,7 +13,7 @@ import IO._
  *
  * */
 
-class NCyclesModule extends Module {
+class AtLeastNCyclesModule extends Module {
   val io = IO(new Bundle {
     val in = Flipped(DecoupledIO(Output(UInt(32.W))))
     val out = DecoupledIO(Output(UInt(32.W)))
@@ -26,19 +24,24 @@ class NCyclesModule extends Module {
   io.out.bits := fu_in.bits
 }
 
-/* ? cycle */
-class PiplineUnitAtLeastNCycles extends Module {
+/* at least 1 cycle */
+class PiplineUnitAtLeast1Cycle extends Module {
   val io = IO(new Bundle {
     val in = Flipped(DecoupledIO(Output(UInt(32.W))))
     val out = DecoupledIO(Output(UInt(32.W)))
     val flush = Input(Bool())
   })
 
-  val m = Module(new NCyclesModule)
+  val m = Module(new AtLeastNCyclesModule)
   val fu_valid = RegInit(N)
 
   io.in.ready := io.out.ready || !fu_valid
 
+  m.io.in.valid := io.in.valid
+  m.io.in.bits := io.in.bits
+  io.in.ready := m.io.in.ready
+
+  m.io.out.ready := io.out.ready
   io.out.valid := m.io.valid
   io.out.bits := m.io.bits
 
@@ -46,6 +49,36 @@ class PiplineUnitAtLeastNCycles extends Module {
     fu_valid := N
   } .elsewhen (!io.flush && io.in.fire()) {
     fu_valid := Y
+  }
+}
+
+/* at least N cycle */
+class PiplineUnitAtLeastNCycles extends Module {
+  val io = IO(new Bundle {
+    val in = Flipped(DecoupledIO(Output(UInt(32.W))))
+    val out = DecoupledIO(Output(UInt(32.W)))
+    val flush = Input(Bool())
+  })
+
+  val ncycles = 12
+  val m = Module(new AtLeastNCyclesModule)
+  val fu_valids = RegInit(0.U(ncycles.W))
+  val blocking = fu_valids(0) && !io.out.fire()
+
+  io.in.ready := io.out.ready || !blocking
+
+  m.io.in.valid := io.in.valid
+  m.io.in.bits := io.in.bits
+  io.in.ready := m.io.in.ready
+
+  m.io.out.ready := io.out.ready
+  io.out.valid := m.io.valid
+  io.out.bits := m.io.bits
+
+  when (io.flush) {
+    fu_valids := 0.U
+  } .elsewhen (!blocking) {
+    fu_valids := Cat(io.in.fire(), fu_valids >> 1)
   }
 }
 
@@ -98,56 +131,3 @@ class PiplineUnitNCycles extends Module {
   }
 }
 
-class Core extends Module {
-  val io = IO(new Bundle {
-    val imem = new MemIO
-    val dmem = new MemIO
-    val commit = new CommitIO
-  })
-
-  io.commit := DontCare
-
-  val ifu = Module(new IFU)
-  val idu = Module(new IDU)
-  val isu = Module(new ISU) // rf
-  val lsu = Module(new LSU)
-  val alu = Module(new ALU)
-  val mdu = Module(new MDU)
-  val bru = Module(new BRU)
-  val wbu = Module(new WBU) // rf
-
-  // bypass signals
-  isu.io.alu_bypass <> alu.io.bypass
-  isu.io.mdu_bypass <> mdu.io.bypass
-  isu.io.lsu_bypass <> lsu.io.bypass
-  isu.io.bru_bypass <> bru.io.bypass
-
-  // Flush signals
-  ifu.io.flush <> wbu.io.flush
-  idu.io.flush <> wbu.io.flush
-  isu.io.flush <> wbu.io.flush
-  lsu.io.flush <> wbu.io.flush
-  alu.io.flush <> wbu.io.flush
-  mdu.io.flush <> wbu.io.flush
-  bru.io.flush <> wbu.io.flush
-
-  ifu.io.imem <> io.imem
-  lsu.io.dmem <> io.dmem
-
-  ifu.io.idu <> idu.io.ifu
-  idu.io.isu <> isu.io.idu
-
-  // ISU -> XXX
-  isu.io.alu <> alu.io.isu
-  isu.io.mdu <> mdu.io.isu
-  isu.io.lsu <> lsu.io.isu
-  isu.io.bru <> bru.io.isu
-
-  // XXX -> WBU
-  lsu.io.wbu <> wbu.io.lsu
-  alu.io.wbu <> wbu.io.alu
-  mdu.io.wbu <> wbu.io.mdu
-  bru.io.wbu <> wbu.io.bru
-
-  isu.io.wbu <> wbu.io.wb
-}

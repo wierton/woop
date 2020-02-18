@@ -17,42 +17,30 @@ class IFU extends Module {
 
   // init to be valid, the first instruction
   val pc = RegInit(UInt(conf.xprlen.W), init=conf.start_addr)
-  val pc_next = pc + 4.U(conf.xprlen.W)
+  val s2_valid = RegInit(N)
 
-  val req_fire = io.imem.req.fire()
-  val resp_fire = io.imem.resp.fire()
-  val instr = io.imem.resp.bits.data
+  /* stage 1: synchronize */
+  io.iaddr.req.valid := Y
+  io.iaddr.req.bits.func := MX_RD
+  io.iaddr.req.bits.vaddr := pc
+  when (io.imem.req.ready || !s2_valid) { pc := pc + 4.U }
 
-  io.imem.req.valid := io.idu.ready && !io.flush.valid
-  io.imem.req.bits.addr  := pc
+  /* stage 2: blocking */
+  io.imem.req.valid := io.iaddr.resp.valid
+  io.imem.req.bits.addr  := io.iaddr.resp.bits.paddr
   io.imem.req.bits.func  := MX_RD
   io.imem.req.bits.wstrb := 0.U
   io.imem.req.bits.data  := 0.U
-
-  when(req_fire) {
-    pc := pc_next
+  io.imem.resp.ready := io.idu.ready
+  when (io.flush.valid || (!io.imem.req.fire() && io.idu.fire())) {
+    s2_valid := N
+  } .elsewhen(!io.flush.valid && io.imem.req.fire()) {
+    s2_valid := Y
   }
 
-  when(io.flush.valid) { pc := io.flush.bits.br_target; }
-
-  io.imem.resp.ready := true.B
-
-  io.idu.valid := io.imem.resp.valid && !io.flush.valid
+  /* stage 3: blocking */
+  io.idu.valid := io.imem.resp.valid
   io.idu.bits.npc := pc
-  io.idu.bits.instr := instr
-
-  // print some logs
-  when(io.imem.req.fire()) {
-    log("[IFU] [CPC] >>>>>> %x <<<<<<\n", pc)
-  }
-  when(io.flush.valid) {
-    log("[IFU] get flush signal, br to %x\n", io.flush.bits.br_target)
-  }
-  when(io.imem.req.valid || io.imem.req.ready) {
-    log("[IFU] imem.req: ready=%x, valid=%x, addr=%x, pc=%x\n", io.imem.req.ready, io.imem.req.valid, io.imem.req.bits.addr, pc)
-  }
-  when(io.imem.resp.valid || io.imem.resp.ready) {
-    log("[IFU] imem.resp: ready=%x, valid=%x, data=%x\n", io.imem.resp.ready, io.imem.resp.valid, io.imem.resp.bits.data)
-  }
+  io.idu.bits.instr := io.imem.resp.bits.data
 }
 

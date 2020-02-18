@@ -14,12 +14,8 @@ class IDU extends Module with UnitOpConsts {
     val flush = Flipped(ValidIO(new FlushIO));
   });
 
-  val ifu_fire = io.ifu.fire();
-  val instr_valid = RegNext(next=ifu_fire, init=false.B);
-  val datain = RegEnable(next=io.ifu.bits, enable=ifu_fire);
-  val npc = datain.npc;
-  val instr = datain.instr;
-  val in_stage_1 = instr_valid;
+  val fu_in = RegEnable(next=io.ifu.bits, enable=io.ifu.fire())
+  val fu_valid = RegInit(N)
 
   // instruction decode stage
   val csignals = ListLookup(instr,
@@ -89,11 +85,10 @@ class IDU extends Module with UnitOpConsts {
   val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: dest_sel :: Nil = csignals;
 
 
-  //               not busy        pipelined
-  io.ifu.ready := !in_stage_1 || io.isu.ready;
+  io.ifu.ready := io.isu.ready || !fu_valid;
 
   // ISU
-  io.isu.valid := valid && in_stage_1 && !io.flush.valid;
+  io.isu.valid := fu_valid
   io.isu.bits.npc := npc;
   io.isu.bits.instr := instr;
   io.isu.bits.fu_type := fu_type;
@@ -102,13 +97,10 @@ class IDU extends Module with UnitOpConsts {
   io.isu.bits.op2_sel := op2_sel;
   io.isu.bits.dest_sel := dest_sel;
 
-  when(!valid) {
-    log("[IDU] Invalid instr %x\n", datain.instr);
-  }
-
-  when(ifu_fire) {
-    log("[IDU] [CPC] >>>>>> %x <<<<<<\n", io.ifu.bits.npc - 4.U);
-    log("[IDU] input_valid:instr=%x\n", io.ifu.bits.instr);
+  when (io.flush.valid || (!io.ifu.fire() && io.isu.fire())) {
+    fu_valid := N
+  } .elsewhen(!io.flush.valid && io.ifu.fire()) {
+    fu_valid := Y
   }
 }
 
