@@ -27,26 +27,27 @@ class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
     val out = Vec(n, new MemIO)
   })
 
-  val in_valids = Cat(for (i <- 0 until m) yield io.in(i).req.valid)
-  val in_readys = Cat(for (i <- 0 until m) yield io.in(i).req.ready)
+  val in_valids = Reverse(Cat(for (i <- 0 until m) yield io.in(i).req.valid))
+  val in_readys = Reverse(Cat(for (i <- 0 until m) yield io.in(i).req.ready))
   val in_valids_1H = BitsOneWay(in_valids)
   val has_req = (in_valids_1H & in_readys).orR
 
-  val reqing = RegEnable(next=Y, enable=has_req)
+  val reqing = RegEnable(next=Y, enable=has_req, init=N)
   val resping = RegInit(N)
   val working = reqing || resping
 
   val cached_in_valids_1H = RegEnable(next=in_valids_1H, enable=has_req)
   val cached_req = RegEnable(next=Mux1H(for (i <- 0 until m) yield in_valids_1H(i) -> io.in(i).req.bits), enable=has_req)
 
-  val cached_out_valids = RegEnable(next=Cat(for (i <- 0 until n) yield
+  val cached_out_valids = RegEnable(next=Reverse(Cat(for (i <- 0 until n) yield
       nAddrSpace(i).st <= cached_req.addr &&
       cached_req.addr < nAddrSpace(i).ed
-    ), enable=has_req)
+    )), enable=has_req)
+  val has_resp = Cat(for (i <- 0 until n) yield io.out(i).resp.valid).orR
 
   for (i <- 0 until m) {
     io.in(i).req.ready := !working && in_valids_1H(i)
-    io.in(i).resp.valid := resping && cached_in_valids_1H(i)
+    io.in(i).resp.valid := has_resp && resping && cached_in_valids_1H(i)
     io.in(i).resp.bits := Mux1H(for (i <- 0 until n) yield
       cached_out_valids(i) -> io.out(i).resp.bits)
 
@@ -83,7 +84,7 @@ class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
     }
     cached_req.dump(msg+".cached_req")
     printf("%d: "+msg+": in_valids=%b, in_valids_1H=%b, cached_in_valids_1H=%b, has_req=%d, in_readys=%b\n", GTimer(), in_valids, in_valids_1H, cached_in_valids_1H, has_req, in_readys)
-    printf("%d: "+msg+": reqing=%b, resping=%b, working=%b, cached_out_valids=%b\n", GTimer(), reqing, resping, working, cached_out_valids)
+    printf("%d: "+msg+": reqing=%b, has_resp=%b, resping=%b, working=%b, cached_out_valids=%b\n", GTimer(), reqing, has_resp, resping, working, cached_out_valids)
   }
 }
 

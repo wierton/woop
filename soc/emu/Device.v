@@ -18,20 +18,23 @@ import "DPI-C" function void ddr_io
   output int  in_resp_bits_data
 );
 
-module DDR(
-  input         clk,
+module SimDDR(
+  input         clock,
   input         reset,
   output        in_req_ready,
   input         in_req_valid,
+  input  [0:0]  in_req_bits_is_aligned,
   input  [31:0] in_req_bits_addr,
   input  [31:0] in_req_bits_data,
-  input  [1:0]  in_req_bits_len,
   input  [0:0]  in_req_bits_func,
   input  [3:0]  in_req_bits_wstrb,
   input         in_resp_ready,
   output        in_resp_valid,
   output [31:0] in_resp_bits_data
 );
+
+// fucking
+wire __in_req_bits_s1_kill = 1'b0;
 
 // delayed inputs
 wire #0.1 __in_req_valid = in_req_valid;
@@ -66,7 +69,7 @@ assign in_req_ready = !s0_req_valid && !s1_req_valid;
 // resp will be valid next cycle
 assign in_resp_valid = resp_valid;
 
-always @(posedge clk)
+always @(posedge clock)
 begin
   if (!reset) begin
     // only support write, no read
@@ -108,20 +111,22 @@ begin
 end
 endmodule
 
-module Device(
-  input         clk,
+module SimDev(
+  input         clock,
   input         reset,
   output        in_req_ready,
   input         in_req_valid,
+  input  [0:0]  in_req_bits_is_aligned,
   input  [31:0] in_req_bits_addr,
   input  [31:0] in_req_bits_data,
-  input  [1:0]  in_req_bits_len,
   input  [0:0]  in_req_bits_func,
   input  [3:0]  in_req_bits_wstrb,
   input         in_resp_ready,
   output        in_resp_valid,
   output [31:0] in_resp_bits_data
 );
+// fucking
+wire __in_req_bits_s1_kill = 1'b0;
 
 // delayed inputs
 wire #0.1 __in_req_valid = in_req_valid;
@@ -156,7 +161,7 @@ assign in_req_ready = !s0_req_valid && !s1_req_valid;
 // resp will be valid next cycle
 assign in_resp_valid = resp_valid;
 
-always @(posedge clk)
+always @(posedge clock)
 begin
   if (!reset) begin
     // only support write, no read

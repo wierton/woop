@@ -48,6 +48,11 @@ void device_io(unsigned char in_req_valid, int in_req_bits_addr,
     int *in_resp_bits_data) {
   if (!in_req_valid) return;
 
+  /* new AddrSpace("h00000000".U, "h80000000".U),
+   * new AddrSpace("h10000000".U, "h20000000".U))
+   */
+  in_req_bits_addr += 0x10000000;
+
   /* deal with read */
   if (in_req_bits_fcn != 1) {
     /* all registers defined in IP manual have length 4 */

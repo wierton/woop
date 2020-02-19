@@ -89,9 +89,8 @@ object BitsOneWay {
     } else {
       val OneToN = Cat(for (i <- 1 until data.getWidth) yield
         (data(i) && !Cat(for (i <- 0 until i) yield
-          data(i)).orR)
-      )
-      Cat(data(0), OneToN)
+          data(i)).orR))
+      Cat(Reverse(OneToN), data(0))
     }
   }
 }
