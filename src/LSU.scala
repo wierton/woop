@@ -30,9 +30,11 @@ class LSUStage2Data extends Bundle {
   val npc = UInt(conf.xprlen.W)
   val data = UInt(conf.xprlen.W)
   val addr = UInt(conf.xprlen.W)
+  val is_cached = Bool()
 
-  def load(lsu:ISU_LSU_IO, _addr:UInt) = {
-    this := Cat(_addr, lsu.data, lsu.npc, lsu.rd_idx, lsu.fu_op).asTypeOf(this)
+  def load(lsu:ISU_LSU_IO, tlb:TLBResp) = {
+    this := Cat(tlb.is_cached, tlb.paddr,lsu.data,
+      lsu.npc, lsu.rd_idx, lsu.fu_op).asTypeOf(this)
   }
 }
 
@@ -68,12 +70,13 @@ class LSU extends Module with UnitOpConsts {
     /* stage 2: send memory request */
    val mio_cycles = 2
    val s2_in = Wire(new LSUStage2Data)
-   s2_in.load(io.isu.bits, io.daddr.resp.bits.paddr)
+   s2_in.load(io.isu.bits, io.daddr.resp.bits)
    val s2_datas = Mem(mio_cycles, new LSUStage2Data)
    val s2_valids = RegInit(0.U(mio_cycles.W))
    val s2_blocking = s2_valids(0) && !io.wbu.fire()
    assert (!s2_blocking || !io.dmem.req.ready)
    io.dmem.req.valid := io.daddr.resp.valid
+   io.dmem.req.bits.is_cached := s2_in.is_cached
    io.dmem.req.bits.is_aligned := s2_in.op.isAligned()
    io.dmem.req.bits.addr  := Mux(s2_in.op.isAligned(),
      s2_in.addr, s2_in.addr & ~(3.U(32.W)))

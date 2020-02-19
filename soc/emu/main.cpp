@@ -26,46 +26,36 @@ int get_exit_code(void) { return ret_code; }
 
 extern "C" {
 
-void ddr_io(unsigned char in_req_valid, int in_req_bits_addr,
-    int in_req_bits_data, char in_req_bits_fcn, char in_req_bits_wstrb,
-    int *in_resp_bits_data) {
-  if (!in_req_valid) return;
+void device_io(
+    unsigned char valid, int addr, int data, char func, char wstrb, int *resp) {
+  if (!valid) return;
 
-  if (in_req_bits_fcn == 0) {
-    // MX_RD
-    memcpy(in_resp_bits_data, &ddr_mem[in_req_bits_addr], 4);
-  } else {
-    // MX_WR
-    for (int i = 0; i < 4; i++) {
-      if (in_req_bits_wstrb & (1 << i))
-        ddr_mem[in_req_bits_addr + i] = (in_req_bits_data >> (i * 8)) & 0xFF;
+  if (0 <= addr && addr < 0x08000000) {
+    if (func == 0) {
+      // MX_RD
+      memcpy(resp, &ddr_mem[addr], 4);
+    } else {
+      // MX_WR
+      for (int i = 0; i < 4; i++) {
+        if (wstrb & (1 << i)) ddr_mem[addr + i] = (data >> (i * 8)) & 0xFF;
+      }
     }
+    return;
   }
-}
-
-void device_io(unsigned char in_req_valid, int in_req_bits_addr,
-    int in_req_bits_data, char in_req_bits_fcn, char in_req_bits_wstrb,
-    int *in_resp_bits_data) {
-  if (!in_req_valid) return;
-
-  /* new AddrSpace("h00000000".U, "h80000000".U),
-   * new AddrSpace("h10000000".U, "h20000000".U))
-   */
-  in_req_bits_addr += 0x10000000;
 
   /* deal with read */
-  if (in_req_bits_fcn != 1) {
+  if (func != 1) {
     /* all registers defined in IP manual have length 4 */
-    *in_resp_bits_data = paddr_peek(in_req_bits_addr, 4);
+    *resp = paddr_peek(addr, 4);
     return;
   }
 
   /* deal with write */
-  switch (in_req_bits_addr) {
+  switch (addr) {
   case GPIO_TRAP:
     finished = true;
-    ret_code = in_req_bits_data;
-    if (in_req_bits_data == 0)
+    ret_code = data;
+    if (data == 0)
       printf(ANSI_COLOR_GREEN "EMU: HIT GOOD TRAP" ANSI_COLOR_RESET "\n");
     else
       printf(ANSI_COLOR_RED "EMU: HIT BAD TRAP" ANSI_COLOR_RESET "\n");

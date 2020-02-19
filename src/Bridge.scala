@@ -20,6 +20,29 @@ class AXI42SRAM extends Module {
   })
 }
 
+class MemMux(name:String) extends Module {
+  val io = IO(new Bundle {
+    val in = Flipped(new MemIO)
+    val cached = new MemIO
+    val uncached = new MemIO
+  })
+
+  io.in.req.ready := io.cached.req.ready && io.uncached.req.ready
+  io.in.resp.valid := io.cached.resp.valid || io.uncached.resp.valid
+  io.in.resp.bits := Mux1H(Array(
+    io.cached.resp.valid -> io.cached.resp.bits,
+    io.uncached.resp.valid -> io.uncached.resp.bits))
+  assert (!io.cached.resp.valid || !io.uncached.resp.valid)
+
+  io.cached.req.valid := io.in.req.valid && io.in.req.bits.is_cached
+  io.cached.req.bits := io.in.req.bits
+  io.cached.resp.ready := io.in.resp.ready
+
+  io.uncached.req.valid := io.in.req.valid && !io.in.req.bits.is_cached
+  io.uncached.req.bits := io.in.req.bits
+  io.uncached.resp.ready := io.in.resp.ready
+}
+
 class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
   val n = nAddrSpace.length
   val io = IO(new Bundle {
@@ -60,7 +83,8 @@ class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
     io.out(i).resp.ready := reqing
     io.out(i).req.valid := reqing && cached_out_valids(i)
     io.out(i).req.bits.is_aligned := cached_req.is_aligned
-    io.out(i).req.bits.addr := cached_req.addr - nAddrSpace(i).st
+    io.out(i).req.bits.is_cached := cached_req.is_cached
+    io.out(i).req.bits.addr := cached_req.addr
     io.out(i).req.bits.data := cached_req.data
     io.out(i).req.bits.func := cached_req.func
     io.out(i).req.bits.wstrb := cached_req.wstrb

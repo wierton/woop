@@ -26,6 +26,7 @@ class CP0Exception extends Bundle {
 
 class MemReq extends Bundle {
   val is_aligned = Output(Bool())
+  val is_cached = Output(Bool())
   val addr = Output(UInt(conf.xprlen.W)); // enable s
   val data  = Output(UInt(conf.xprlen.W))
   val func  = Output(UInt(MX_SZ.W))

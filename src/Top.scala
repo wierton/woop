@@ -8,14 +8,6 @@ import Configure._
 import IO._
 import DumpUtils._
 
-class SimDDR extends BlackBox {
-  val io = IO(new Bundle {
-    val clock = Input(Clock())
-    val reset = Input(Bool())
-    val in = Flipped(new MemIO)
-  })
-}
-
 class SimDev extends BlackBox {
   val io = IO(new Bundle {
     val clock = Input(Clock())
@@ -30,22 +22,24 @@ class SOC_EMU_TOP extends Module {
   })
 
   val core = Module(new Core)
-  val as = Array(
-    new AddrSpace("h00000000".U, "h08000000".U),
-    new AddrSpace("h10000000".U, "h20000000".U))
-  val ddr = Module(new SimDDR)
+  val imux = Module(new MemMux("imux"))
+  val dmux = Module(new MemMux("dmux"))
   val dev = Module(new SimDev)
-  val crossbar = Module(new MemCrossbar(2, as))
+  val as = Array(new AddrSpace("h00000000".U, "h20000000".U))
+  val crossbar = Module(new MemCrossbar(4, as))
 
-  ddr.io.clock := clock
-  ddr.io.reset := reset
   dev.io.clock := clock
   dev.io.reset := reset
 
-  crossbar.io.in(0) <> core.io.imem
-  crossbar.io.in(1) <> core.io.dmem
-  crossbar.io.out(0) <> ddr.io.in
-  crossbar.io.out(1) <> dev.io.in
+  imux.io.in <> core.io.imem
+  dmux.io.in <> core.io.dmem
+
+  crossbar.io.in(0) <> imux.io.cached
+  crossbar.io.in(1) <> imux.io.uncached
+  crossbar.io.in(2) <> dmux.io.cached
+  crossbar.io.in(3) <> dmux.io.uncached
+
+  crossbar.io.out(0) <> dev.io.in
 
   core.io.commit <> io.commit
 }
