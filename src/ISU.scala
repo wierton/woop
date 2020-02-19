@@ -125,7 +125,7 @@ class ISU(nbps:Int) extends Module {
 
   // ALU IO
   io.alu.bits.fu_op := fu_in.fu_op
-  io.alu.bits.npc := fu_in.npc
+  io.alu.bits.pc := fu_in.pc
   io.alu.bits.op1 := op1_data
   io.alu.bits.op2 := op2_data
   io.alu.bits.rd_idx := rd_idx
@@ -133,7 +133,7 @@ class ISU(nbps:Int) extends Module {
 
   // MDU IO
   io.mdu.bits.fu_op := fu_in.fu_op
-  io.mdu.bits.npc := fu_in.npc
+  io.mdu.bits.pc := fu_in.pc
   io.mdu.bits.op1 := op1_data
   io.mdu.bits.op2 := op2_data
   io.mdu.bits.rd_idx := rd_idx
@@ -141,7 +141,7 @@ class ISU(nbps:Int) extends Module {
 
   // LSU IO
   io.lsu.bits.fu_op := fu_in.fu_op
-  io.lsu.bits.npc := fu_in.npc
+  io.lsu.bits.pc := fu_in.pc
   io.lsu.bits.base := op1_data
   io.lsu.bits.offset := se_imm
   io.lsu.bits.data := op2_data
@@ -150,7 +150,7 @@ class ISU(nbps:Int) extends Module {
 
   // BRU IO
   io.bru.bits.fu_op := fu_in.fu_op
-  io.bru.bits.npc := fu_in.npc
+  io.bru.bits.pc := fu_in.pc
   io.bru.bits.rs_data := op1_data
   io.bru.bits.rt_data := op2_data
   io.bru.bits.addr := instr.addr

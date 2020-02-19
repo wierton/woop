@@ -53,7 +53,7 @@ class MDU extends Module with UnitOpConsts {
   io.bypass.bits.rd_idx := io.wbu.bits.rd_idx;
   io.bypass.bits.data := io.wbu.bits.data;
 
-  io.wbu.bits.npc := datain.npc;
+  io.wbu.bits.pc := datain.pc;
   io.wbu.bits.data := wlo;
   io.wbu.bits.need_wb := mduop.wb_reg === WB_RD;
   io.wbu.bits.rd_idx := rd_idx;
@@ -104,6 +104,6 @@ class MDU extends Module with UnitOpConsts {
           }
 
           when(io.isu.fire()) {
-            log("[MDU] [CPC] >>>>>> %x <<<<<<\n", io.isu.bits.npc - 4.U);
+            log("[MDU] [CPC] >>>>>> %x <<<<<<\n", io.isu.bits.pc - 4.U);
           }
 }

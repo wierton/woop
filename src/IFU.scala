@@ -18,22 +18,22 @@ class IFU extends Module {
 
   // init to be valid, the first instruction
   val pc = RegInit(UInt(conf.xprlen.W), init=conf.start_addr)
-  val s1_valid = RegInit(N)
-  val s2_valid = RegInit(N)
-
-  when (io.imem.req.ready || !s1_valid) { pc := pc + 4.U }
+  when (io.imem.req.fire()) { pc := pc + 4.U }
 
   /* stage 1: synchronize */
-  io.iaddr.req.valid := io.imem.req.ready || !s1_valid
+  io.iaddr.req.valid := Y
   io.iaddr.req.bits.func := MX_RD
   io.iaddr.req.bits.vaddr := pc
-  when (io.flush.valid || (!io.iaddr.req.fire() && io.imem.req.fire())) {
-    s1_valid := N
-  } .elsewhen(!io.flush.valid && io.iaddr.req.fire()) {
-    s1_valid := Y
-  }
 
   /* stage 2: blocking */
+  val mio_cycles = 5
+  val s2_in = RegEnable(next=pc, enable=io.iaddr.req.fire())
+  val s2_datas = Module(new Queue(UInt(32.W), mio_cycles))
+  s2_datas.reset := io.flush.valid
+  s2_datas.io.enq.valid := io.imem.req.fire()
+  s2_datas.io.enq.bits := s2_in
+  s2_datas.io.deq.ready := io.imem.resp.fire()
+  assert (s2_datas.io.enq.fire() === io.imem.req.fire())
   io.imem.req.valid := io.iaddr.resp.valid
   io.imem.req.bits.is_cached := io.iaddr.resp.bits.is_cached
   io.imem.req.bits.is_aligned := Y
@@ -42,18 +42,13 @@ class IFU extends Module {
   io.imem.req.bits.wstrb := 0.U
   io.imem.req.bits.data  := 0.U
   io.imem.resp.ready := io.idu.ready
-  when (io.flush.valid || (!io.imem.req.fire() && io.idu.fire())) {
-    s2_valid := N
-  } .elsewhen(!io.flush.valid && io.imem.req.fire()) {
-    s2_valid := Y
-  }
 
   /* stage 3: blocking */
   io.idu.valid := io.imem.resp.valid
-  io.idu.bits.npc := pc
+  io.idu.bits.pc := s2_datas.io.deq.bits
   io.idu.bits.instr := io.imem.resp.bits.data
 
-  printf("%d: IFU: pc %x, s1_valid %d, s2_valid %d\n", GTimer(), pc, s1_valid, s2_valid)
+  printf("%d: IFU: pc=%x, s2_datas={[%b,%b]:%x, [%b,%b]:%x}\n", GTimer(), pc, s2_datas.io.enq.valid, s2_datas.io.enq.ready, s2_datas.io.enq.bits, s2_datas.io.deq.valid, s2_datas.io.deq.ready, s2_datas.io.deq.bits)
   io.imem.dump("IFU.imem")
   io.iaddr.dump("IFU.iaddr")
   io.idu.dump("IFU.idu")

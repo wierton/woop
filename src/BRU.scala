@@ -22,8 +22,8 @@ class BRU extends Module with UnitOpConsts {
 
   io.isu.ready := io.wbu.ready || !fu_valid
 
-  val I = (fu_in.npc + (fu_in.se_off << 2))(31, 0)
-  val J = Cat(Seq(fu_in.npc(OP_MSB, OP_LSB + 2), fu_in.addr, 0.U(2.W)))
+  val I = (fu_in.pc + (fu_in.se_off << 2))(31, 0)
+  val J = Cat(Seq(fu_in.pc(OP_MSB, OP_LSB + 2), fu_in.addr, 0.U(2.W)))
   val JR = fu_in.rs_data
 
   val br_info = Mux1H(Array(
@@ -46,11 +46,11 @@ class BRU extends Module with UnitOpConsts {
   io.bypass.bits.data := io.wbu.bits.data
 
   /* wbu signals */
-  io.wbu.bits.npc := fu_in.npc
+  io.wbu.bits.pc := fu_in.pc
   io.wbu.bits.need_br := br_info(33)
   io.wbu.bits.need_wb := br_info(32)
   io.wbu.bits.br_target := br_info(31, 0)
-  io.wbu.bits.data := fu_in.npc + 4.U
+  io.wbu.bits.data := fu_in.pc + 4.U
   io.wbu.bits.rd_idx := Mux(fu_in.fu_op === BR_JAL, 31.U, fu_in.rd_idx)
   io.wbu.valid := fu_valid
 

@@ -27,14 +27,14 @@ class LSUOp extends Bundle
 class LSUStage2Data extends Bundle {
   val op = new LSUOp
   val rd_idx = UInt(REG_SZ.W)
-  val npc = UInt(conf.xprlen.W)
+  val pc = UInt(conf.xprlen.W)
   val data = UInt(conf.xprlen.W)
   val addr = UInt(conf.xprlen.W)
   val is_cached = Bool()
 
   def load(lsu:ISU_LSU_IO, tlb:TLBResp) = {
     this := Cat(tlb.is_cached, tlb.paddr,lsu.data,
-      lsu.npc, lsu.rd_idx, lsu.fu_op).asTypeOf(this)
+      lsu.pc, lsu.rd_idx, lsu.fu_op).asTypeOf(this)
   }
 }
 
@@ -104,7 +104,7 @@ class LSU extends Module with UnitOpConsts {
   val s3_in = s2_datas(0)
   val s3_data = io.dmem.resp.bits.data
   io.wbu.valid := io.dmem.resp.valid
-  io.wbu.bits.npc := s3_in.npc
+  io.wbu.bits.pc := s3_in.pc
   io.wbu.bits.need_wb := Y
   io.wbu.bits.rd_idx := s3_in.rd_idx
 

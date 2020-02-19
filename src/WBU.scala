@@ -17,7 +17,7 @@ class WBU extends Module {
     val flush = ValidIO(new FlushIO)
   })
 
-  val wb_npc = RegInit(0.U(conf.xprlen.W))
+  val wb_pc = RegInit(0.U(conf.xprlen.W))
   val wb_addr = RegInit(0.U(conf.xprlen.W))
   val wb_data = RegInit(0.U(conf.xprlen.W))
   val wb_wen = RegInit(N)
@@ -42,7 +42,7 @@ class WBU extends Module {
   io.bru.ready := Y
 
   // wb
-  io.wb.bits.npc := wb_npc
+  io.wb.bits.pc := wb_pc
   io.wb.bits.rd_idx := wb_addr
   io.wb.bits.data := wb_data
   io.wb.bits.wen := wb_wen

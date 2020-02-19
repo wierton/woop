@@ -27,7 +27,7 @@ class MemMux(name:String) extends Module {
     val uncached = new MemIO
   })
 
-  io.in.req.ready := io.cached.req.ready && io.uncached.req.ready
+  io.in.req.ready := Mux(io.in.req.bits.is_cached, io.cached.req.ready, io.uncached.req.ready)
   io.in.resp.valid := io.cached.resp.valid || io.uncached.resp.valid
   io.in.resp.bits := Mux1H(Array(
     io.cached.resp.valid -> io.cached.resp.bits,
@@ -41,6 +41,59 @@ class MemMux(name:String) extends Module {
   io.uncached.req.valid := io.in.req.valid && !io.in.req.bits.is_cached
   io.uncached.req.bits := io.in.req.bits
   io.uncached.resp.ready := io.in.resp.ready
+}
+
+/* assume memory request reach in order */
+class CrossbarNx1(m:Int) extends Module {
+  val io = IO(new Bundle {
+    val in = Vec(m, Flipped(new MemIO))
+    val out = new MemIO
+  })
+
+  val in_valids = Reverse(Cat(for (i <- 0 until m) yield io.in(i).req.valid))
+  val in_readys = Reverse(Cat(for (i <- 0 until m) yield io.in(i).req.ready))
+  val in_resp_readys = Reverse(Cat(for (i <- 0 until m) yield io.in(i).resp.ready))
+  val in_valids_1H = BitsOneWay(in_valids)
+  val in_req = Mux1H(for (i <- 0 until m) yield in_valids_1H(i) -> io.in(i).req.bits)
+
+  val nstages = 2
+  val n_data = RegInit(~(0.U(log2Ceil(m).W)))
+  val q_datas = Mem(nstages, UInt(m.W))
+  val p_data = q_datas(n_data)
+  when (io.out.req.fire()) {
+    for (i <- 0 until nstages - 1) {
+      q_datas(i) := q_datas(i + 1)
+    }
+    q_datas(nstages - 1) := in_valids
+    n_data := n_data + 1.U
+  } .elsewhen (io.out.resp.fire()) {
+    n_data := n_data - 1.U
+  }
+
+  for (i <- 0 until m) {
+    io.in(i).req.ready := io.out.req.ready && in_valids_1H(i)
+    io.in(i).resp.valid := io.out.resp.valid && p_data(i)
+    io.in(i).resp.bits := io.out.resp.bits
+  }
+
+  assert (!(n_data === ~(0.U(log2Ceil(m).W)) && io.out.resp.valid))
+  io.out.resp.ready := p_data & in_resp_readys
+  io.out.req.valid := in_valids.orR
+  io.out.req.bits := in_req
+
+  dump("crossbar")
+
+  def dump(msg:String) = {
+    for (i <- 0 until io.in.size) {
+      io.in(i).dump(msg+".io.in."+i)
+    }
+    io.out.dump(msg+".io.out")
+    in_req.dump(msg+".in_req")
+    printf("%d: "+msg+": in_valids=%b, in_valids_1H=%b, in_readys=%b, in_resp_readys=%b\n", GTimer(), in_valids, in_valids_1H, in_readys, in_resp_readys)
+    val p = Seq[Bits](GTimer(), n_data, p_data)
+    val q = for (i <- 0 until log2Ceil(m)) yield q_datas(i)
+    printf("%d: "+msg+": n_data=%d, p_data=%b, q_datas={"+List.fill(log2Ceil(m))("%b,").mkString+"}\n", (p++q):_*)
+  }
 }
 
 class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
@@ -60,12 +113,12 @@ class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
   val working = reqing || resping
 
   val cached_in_valids_1H = RegEnable(next=in_valids_1H, enable=has_req)
-  val cached_req = RegEnable(next=Mux1H(for (i <- 0 until m) yield in_valids_1H(i) -> io.in(i).req.bits), enable=has_req)
-
+  val cached_in_req = RegEnable(next=Mux1H(for (i <- 0 until m) yield in_valids_1H(i) -> io.in(i).req.bits), enable=has_req)
   val cached_out_valids = RegEnable(next=Reverse(Cat(for (i <- 0 until n) yield
-      nAddrSpace(i).st <= cached_req.addr &&
-      cached_req.addr < nAddrSpace(i).ed
+      nAddrSpace(i).st <= cached_in_req.addr &&
+      cached_in_req.addr < nAddrSpace(i).ed
     )), enable=has_req)
+
   val has_resp = Cat(for (i <- 0 until n) yield io.out(i).resp.valid).orR
 
   for (i <- 0 until m) {
@@ -80,14 +133,14 @@ class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
   val out_req_fire = for (i <- 0 until n) yield io.out(i).req.fire()
   assert (AtMost1H(out_req_fire:_*))
   for (i <- 0 until n) {
-    io.out(i).resp.ready := reqing
+    io.out(i).resp.ready := resping
     io.out(i).req.valid := reqing && cached_out_valids(i)
-    io.out(i).req.bits.is_aligned := cached_req.is_aligned
-    io.out(i).req.bits.is_cached := cached_req.is_cached
-    io.out(i).req.bits.addr := cached_req.addr
-    io.out(i).req.bits.data := cached_req.data
-    io.out(i).req.bits.func := cached_req.func
-    io.out(i).req.bits.wstrb := cached_req.wstrb
+    io.out(i).req.bits.is_aligned := cached_in_req.is_aligned
+    io.out(i).req.bits.is_cached := cached_in_req.is_cached
+    io.out(i).req.bits.addr := cached_in_req.addr
+    io.out(i).req.bits.data := cached_in_req.data
+    io.out(i).req.bits.func := cached_in_req.func
+    io.out(i).req.bits.wstrb := cached_in_req.wstrb
     when (io.out(i).req.fire()) {
       reqing := N
       resping := Y
@@ -106,7 +159,7 @@ class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
     for (i <- 0 until io.out.size) {
       io.out(i).dump(msg+".io.out."+i)
     }
-    cached_req.dump(msg+".cached_req")
+    cached_in_req.dump(msg+".cached_in_req")
     printf("%d: "+msg+": in_valids=%b, in_valids_1H=%b, cached_in_valids_1H=%b, has_req=%d, in_readys=%b\n", GTimer(), in_valids, in_valids_1H, cached_in_valids_1H, has_req, in_readys)
     printf("%d: "+msg+": reqing=%b, has_resp=%b, resping=%b, working=%b, cached_out_valids=%b\n", GTimer(), reqing, has_resp, resping, working, cached_out_valids)
   }

@@ -26,7 +26,7 @@ class SOC_EMU_TOP extends Module {
   val dmux = Module(new MemMux("dmux"))
   val dev = Module(new SimDev)
   val as = Array(new AddrSpace("h00000000".U, "h20000000".U))
-  val crossbar = Module(new MemCrossbar(4, as))
+  val crossbar = Module(new CrossbarNx1(4))
 
   dev.io.clock := clock
   dev.io.reset := reset
@@ -39,7 +39,7 @@ class SOC_EMU_TOP extends Module {
   crossbar.io.in(2) <> dmux.io.cached
   crossbar.io.in(3) <> dmux.io.uncached
 
-  crossbar.io.out(0) <> dev.io.in
+  crossbar.io.out <> dev.io.in
 
   core.io.commit <> io.commit
 }

@@ -47,7 +47,7 @@ class ALU extends Module with UnitOpConsts {
   io.bypass.bits.rd_idx := rd_idx
   io.bypass.bits.data := result
 
-  io.wbu.bits.npc := fu_in.npc
+  io.wbu.bits.pc := fu_in.pc
   io.wbu.bits.rd_idx := rd_idx
   io.wbu.bits.data := result
   io.wbu.valid := fu_valid

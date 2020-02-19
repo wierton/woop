@@ -33,9 +33,9 @@ class PiplineUnitAtLeast1Cycle extends Module {
   })
 
   val m = Module(new AtLeastNCyclesModule)
-  val fu_valid = RegInit(N)
+  val fu_data = RegEnable(next=0.U, enable=m.io.in.fire())
 
-  io.in.ready := io.out.ready || !fu_valid
+  io.in.ready := m.io.in.ready
 
   m.io.in.valid := io.in.valid
   m.io.in.bits := io.in.bits
@@ -44,12 +44,6 @@ class PiplineUnitAtLeast1Cycle extends Module {
   m.io.out.ready := io.out.ready
   io.out.valid := m.io.out.valid
   io.out.bits := m.io.out.bits
-  assert (!(fu_valid && m.io.in.ready && !io.out.fire()))
-  when (io.flush || (!io.in.fire() && io.out.fire())) {
-    fu_valid := N
-  } .elsewhen (!io.flush && io.in.fire()) {
-    fu_valid := Y
-  }
 }
 
 /* at least N cycle */
@@ -63,10 +57,14 @@ class PiplineUnitAtLeastNCycles extends Module {
   val m = Module(new AtLeastNCyclesModule)
 
   val ncycles = 12
-  val fu_valids = RegInit(0.U(ncycles.W))
-  val blocking = fu_valids(0) && !io.out.fire()
+  val fu_datas = Module(new Queue(UInt(32.W), ncycles))
+  fu_datas.reset := io.flush
+  fu_datas.io.enq.valid := m.io.in.fire()
+  fu_datas.io.enq.bits := Y
+  fu_datas.io.deq.ready := m.io.out.fire()
+  assert (fu_datas.io.enq.fire() === m.io.in.fire())
 
-  io.in.ready := io.out.ready || !blocking
+  io.in.ready := io.out.ready
 
   m.io.in.valid := io.in.valid
   m.io.in.bits := io.in.bits
@@ -75,12 +73,7 @@ class PiplineUnitAtLeastNCycles extends Module {
   m.io.out.ready := io.out.ready
   io.out.valid := m.io.out.valid
   io.out.bits := m.io.out.bits
-  assert (!(fu_valids(0) && m.io.in.ready && !io.out.fire()))
-  when (io.flush) {
-    fu_valids := 0.U
-  } .elsewhen (!blocking) {
-    fu_valids := Cat(io.in.fire(), fu_valids >> 1)
-  }
+  // ncycles is too large
 }
 
 /* 1 cycle */

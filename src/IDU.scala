@@ -6,6 +6,7 @@ import chisel3.util._
 import Consts._
 import Configure._
 import IO._
+import DumpUtils._
 
 class IDU extends Module with UnitOpConsts {
   val io = IO(new Bundle {
@@ -89,7 +90,7 @@ class IDU extends Module with UnitOpConsts {
 
   // ISU
   io.isu.valid := fu_valid
-  io.isu.bits.npc := fu_in.npc
+  io.isu.bits.pc := fu_in.pc
   io.isu.bits.instr := fu_in.instr
   io.isu.bits.fu_type := fu_type
   io.isu.bits.fu_op := fu_op
@@ -102,5 +103,11 @@ class IDU extends Module with UnitOpConsts {
   } .elsewhen(!io.flush.valid && io.ifu.fire()) {
     fu_valid := Y
   }
+
+  printf("%d: IDU: fu_valid=%b\n", GTimer(), fu_valid)
+  fu_in.dump("IDU.fu_in")
+  io.ifu.dump("IDU.ifu")
+  io.isu.dump("IDU.isu")
+  io.flush.dump("IDU.flush")
 }
 
