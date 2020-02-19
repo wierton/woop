@@ -6,6 +6,7 @@ import chisel3.util._
 import Consts._
 import Configure._
 import IO._
+import DumpUtils._
 
 class AddrSpace(start:UInt, end:UInt) {
   val st = start
@@ -70,5 +71,19 @@ class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
 
   /* no matched output */
   when (reqing && !cached_out_valids.orR) { reqing := N }
+
+  dump("crossbar")
+
+  def dump(msg:String) = {
+    for (i <- 0 until io.in.size) {
+      io.in(i).dump(msg+".io.in."+i)
+    }
+    for (i <- 0 until io.out.size) {
+      io.out(i).dump(msg+".io.out."+i)
+    }
+    cached_req.dump(msg+".cached_req")
+    printf("%d: "+msg+": in_valids=%b, in_valids_1H=%b, cached_in_valids_1H=%b, has_req=%d, in_readys=%b\n", GTimer(), in_valids, in_valids_1H, cached_in_valids_1H, has_req, in_readys)
+    printf("%d: "+msg+": reqing=%b, resping=%b, working=%b, cached_out_valids=%b\n", GTimer(), reqing, resping, working, cached_out_valids)
+  }
 }
 

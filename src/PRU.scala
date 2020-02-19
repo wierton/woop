@@ -29,9 +29,9 @@ class PRU extends Module {
     val daddr = Flipped(new TLBTransaction)
   })
 
-  val iaddr_req_valid = RegNext(io.iaddr.req.valid)
+  val iaddr_req_valid = RegNext(io.iaddr.req.valid, init=N)
   val iaddr_req = RegNext(io.iaddr.req.bits)
-  val daddr_req_valid = RegNext(io.daddr.req.valid)
+  val daddr_req_valid = RegNext(io.daddr.req.valid, init=N)
   val daddr_req = RegNext(io.daddr.req.bits)
 
   def naive_tlb_translate(addr:UInt) = Mux1H(Array(

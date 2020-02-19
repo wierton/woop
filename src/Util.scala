@@ -15,7 +15,7 @@ object conf {
   val addr_width = 32;
   val data_width = 32;
   val xprbyte = xprlen / 8;
-  val start_addr = "h10000000".U;
+  val start_addr = "hbfc00000".U;
   val axi_data_width = 32;
   val axi_id_width = 4;
   val log = true;
@@ -91,7 +91,6 @@ object BitsOneWay {
         (data(i) && !Cat(for (i <- 0 until i) yield
           data(i)).orR)
       )
-      printf(":data(0) %x, OneToN %x\n", data(0), OneToN);
       Cat(data(0), OneToN)
     }
   }

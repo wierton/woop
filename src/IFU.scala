@@ -6,6 +6,7 @@ import chisel3.util._
 import Consts._
 import Configure._
 import IO._
+import DumpUtils._
 
 class IFU extends Module {
   val io = IO(new Bundle {
@@ -50,5 +51,11 @@ class IFU extends Module {
   io.idu.valid := io.imem.resp.valid
   io.idu.bits.npc := pc
   io.idu.bits.instr := io.imem.resp.bits.data
+
+  printf("%d: IFU: pc %x, s1_valid %d, s2_valid %d\n", GTimer(), pc, s1_valid, s2_valid)
+  io.imem.dump("IFU.imem")
+  io.iaddr.dump("IFU.iaddr")
+  io.idu.dump("IFU.idu")
+  io.flush.dump("IFU.flush")
 }
 

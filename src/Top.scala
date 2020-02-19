@@ -6,6 +6,7 @@ import chisel3.util._
 import Consts._
 import Configure._
 import IO._
+import DumpUtils._
 
 class SOC_EMU_TOP extends Module {
   val io = IO(new Bundle {
