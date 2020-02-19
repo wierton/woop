@@ -34,6 +34,7 @@ class IFU extends Module {
 
   /* stage 2: blocking */
   io.imem.req.valid := io.iaddr.resp.valid
+  io.imem.req.bits.is_aligned := Y
   io.imem.req.bits.addr  := io.iaddr.resp.bits.paddr
   io.imem.req.bits.func  := MX_RD
   io.imem.req.bits.wstrb := 0.U

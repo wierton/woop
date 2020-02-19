@@ -1,4 +1,4 @@
-package Mipsfu_in.NPC
+package MipsNPC
 
 import chisel3._
 import chisel3.util._
@@ -42,14 +42,14 @@ class BRU extends Module with UnitOpConsts {
   /* bypass signals */
   io.bypass.valid := io.wbu.valid
   io.bypass.bits.wen := io.wbu.bits.need_wb
-  io.bypass.bits.rd_idx := io.wbu.bits.fu_in.rd_idx
+  io.bypass.bits.rd_idx := io.wbu.bits.rd_idx
   io.bypass.bits.data := io.wbu.bits.data
 
   /* wbu signals */
-  io.wbu.bits.npc := fu_in.fu_in.npc
+  io.wbu.bits.npc := fu_in.npc
   io.wbu.bits.need_br := br_info(33)
   io.wbu.bits.need_wb := br_info(32)
-  io.wbu.bits.br_target := br_info(0, 31)
+  io.wbu.bits.br_target := br_info(31, 0)
   io.wbu.bits.data := fu_in.npc + 4.U
   io.wbu.bits.rd_idx := Mux(fu_in.fu_op === BR_JAL, 31.U, fu_in.rd_idx)
   io.wbu.valid := fu_valid

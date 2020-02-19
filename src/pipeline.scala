@@ -1,9 +1,7 @@
 import chisel3._
 import chisel3.util._
 
-import Consts._
-import Configure._
-import IO._
+import MipsNPC.Consts._
 
 /* pipeline:
  * 
@@ -18,10 +16,12 @@ class AtLeastNCyclesModule extends Module {
     val in = Flipped(DecoupledIO(Output(UInt(32.W))))
     val out = DecoupledIO(Output(UInt(32.W)))
   })
+
+  val fu_valid = RegNext(next=io.in.valid, init=N)
   val fu_in = RegEnable(next=io.in.bits, enable=io.in.fire())
   // io.in.ready := random
   io.out.valid := fu_valid
-  io.out.bits := fu_in.bits
+  io.out.bits := fu_in
 }
 
 /* at least 1 cycle */
@@ -42,8 +42,8 @@ class PiplineUnitAtLeast1Cycle extends Module {
   io.in.ready := m.io.in.ready
 
   m.io.out.ready := io.out.ready
-  io.out.valid := m.io.valid
-  io.out.bits := m.io.bits
+  io.out.valid := m.io.out.valid
+  io.out.bits := m.io.out.bits
   assert (!(fu_valid && m.io.in.ready && !io.out.fire()))
   when (io.flush || (!io.in.fire() && io.out.fire())) {
     fu_valid := N
@@ -73,8 +73,8 @@ class PiplineUnitAtLeastNCycles extends Module {
   io.in.ready := m.io.in.ready
 
   m.io.out.ready := io.out.ready
-  io.out.valid := m.io.valid
-  io.out.bits := m.io.bits
+  io.out.valid := m.io.out.valid
+  io.out.bits := m.io.out.bits
   assert (!(fu_valids(0) && m.io.in.ready && !io.out.fire()))
   when (io.flush) {
     fu_valids := 0.U
@@ -97,7 +97,7 @@ class PiplineUnit1Cycle extends Module {
   io.in.ready := io.out.ready || !fu_valid
 
   io.out.valid := fu_valid
-  io.out.bits := fu_in.bits
+  io.out.bits := fu_in
 
   when (io.flush || (!io.in.fire() && io.out.fire())) {
     fu_valid := N
@@ -121,7 +121,7 @@ class PiplineUnitNCycles extends Module {
   io.in.ready := io.out.ready || !fu_valids(0)
 
   io.out.valid := fu_valids(0)
-  io.out.bits := Pipe(fu_in.bits, ncycles)
+  io.out.bits := Pipe(Y, fu_in, ncycles)
 
   when (io.flush) {
     fu_valids := 0.U

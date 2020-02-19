@@ -7,7 +7,7 @@ import chisel3.util._
 import Configure._
 import Consts._
 
-class Instr {
+class Instr extends Bundle {
   val op     = UInt(OP_SZ.W)
   val rs_idx = UInt(REG_SZ.W)
   val rt_idx = UInt(REG_SZ.W)
@@ -59,15 +59,15 @@ class FlushIO extends Bundle {
 }
 
 class BypassIO extends Bundle {
-  val rd = Output(UInt(REG_SZ.W))
-  val wen = Output(Bool()); // need bypass
+  val rd_idx = Output(UInt(REG_SZ.W))
+  val wen = Output(Bool())
   val data = Output(UInt(conf.xprlen.W))
 }
 
-class WriteBackIO extends BypassIO {
+class WriteBackIO extends Bundle {
   val npc = Output(UInt(conf.xprlen.W))
-  val wen = Output(Bool())
   val rd_idx = Output(UInt(REG_SZ.W))
+  val wen = Output(Bool());
   val data = Output(UInt(conf.xprlen.W))
 }
 
@@ -83,7 +83,7 @@ class IDU_ISU_IO extends Bundle {
   val fu_op = Output(UInt(FU_OP_SZ.W))
   val op1_sel = Output(UInt(OP1_SEL_SZ.W))
   val op2_sel = Output(UInt(OP2_SEL_SZ.W))
-  val dest_sel = Output(UInt(DEST_SEL_SZ.W))
+  val rd_sel = Output(UInt(DEST_SEL_SZ.W))
 }
 
 //========================================================

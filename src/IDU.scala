@@ -9,18 +9,18 @@ import IO._
 
 class IDU extends Module with UnitOpConsts {
   val io = IO(new Bundle {
-    val ifu = Flipped(DecoupledIO(new IFU_IDU_IO));
-    val isu = DecoupledIO(new IDU_ISU_IO);
-    val flush = Flipped(ValidIO(new FlushIO));
-  });
+    val ifu = Flipped(DecoupledIO(new IFU_IDU_IO))
+    val isu = DecoupledIO(new IDU_ISU_IO)
+    val flush = Flipped(ValidIO(new FlushIO))
+  })
 
   val fu_in = RegEnable(next=io.ifu.bits, enable=io.ifu.fire())
   val fu_valid = RegInit(N)
 
   // instruction decode stage
-  val csignals = ListLookup(instr,
+  val csignals = ListLookup(fu_in.instr,
     List(N, FU_X, FU_OP_X, OP1_X, OP2_X, DEST_X), Array(
-      /* instr | fu_type  |  fu_op  |  op1_sel  |  op2_sel |  dest_sel */
+      /* instr | fu_type  |  fu_op  |  op1_sel  |  op2_sel |  rd_sel */
      // ALU instructions
      LUI     -> List(Y, FU_ALU,  ALU_COPY1,  OP1_IMU,  OP2_X,   DEST_RT),
      ADD     -> List(Y, FU_ALU,  ALU_ADD,    OP1_RS,   OP2_RT,  DEST_RD),
@@ -80,22 +80,22 @@ class IDU extends Module with UnitOpConsts {
      MULTU   -> List(Y, FU_MDU,  MDU_MULTU,  OP1_RS,   OP2_RT,  DEST_X),
      DIV     -> List(Y, FU_MDU,  MDU_DIV,    OP1_RS,   OP2_RT,  DEST_X),
      DIVU    -> List(Y, FU_MDU,  MDU_DIVU,   OP1_RS,   OP2_RT,  DEST_X),
-  ));
+  ))
 
-  val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: dest_sel :: Nil = csignals;
+  val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: rd_sel :: Nil = csignals
 
 
-  io.ifu.ready := io.isu.ready || !fu_valid;
+  io.ifu.ready := io.isu.ready || !fu_valid
 
   // ISU
   io.isu.valid := fu_valid
-  io.isu.bits.npc := npc;
-  io.isu.bits.instr := instr;
-  io.isu.bits.fu_type := fu_type;
-  io.isu.bits.fu_op := fu_op;
-  io.isu.bits.op1_sel := op1_sel;
-  io.isu.bits.op2_sel := op2_sel;
-  io.isu.bits.dest_sel := dest_sel;
+  io.isu.bits.npc := fu_in.npc
+  io.isu.bits.instr := fu_in.instr
+  io.isu.bits.fu_type := fu_type
+  io.isu.bits.fu_op := fu_op
+  io.isu.bits.op1_sel := op1_sel
+  io.isu.bits.op2_sel := op2_sel
+  io.isu.bits.rd_sel := rd_sel
 
   when (io.flush.valid || (!io.ifu.fire() && io.isu.fire())) {
     fu_valid := N
