@@ -1,14 +1,14 @@
-package MipsNPC
+package njumips
+package core
 
 import chisel3._
 import chisel3.util._
+import njumips.consts._
+import njumips.configs._
+import njumips.dumps._
+import njumips.utils._
 
-import Consts._
-import Configure._
-import IO._
-import DumpUtils._
-
-class IDU extends Module with UnitOpConsts {
+class IDU extends Module with UnitOpConstants {
   val io = IO(new Bundle {
     val ifu = Flipped(DecoupledIO(new IFU_IDU_IO))
     val isu = DecoupledIO(new IDU_ISU_IO)
@@ -104,7 +104,7 @@ class IDU extends Module with UnitOpConsts {
     fu_valid := Y
   }
 
-  if (false) {
+  if (conf.log_IDU) {
     printf("%d: IDU: fu_valid=%b\n", GTimer(), fu_valid)
     fu_in.dump("IDU.fu_in")
     io.ifu.dump("IDU.ifu")

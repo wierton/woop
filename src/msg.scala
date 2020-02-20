@@ -1,11 +1,10 @@
-package MipsNPC
-package IO
+package njumips
+package core
 
 import chisel3._
 import chisel3.util._
-
-import Configure._
-import Consts._
+import njumips.configs._
+import njumips.consts._
 
 class Instr extends Bundle {
   val op     = UInt(OP_SZ.W)
@@ -22,6 +21,23 @@ class Instr extends Bundle {
 class CP0Exception extends Bundle {
   val offset = UInt(12.W)
   val code = UInt(ETW_WIDTH.W)
+}
+
+class TLBReq extends Bundle {
+  val func = Output(Bool()) // 1: load, 0:store
+  val vaddr = Output(UInt(conf.xprlen.W))
+}
+
+class TLBResp extends Bundle {
+  val paddr = Output(UInt(conf.xprlen.W))
+  val is_cached = Output(Bool())
+  val ex = Output(new CP0Exception)
+}
+
+class TLBTransaction extends Bundle {
+  // when tlbx is executing, the req should be hanged
+  val req = DecoupledIO(new TLBReq)
+  val resp = Flipped(ValidIO(new TLBResp))
 }
 
 class MemReq extends Bundle {

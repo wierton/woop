@@ -1,12 +1,12 @@
-package MipsNPC
+package njumips
+package core
 
 import chisel3._
 import chisel3.util._
-
-import Consts._
-import Configure._
-import IO._
-import DumpUtils._
+import njumips.consts._
+import njumips.configs._
+import njumips.dumps._
+import njumips.utils._
 
 class SimDev extends BlackBox {
   val io = IO(new Bundle {
@@ -45,8 +45,10 @@ class SOC_EMU_TOP extends Module {
   cistern.io.enq <> dev.io.in.resp
   crossbar.io.out.resp <> cistern.io.deq
 
-  cistern.io.enq.dump("cistern.io.enq")
-  cistern.io.deq.dump("cistern.io.deq")
+  if (conf.log_Cistern) {
+    cistern.io.enq.dump("cistern.io.enq")
+    cistern.io.deq.dump("cistern.io.deq")
+  }
 
   core.io.commit <> io.commit
 }
@@ -69,7 +71,7 @@ class LOONGSON_TOP extends Module {
   })
 }
 
-import MipsNPCTest._
+import njumipsTest._
 
 object Main extends App {
   chisel3.Driver.execute(args, () => new SOC_EMU_TOP);

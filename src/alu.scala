@@ -1,14 +1,13 @@
-package MipsNPC
+package njumips
+package core
 
 import chisel3._
 import chisel3.util._
-
-import Consts._
-import Configure._
-import IO._
+import njumips.consts._
+import njumips.configs._
 
 
-class ALU extends Module with UnitOpConsts {
+class ALU extends Module with UnitOpConstants {
   val io = IO(new Bundle {
     val bypass = ValidIO(new BypassIO)
     val isu = Flipped(DecoupledIO(new ISU_ALU_IO))

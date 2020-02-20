@@ -1,12 +1,12 @@
-package MipsNPC
+package njumips
+package core
 
 import chisel3._
 import chisel3.util._
-
-import Consts._
-import Configure._
-import IO._
-import DumpUtils._
+import njumips.consts._
+import njumips.configs._
+import njumips.dumps._
+import njumips.utils._
 
 class AddrSpace(start:UInt, end:UInt) {
   val st = start
@@ -57,8 +57,8 @@ class CrossbarNx1(m:Int) extends Module {
   val in_req = Mux1H(for (i <- 0 until m) yield in_valids_1H(i) -> io.in(i).req.bits)
 
   /* q_datas [0:head, ..., nstages-1:tail] */
-  val nstages = 2
-  val q_data_tail = RegInit(~(0.U((log2Ceil(m)+1).W)))
+  val nstages = 25
+  val q_data_tail = RegInit(~(0.U(log2Ceil(m+1).W)))
   val q_datas = Mem(nstages, UInt(m.W))
   val p_data = q_datas(q_data_tail)
   when (io.out.req.fire()) {
@@ -79,7 +79,9 @@ class CrossbarNx1(m:Int) extends Module {
   io.out.req.valid := in_valids.orR
   io.out.req.bits := in_req
 
-  dump("crossbar")
+  if (conf.log_CrossbarNx1) {
+    dump("crossbar")
+  }
   assert ((~q_data_tail).orR =/= 0.U || !io.out.resp.valid)
 
   def dump(msg:String) = {

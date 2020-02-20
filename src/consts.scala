@@ -1,11 +1,10 @@
-package MipsNPC 
+package njumips 
 
 import chisel3._
 import chisel3.util._
+import njumips.configs._
 
-import Configure._
-
-trait MemConsts {
+trait MemConstants {
   // MX
   val MX_SZ = 1
   val MX_X  = 0.U(MX_SZ.W)
@@ -72,7 +71,7 @@ trait CP0Constants {
   val ETB_TLBS    =  12        // TLB store
 }
 
-trait InstrConsts {
+trait InstrConstants {
   val REG_SZ    = 5;
   val OP_MSB    = 31;
   val OP_LSB    = 26;
@@ -169,7 +168,7 @@ trait InstrPattern {
   val MOVZ  = BitPat("b000000???????????????00000001010")
 }
 
-trait LSUConsts extends MemConsts {
+trait LSUConstants extends MemConstants {
   // LSU Operation Signal
   val LSU_E_SZ = 1
   val LSU_XE  = 0.U(LSU_E_SZ.W)
@@ -187,7 +186,7 @@ trait LSUConsts extends MemConsts {
   val LSU_R = 1.U(1.W)
 }
 
-trait MDUConsts {
+trait MDUConstants {
   val MF_X  = 0.U(1.W)
   val MF_HI = 0.U(1.W)
   val MF_LO = 1.U(1.W)
@@ -201,7 +200,7 @@ trait MDUConsts {
   val WB_HL = 1.U(1.W)
 }
 
-trait ISUConsts extends MDUConsts with LSUConsts
+trait ISUConstants extends MDUConstants with LSUConstants
 {
   val Y      = true.B
   val N      = false.B
@@ -240,12 +239,12 @@ trait ISUConsts extends MDUConsts with LSUConsts
 }
 
 
-object ISUConstsImpl extends ISUConsts { }
-import ISUConstsImpl._
+object ISUConstantsImpl extends ISUConstants { }
+import ISUConstantsImpl._
 
 
 // UInt definition cannot occur in Bundle subclass
-trait UnitOpConsts extends ISUConsts with MemConsts {
+trait UnitOpConstants extends ISUConstants with MemConstants {
   // Branch Operation Signal
   val BR_EQ   = 0.U(FU_OP_SZ.W);  // Branch on Equal
   val BR_NE   = 1.U(FU_OP_SZ.W);  // Branch on NotEqual
@@ -298,10 +297,10 @@ trait UnitOpConsts extends ISUConsts with MemConsts {
   val MDU_DIVU  = Cat(MF_X,  F_DIV, N, WB_HL)
 }
 
-object Consts extends InstrPattern
-  with ISUConsts
-  with InstrConsts
-  with MemConsts
+object consts extends InstrPattern
+  with ISUConstants
+  with InstrConstants
+  with MemConstants
   with CP0Constants
 {
 }

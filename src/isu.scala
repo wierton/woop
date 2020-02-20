@@ -1,13 +1,12 @@
-package MipsNPC
+package njumips
+package core
 
 import chisel3._
 import chisel3.util._
-
-import Consts._
-import Configure._
-import IO._
-import DumpUtils._
-
+import njumips.consts._
+import njumips.configs._
+import njumips.dumps._
+import njumips.utils._
 
 class ISU(nbps:Int) extends Module {
   val io = IO(new Bundle {
@@ -159,7 +158,7 @@ class ISU(nbps:Int) extends Module {
   io.bru.bits.rd_idx := rd_idx
   io.bru.valid := op_ready && fu_in.fu_type === FU_BRU
 
-  if (false) {
+  if (conf.log_ISU) {
     printf("%d: ISU: io_out_ready=%b, fu_valid=%b, bp_valids=%b, bp_valid=%b, bp_rd=%d, bp_need_wb=%b, bp_data=%x\n", GTimer(), io_out_ready, fu_valid, bypass_valids, bypass_valid, bypass_rd, bypass_need_wb, bypass_data)
     printf("%d: ISU: wb_valid=%b, wb_need_wb=%b, wb_data=%x, sb=%b, op_ready=%x, rd_idx=%d\n", GTimer(), wb_valid, wb_need_wb, wb_data, Cat(for (i <- 0 until 32) yield sb(i)), op_ready, rd_idx)
     printf("%d: ISU: instr=%x, op1_idx=%d, op2_idx=%d, op1_reg={%b,%x}, op2_reg={%b,%x}\n", GTimer(), instr.asUInt, op1_idx, op2_idx, op1_reg_status(0), op1_reg_status(32, 1), op2_reg_status(0), op2_reg_status(32, 1))

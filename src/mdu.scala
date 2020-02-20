@@ -1,11 +1,10 @@
-package MipsNPC
+package njumips
+package core
 
 import chisel3._
 import chisel3.util._
-
-import Consts._
-import Configure._
-import IO._
+import njumips.consts._
+import njumips.configs._
 
 class MDUOp extends Bundle
 {
@@ -22,7 +21,7 @@ class MDUOp extends Bundle
   def isWB_RD() = wb_reg === WB_RD
 }
 
-class MDU extends Module with UnitOpConsts {
+class MDU extends Module with UnitOpConstants {
   val io = IO(new Bundle {
     val bypass = ValidIO(new BypassIO);
     val isu = Flipped(DecoupledIO(new ISU_MDU_IO));

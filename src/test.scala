@@ -1,12 +1,12 @@
-package MipsNPCTest
+package njumipsTest
 
 import chisel3._
 import chisel3.util._
-
-import Configure._
-import MipsNPC.Consts._
-import MipsNPC.IO._
-import MipsNPC._
+import njumips.configs._
+import njumips.consts._
+import njumips.utils._
+import njumips.core._
+import njumips._
 
 class TestBitsOneWay extends Module {
   val io = IO(new Bundle {

@@ -1,14 +1,13 @@
-package MipsNPC
+package njumips
+package core
 
 import chisel3._
 import chisel3.util._
-
-import Consts._
-import Configure._
-import IO._
+import njumips.consts._
+import njumips.configs._
 
 
-class BRU extends Module with UnitOpConsts {
+class BRU extends Module with UnitOpConstants {
   val io = IO(new Bundle {
     val isu = Flipped(DecoupledIO(new ISU_BRU_IO))
     val wbu = DecoupledIO(new BRU_WBU_IO)

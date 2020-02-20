@@ -1,11 +1,10 @@
-package MipsNPC
+package njumips
+package core
 
 import chisel3._
 import chisel3.util._
-
-import Consts._
-import Configure._
-import IO._
+import njumips.consts._
+import njumips.configs._
 
 class Core extends Module {
   val io = IO(new Bundle {

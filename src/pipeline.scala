@@ -1,7 +1,10 @@
+package njumips
+package examples
+
 import chisel3._
 import chisel3.util._
 
-import MipsNPC.Consts._
+import njumips.consts._
 
 /* pipeline:
  * 

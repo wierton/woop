@@ -1,11 +1,10 @@
-package MipsNPC
+package njumips
+package core
 
 import chisel3._
 import chisel3.util._
-
-import Consts._
-import Configure._
-import IO._
+import njumips.consts._
+import njumips.configs._
 
 class LSUOp extends Bundle
 {
@@ -38,7 +37,7 @@ class LSUStage2Data extends Bundle {
   }
 }
 
-class LSU extends Module with UnitOpConsts {
+class LSU extends Module with UnitOpConstants {
   val io = IO(new Bundle {
     val dmem = new MemIO
     val daddr = new TLBTransaction

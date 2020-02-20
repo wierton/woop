@@ -1,26 +1,16 @@
-package Configure
+package njumips
+package utils
 
 import chisel3._
 import chisel3.util._
-
+import njumips.dumps._
+import njumips.configs._
 
 object GTimer {
   def apply(): UInt = {
     val (t, c) = Counter(true.B, 0x7fffffff)
     t
   }
-}
-
-object conf {
-  val xprlen = 32;
-  val addr_width = 32;
-  val data_width = 32;
-  val xprbyte = xprlen / 8;
-  val start_addr = "hbfc00000".U;
-  val axi_data_width = 32;
-  val axi_id_width = 4;
-  val log = true;
-  val diff = true;
 }
 
 class Cistern[T<:Data](gen: T, entries: Int) extends Module {
@@ -44,7 +34,9 @@ class Cistern[T<:Data](gen: T, entries: Int) extends Module {
     onoff := false.B
   }
 
-  printf("%d: Cistern: onoff=%b, size=%d\n", GTimer(), onoff, size)
+  if (conf.log_Cistern) {
+    printf("%d: Cistern: onoff=%b, size=%d\n", GTimer(), onoff, size)
+  }
 }
 
 // filter bits, left 1 way
@@ -67,10 +59,11 @@ object Only1H {
     Cat(for(i <- 0 until data.length) yield
       Cat(for(j <- 0 until data.length) yield
         if(i == j) data(j).asUInt.orR else !(data(j).asUInt)).andR
-      ).orR;
+      ).orR
   }
 }
 
 object AtMost1H {
-  def apply(data:Bool*) = !Cat(data).orR || Only1H(data:_*);
+  def apply(data:Bool*) = !Cat(data).orR || Only1H(data:_*)
 }
+

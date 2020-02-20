@@ -1,28 +1,11 @@
-package MipsNPC
+package njumips
+package core
 
 import chisel3._
 import chisel3.util._
+import njumips.consts._
+import njumips.configs._
 
-import Consts._
-import Configure._
-import IO._
-
-class TLBReq extends Bundle {
-  val func = Output(Bool()) // 1: load, 0:store
-  val vaddr = Output(UInt(conf.xprlen.W))
-}
-
-class TLBResp extends Bundle {
-  val paddr = Output(UInt(conf.xprlen.W))
-  val is_cached = Output(Bool())
-  val ex = Output(new CP0Exception)
-}
-
-class TLBTransaction extends Bundle {
-  // when tlbx is executing, the req should be hanged
-  val req = DecoupledIO(new TLBReq)
-  val resp = Flipped(ValidIO(new TLBResp))
-}
 
 class PRU extends Module {
   val io = IO(new Bundle {

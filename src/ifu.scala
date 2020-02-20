@@ -1,12 +1,12 @@
-package MipsNPC
+package njumips
+package core
 
 import chisel3._
 import chisel3.util._
-
-import Consts._
-import Configure._
-import IO._
-import DumpUtils._
+import njumips.consts._
+import njumips.configs._
+import njumips.dumps._
+import njumips.utils._
 
 class IFU extends Module {
   val io = IO(new Bundle {
@@ -48,7 +48,7 @@ class IFU extends Module {
   io.idu.bits.pc := s2_datas.io.deq.bits
   io.idu.bits.instr := io.imem.resp.bits.data
 
-  if (true) {
+  if (conf.log_IFU) {
     printf("%d: IFU: pc=%x, s2_datas={[%b,%b]:%x, [%b,%b]:%x}\n", GTimer(), pc, s2_datas.io.enq.valid, s2_datas.io.enq.ready, s2_datas.io.enq.bits, s2_datas.io.deq.valid, s2_datas.io.deq.ready, s2_datas.io.deq.bits)
     io.imem.dump("IFU.imem")
     io.iaddr.dump("IFU.iaddr")
