@@ -39,7 +39,11 @@ class SOC_EMU_TOP extends Module {
   crossbar.io.in(2) <> dmux.io.cached
   crossbar.io.in(3) <> dmux.io.uncached
 
-  crossbar.io.out <> dev.io.in
+  crossbar.io.out.req <> dev.io.in.req
+
+  val cistern = Module(new Cistern(new MemResp, 20))
+  cistern.io.enq <> dev.io.in.resp
+  crossbar.io.out.resp <> cistern.io.deq
 
   core.io.commit <> io.commit
 }

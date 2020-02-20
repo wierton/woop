@@ -22,11 +22,25 @@ object conf {
   val diff = true;
 }
 
-object log {
-  def apply(fmt:String, data:Bits*) = {
-    if(conf.log) {
-      printf(fmt, data:_*);
-    }
+class Cistern[T<:Data](gen: T, entries: Int) extends Module {
+  val io = IO(new Bundle {
+    val enq = Flipped(DecoupledIO(gen))
+    val deq = DecoupledIO(gen)
+  })
+
+  val onoff = RegInit(true.B)
+  val size = RegInit(0.U(log2Ceil(entries + 1)))
+  val queue = Module(new Queue(gen, entries))
+  size := size + queue.io.enq.fire() - queue.io.deq.fire()
+  queue.io.enq <> io.enq
+
+  io.deq.bits := queue.io.deq.bits
+  io.deq.valid := queue.io.deq.valid && onoff
+  queue.io.deq.ready := io.deq.ready && onoff
+  when (size === entries.U) {
+    onoff := true.B
+  } .elsewhen(size === 0.U) {
+    onoff := false.B
   }
 }
 

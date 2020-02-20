@@ -59,19 +59,6 @@ class MDU extends Module with UnitOpConsts {
   io.wbu.bits.rd_idx := rd_idx;
   io.wbu.valid := in_stage_1 && !io.flush.valid;
 
-  when(io.isu.fire()) {
-    log("[MDU] fu_op:%x, op1:%x, op2:%x\n", fu_op, op1, op2);
-    log("[MDU] rd_idx:%x\n", rd_idx);
-    log("[MDU] mf_reg:%x, fcn:%x\n", mduop.mf_reg, mduop.func);
-    log("[MDU] sign:%x, wb_reg:%x\n", mduop.sign, mduop.wb_reg);
-  }
-
-  when(io.wbu.fire()) {
-    log("[MDU] hi:%x, lo:%x\n", hi, lo);
-    log("[MDU] need_wb:%x\n", io.wbu.bits.need_wb);
-    log("[MDU] wb_data:%x\n", io.wbu.bits.data);
-  }
-
   when(mduop.isMul()) {
     val result = Wire(UInt((2 * conf.xprlen).W));
     when(mduop.isSigned()) {
@@ -103,7 +90,4 @@ class MDU extends Module with UnitOpConsts {
             lo := wlo;
           }
 
-          when(io.isu.fire()) {
-            log("[MDU] [CPC] >>>>>> %x <<<<<<\n", io.isu.bits.pc - 4.U);
-          }
 }
