@@ -56,19 +56,18 @@ class CrossbarNx1(m:Int) extends Module {
   val in_valids_1H = BitsOneWay(in_valids)
   val in_req = Mux1H(for (i <- 0 until m) yield in_valids_1H(i) -> io.in(i).req.bits)
 
+  /* q_datas [0:head, ..., nstages-1:tail] */
   val nstages = 2
-  val n_data = RegInit(~(0.U(log2Ceil(m).W)))
+  val q_data_tail = RegInit(~(0.U((log2Ceil(m)+1).W)))
   val q_datas = Mem(nstages, UInt(m.W))
-  val p_data = q_datas(n_data)
+  val p_data = q_datas(q_data_tail)
   when (io.out.req.fire()) {
-    for (i <- 0 until nstages - 1) {
-      q_datas(i) := q_datas(i + 1)
+    for (i <- 1 until nstages) {
+      q_datas(i) := q_datas(i - 1)
     }
-    q_datas(nstages - 1) := in_valids
-    n_data := n_data + 1.U
-  } .elsewhen (io.out.resp.fire()) {
-    n_data := n_data - 1.U
+    q_datas(0) := in_valids
   }
+  q_data_tail := q_data_tail + io.out.req.fire() - io.out.resp.fire()
 
   for (i <- 0 until m) {
     io.in(i).req.ready := io.out.req.ready && in_valids_1H(i)
@@ -76,12 +75,12 @@ class CrossbarNx1(m:Int) extends Module {
     io.in(i).resp.bits := io.out.resp.bits
   }
 
-  assert (!(n_data === ~(0.U(log2Ceil(m).W)) && io.out.resp.valid))
-  io.out.resp.ready := p_data & in_resp_readys
+  io.out.resp.ready := (p_data & in_resp_readys).orR
   io.out.req.valid := in_valids.orR
   io.out.req.bits := in_req
 
   dump("crossbar")
+  assert ((~q_data_tail).orR =/= 0.U || !io.out.resp.valid)
 
   def dump(msg:String) = {
     for (i <- 0 until io.in.size) {
@@ -90,9 +89,9 @@ class CrossbarNx1(m:Int) extends Module {
     io.out.dump(msg+".io.out")
     in_req.dump(msg+".in_req")
     printf("%d: "+msg+": in_valids=%b, in_valids_1H=%b, in_readys=%b, in_resp_readys=%b\n", GTimer(), in_valids, in_valids_1H, in_readys, in_resp_readys)
-    val p = Seq[Bits](GTimer(), n_data, p_data)
-    val q = for (i <- 0 until log2Ceil(m)) yield q_datas(i)
-    printf("%d: "+msg+": n_data=%d, p_data=%b, q_datas={"+List.fill(log2Ceil(m))("%b,").mkString+"}\n", (p++q):_*)
+    val p = Seq[Bits](GTimer(), q_data_tail, p_data)
+    val q = for (i <- 0 until nstages) yield q_datas(i)
+    printf("%d: "+msg+": q_data_tail=%d, p_data=%b, q_datas={"+List.fill(nstages)("%b,").mkString+"}\n", (p++q):_*)
   }
 }
 

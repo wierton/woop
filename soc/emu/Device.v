@@ -44,7 +44,6 @@ assign in_resp_valid = resp_valid;
 always @(posedge clock)
 begin
   if (!reset) begin
-    // only support write, no read
     device_io(
       __in_req_valid,
       __in_req_bits_addr,
@@ -53,7 +52,10 @@ begin
       __in_req_bits_wstrb,
       __in_resp_bits_data
     );
-    resp_valid <= __in_req_valid;
+    if (__in_req_valid && in_req_ready) // in_req_fire
+      resp_valid <= 1'b1;
+    else if (resp_valid && in_resp_ready) // in_resp_fire
+      resp_valid <= 1'b0;
     resp_data <= __in_resp_bits_data;
   end
 end
