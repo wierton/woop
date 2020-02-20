@@ -71,10 +71,12 @@ class LSU extends Module with UnitOpConsts {
    val mio_cycles = 2
    val s2_in = Wire(new LSUStage2Data)
    s2_in.load(io.isu.bits, io.daddr.resp.bits)
-   val s2_datas = Mem(mio_cycles, new LSUStage2Data)
+   val s2_datas = Module(new Queue(new LSUStage2Data, mio_cycles))
    val s2_valids = RegInit(0.U(mio_cycles.W))
-   val s2_blocking = s2_valids(0) && !io.wbu.fire()
-   assert (!s2_blocking || !io.dmem.req.ready)
+   s2_datas.reset := io.flush.valid
+   s2_datas.io.enq.valid := io.dmem.req.fire()
+   s2_datas.io.enq.bits := s2_in
+   s2_datas.io.deq.ready := io.dmem.resp.fire()
    io.dmem.req.valid := io.daddr.resp.valid
    io.dmem.req.bits.is_cached := s2_in.is_cached
    io.dmem.req.bits.is_aligned := s2_in.op.isAligned()
@@ -89,19 +91,9 @@ class LSU extends Module with UnitOpConsts {
        "b0001111".U >> (~s2_in.addr(1, 0))))
    io.dmem.req.bits.data := s2_in.data
    io.dmem.resp.ready := io.wbu.ready
-   assert (!(s2_valids(0) && io.dmem.req.ready && !io.dmem.resp.fire()))
-   when (io.flush.valid) {
-     s2_valids := 0.U
-   } .elsewhen (!s2_blocking) {
-     s2_valids := Cat(io.dmem.req.fire(), s2_valids >> 1)
-     for (i <- 0 until mio_cycles - 1) {
-       s2_datas(i) := s2_datas(i + 1)
-     }
-     s2_datas(mio_cycles - 1) := s2_in
-   }
 
    /* stage 3: recv contents */
-  val s3_in = s2_datas(0)
+  val s3_in = s2_datas.io.deq.bits
   val s3_data = io.dmem.resp.bits.data
   io.wbu.valid := io.dmem.resp.valid
   io.wbu.bits.pc := s3_in.pc
