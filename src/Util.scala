@@ -3,6 +3,7 @@ package Configure
 import chisel3._
 import chisel3.util._
 
+
 object GTimer {
   def apply(): UInt = {
     val (t, c) = Counter(true.B, 0x7fffffff)
@@ -29,7 +30,7 @@ class Cistern[T<:Data](gen: T, entries: Int) extends Module {
   })
 
   val onoff = RegInit(true.B)
-  val size = RegInit(0.U(log2Ceil(entries + 1)))
+  val size = RegInit(0.U(log2Ceil(entries + 1).W))
   val queue = Module(new Queue(gen, entries))
   size := size + queue.io.enq.fire() - queue.io.deq.fire()
   queue.io.enq <> io.enq
@@ -42,57 +43,8 @@ class Cistern[T<:Data](gen: T, entries: Int) extends Module {
   } .elsewhen(size === 0.U) {
     onoff := false.B
   }
-}
 
-object IFill {
-  def apply(data:UInt, n:Int) = {
-    Cat(for(i <- 0 until n) yield Fill(n, data(i)));
-  }
-}
-
-object CyclicShift {
-  implicit class RShift(lhs:UInt) {
-    def %>>(rhs:UInt) = {
-      ((lhs >> rhs) | ((lhs << 1) << ~rhs))(lhs.getWidth - 1, 0);
-    }
-  }
-
-  implicit class LShift(lhs:UInt) {
-    def %<<(rhs:UInt) = ((lhs << rhs) | ((lhs >> 1) >> ~rhs))(lhs.getWidth - 1, 0);
-  }
-}
-
-
-object ExtOperation {
-  implicit class BitsExtTo[T<:Bits](in:T) {
-    def ZExt(n:Int):UInt = {
-      assert(n >= in.getWidth);
-      Cat(Fill(n - in.getWidth, 0.U(1.W)), in);
-    }
-
-    def SExt(n:Int):UInt = {
-      assert(n >= in.getWidth);
-      Cat(Fill(n - in.getWidth, in.head(1)), in);
-    }
-  }
-}
-
-import ExtOperation._
-import CyclicShift._
-
-class Tie(data:Bits*) {
-  def :=(in:Bits) {
-    var total:Int = (for(d <- data) yield d.getWidth).reduce(_ + _);
-    assert(total == in.getWidth);
-    for(d <- data) {
-      d := in(total - 1, total - d.getWidth);
-      total = total - d.getWidth;
-    }
-  }
-}
-
-object Tie {
-  def apply(data:Bits*) = new Tie(data:_*);
+  printf("%d: Cistern: onoff=%b, size=%d\n", GTimer(), onoff, size)
 }
 
 // filter bits, left 1 way

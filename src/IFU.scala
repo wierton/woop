@@ -26,7 +26,7 @@ class IFU extends Module {
   io.iaddr.req.bits.vaddr := pc
 
   /* stage 2: blocking */
-  val mio_cycles = 5
+  val mio_cycles = 23
   val s2_in = RegEnable(next=pc, enable=io.iaddr.req.fire())
   val s2_datas = Module(new Queue(UInt(32.W), mio_cycles))
   s2_datas.reset := io.flush.valid
@@ -48,10 +48,12 @@ class IFU extends Module {
   io.idu.bits.pc := s2_datas.io.deq.bits
   io.idu.bits.instr := io.imem.resp.bits.data
 
-  printf("%d: IFU: pc=%x, s2_datas={[%b,%b]:%x, [%b,%b]:%x}\n", GTimer(), pc, s2_datas.io.enq.valid, s2_datas.io.enq.ready, s2_datas.io.enq.bits, s2_datas.io.deq.valid, s2_datas.io.deq.ready, s2_datas.io.deq.bits)
-  io.imem.dump("IFU.imem")
-  io.iaddr.dump("IFU.iaddr")
-  io.idu.dump("IFU.idu")
-  io.flush.dump("IFU.flush")
+  if (true) {
+    printf("%d: IFU: pc=%x, s2_datas={[%b,%b]:%x, [%b,%b]:%x}\n", GTimer(), pc, s2_datas.io.enq.valid, s2_datas.io.enq.ready, s2_datas.io.enq.bits, s2_datas.io.deq.valid, s2_datas.io.deq.ready, s2_datas.io.deq.bits)
+    io.imem.dump("IFU.imem")
+    io.iaddr.dump("IFU.iaddr")
+    io.idu.dump("IFU.idu")
+    io.flush.dump("IFU.flush")
+  }
 }
 

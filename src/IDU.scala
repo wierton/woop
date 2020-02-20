@@ -104,10 +104,12 @@ class IDU extends Module with UnitOpConsts {
     fu_valid := Y
   }
 
-  printf("%d: IDU: fu_valid=%b\n", GTimer(), fu_valid)
-  fu_in.dump("IDU.fu_in")
-  io.ifu.dump("IDU.ifu")
-  io.isu.dump("IDU.isu")
-  io.flush.dump("IDU.flush")
+  if (false) {
+    printf("%d: IDU: fu_valid=%b\n", GTimer(), fu_valid)
+    fu_in.dump("IDU.fu_in")
+    io.ifu.dump("IDU.ifu")
+    io.isu.dump("IDU.isu")
+    io.flush.dump("IDU.flush")
+  }
 }
 

@@ -159,20 +159,22 @@ class ISU(nbps:Int) extends Module {
   io.bru.bits.rd_idx := rd_idx
   io.bru.valid := op_ready && fu_in.fu_type === FU_BRU
 
-  printf("%d: ISU: io_out_ready=%b, fu_valid=%b, bp_valids=%b, bp_valid=%b, bp_rd=%d, bp_need_wb=%b, bp_data=%x\n", GTimer(), io_out_ready, fu_valid, bypass_valids, bypass_valid, bypass_rd, bypass_need_wb, bypass_data)
-  printf("%d: ISU: wb_valid=%b, wb_need_wb=%b, wb_data=%x, sb=%b, op_ready=%x, rd_idx=%d\n", GTimer(), wb_valid, wb_need_wb, wb_data, Cat(for (i <- 0 until 32) yield sb(i)), op_ready, rd_idx)
-  printf("%d: ISU: instr=%x, op1_idx=%d, op2_idx=%d, op1_reg={%b,%x}, op2_reg={%b,%x}\n", GTimer(), instr.asUInt, op1_idx, op2_idx, op1_reg_status(0), op1_reg_status(32, 1), op2_reg_status(0), op2_reg_status(32, 1))
-  printf("%d: ISU: shamt_ext=%x, se_imm=%x, ze_imm=%x, ue_imm=%x, op1_data={%b,%x}, op2_data={%b,%x}\n", GTimer(), shamt_ext, se_imm, ze_imm, ue_imm, op1_data_status(0), op1_data_status(32, 1), op2_data_status(0), op2_data_status(32, 1));
-  fu_in.dump("ISU.fu_in")
-  io.idu.dump("ISU.idu")
-  io.wb.dump("ISU.wb")
-  for (i <- 0 until nbps) {
-    io.bypasses(i).dump("ISU.bp."+i)
+  if (false) {
+    printf("%d: ISU: io_out_ready=%b, fu_valid=%b, bp_valids=%b, bp_valid=%b, bp_rd=%d, bp_need_wb=%b, bp_data=%x\n", GTimer(), io_out_ready, fu_valid, bypass_valids, bypass_valid, bypass_rd, bypass_need_wb, bypass_data)
+    printf("%d: ISU: wb_valid=%b, wb_need_wb=%b, wb_data=%x, sb=%b, op_ready=%x, rd_idx=%d\n", GTimer(), wb_valid, wb_need_wb, wb_data, Cat(for (i <- 0 until 32) yield sb(i)), op_ready, rd_idx)
+    printf("%d: ISU: instr=%x, op1_idx=%d, op2_idx=%d, op1_reg={%b,%x}, op2_reg={%b,%x}\n", GTimer(), instr.asUInt, op1_idx, op2_idx, op1_reg_status(0), op1_reg_status(32, 1), op2_reg_status(0), op2_reg_status(32, 1))
+    printf("%d: ISU: shamt_ext=%x, se_imm=%x, ze_imm=%x, ue_imm=%x, op1_data={%b,%x}, op2_data={%b,%x}\n", GTimer(), shamt_ext, se_imm, ze_imm, ue_imm, op1_data_status(0), op1_data_status(32, 1), op2_data_status(0), op2_data_status(32, 1));
+    fu_in.dump("ISU.fu_in")
+    io.idu.dump("ISU.idu")
+    io.wb.dump("ISU.wb")
+    for (i <- 0 until nbps) {
+      io.bypasses(i).dump("ISU.bp."+i)
+    }
+    io.alu.dump("ISU.alu")
+    io.mdu.dump("ISU.mdu")
+    io.lsu.dump("ISU.lsu")
+    io.bru.dump("ISU.bru")
+    io.flush.dump("ISU.flush")
   }
-  io.alu.dump("ISU.alu")
-  io.mdu.dump("ISU.mdu")
-  io.lsu.dump("ISU.lsu")
-  io.bru.dump("ISU.bru")
-  io.flush.dump("ISU.flush")
 }
 

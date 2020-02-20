@@ -45,6 +45,9 @@ class SOC_EMU_TOP extends Module {
   cistern.io.enq <> dev.io.in.resp
   crossbar.io.out.resp <> cistern.io.deq
 
+  cistern.io.enq.dump("cistern.io.enq")
+  cistern.io.deq.dump("cistern.io.deq")
+
   core.io.commit <> io.commit
 }
 

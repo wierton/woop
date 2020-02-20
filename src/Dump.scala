@@ -26,6 +26,12 @@ object DumpUtils {
     }
   }
 
+  implicit class Decoupled_MemResp_DUMP(data:DecoupledIO[MemResp]) {
+    def dump(msg:String) = {
+      printf("%d: "+msg+": resp[%d,%d]={data:%x}\n", GTimer(), data.valid, data.ready, data.bits.data)
+    }
+  }
+
   implicit class MemIO_DUMP(data:MemIO) {
     def dump(msg:String) = {
       printf("%d: "+msg+": req[%d,%d]={align:%d, addr:%x, data:%x, func:%d, strb:%x}, resp[%d,%d]={data:%x}\n", GTimer(), data.req.valid, data.req.ready, data.req.bits.is_aligned, data.req.bits.addr, data.req.bits.data, data.req.bits.func, data.req.bits.wstrb, data.resp.valid, data.resp.ready, data.resp.bits.data)
