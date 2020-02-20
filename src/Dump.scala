@@ -62,6 +62,12 @@ object DumpUtils {
     }
   }
 
+  implicit class VALID_WriteBack_IO_DUMP(data:ValidIO[WriteBackIO]) {
+    def dump(msg:String) = {
+      printf("%d: "+msg+": [%b]={pc:%x, rd:%d, wen:%b, data:%x}\n", GTimer(), data.valid, data.bits.pc, data.bits.rd_idx, data.bits.wen, data.bits.data)
+    }
+  }
+
   implicit class Decoupled_ISU_ALU_IO_DUMP(data:DecoupledIO[ISU_ALU_IO]) {
     def dump(msg:String) = {
       printf("%d: "+msg+": [%b,%b]={fu_op:%d, pc:%x, op1:%x, op2:%x, rd:%d}\n", GTimer(), data.valid, data.ready, data.bits.fu_op, data.bits.pc, data.bits.op1, data.bits.op2, data.bits.rd_idx)

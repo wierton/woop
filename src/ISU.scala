@@ -165,6 +165,7 @@ class ISU(nbps:Int) extends Module {
   printf("%d: ISU: shamt_ext=%x, se_imm=%x, ze_imm=%x, ue_imm=%x, op1_data={%b,%x}, op2_data={%b,%x}\n", GTimer(), shamt_ext, se_imm, ze_imm, ue_imm, op1_data_status(0), op1_data_status(32, 1), op2_data_status(0), op2_data_status(32, 1));
   fu_in.dump("ISU.fu_in")
   io.idu.dump("ISU.idu")
+  io.wb.dump("ISU.wb")
   for (i <- 0 until nbps) {
     io.bypasses(i).dump("ISU.bp."+i)
   }
