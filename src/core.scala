@@ -23,7 +23,7 @@ class Core extends Module {
   val mdu = Module(new MDU)
   val bru = Module(new BRU)
   val pru = Module(new PRU)
-  val wbu = Module(new WBU) // rf
+  val wbu = Module(new WBU(4)) // rf
 
   ifu.io.iaddr <> pru.io.iaddr
   lsu.io.daddr <> pru.io.daddr
@@ -35,6 +35,9 @@ class Core extends Module {
   isu.io.bypasses(3) <> bru.io.bypass
 
   lsu.io.bp_failed := bru.io.bp_failed
+
+  /* branch info */
+  wbu.io.brinfo <> bru.io.brinfo
 
   // Flush signals
   ifu.io.flush <> wbu.io.flush
@@ -58,10 +61,10 @@ class Core extends Module {
   isu.io.bru <> bru.io.isu
 
   // XXX -> WBU
-  lsu.io.wbu <> wbu.io.lsu
-  alu.io.wbu <> wbu.io.alu
-  mdu.io.wbu <> wbu.io.mdu
-  bru.io.wbu <> wbu.io.bru
+  lsu.io.wbu <> wbu.io.exus(0)
+  alu.io.wbu <> wbu.io.exus(1)
+  mdu.io.wbu <> wbu.io.exus(2)
+  bru.io.wbu <> wbu.io.exus(3)
 
   isu.io.wb <> wbu.io.wb
 }

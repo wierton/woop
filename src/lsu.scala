@@ -42,7 +42,7 @@ class LSU extends Module with UnitOpConstants {
     val dmem = new MemIO
     val daddr = new TLBTransaction
     val isu = Flipped(DecoupledIO(new ISU_LSU_IO))
-    val wbu = DecoupledIO(new LSU_WBU_IO)
+    val wbu = DecoupledIO(new EXU_WBU_IO)
     val bypass = ValidIO(new BypassIO)
     val bp_failed = Input(Bool())
     val flush = Flipped(ValidIO(new FlushIO))
@@ -91,27 +91,29 @@ class LSU extends Module with UnitOpConstants {
    io.dmem.req.bits.data := s2_in.data
    io.dmem.resp.ready := io.wbu.ready
 
-   /* stage 3: recv contents */
+   /* stage 3: recv contents and commit */
   val s3_in = s2_datas.io.deq.bits
   val s3_data = io.dmem.resp.bits.data
   io.wbu.valid := io.dmem.resp.valid
-  io.wbu.bits.pc := s3_in.pc
-  io.wbu.bits.need_wb := Y
-  io.wbu.bits.rd_idx := s3_in.rd_idx
+  io.wbu.bits.wb.pc := s3_in.pc
+  io.wbu.bits.wb.wen := Y
+  io.wbu.bits.wb.rd_idx := s3_in.rd_idx
 
+  /* io.wbu.bits.wb.data */
   val lstrb = "b1111000".U >> (~s3_in.addr(1, 0))
   val lmask = Cat(for (i <- 0 until 4) yield lstrb(i).asTypeOf(SInt(8.W)))
   val rstrb = "b0001111".U >> (~s3_in.addr(1, 0))
   val rmask = Cat(for (i <- 0 until 4) yield rstrb(i).asTypeOf(SInt(8.W)))
-  io.wbu.bits.data := Mux(s3_in.op.isAligned(),
+  io.wbu.bits.wb.data := Mux(s3_in.op.isAligned(),
     io.dmem.resp.bits.data, Mux(s3_in.op.ext === LSU_L,
       (lmask & s3_data) | (~lmask & s3_in.data),
       (rmask & s3_data) | (~rmask & s3_in.data)))
+  io.wbu.bits.ex := 0.U.asTypeOf(io.wbu.bits.ex)
 
   /* bypass */
   io.bypass.valid := io.dmem.resp.valid
   io.bypass.bits.wen := Y
   io.bypass.bits.rd_idx := s3_in.rd_idx
-  io.bypass.bits.data := io.wbu.bits.data
+  io.bypass.bits.data := io.wbu.bits.wb.data
 }
 

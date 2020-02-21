@@ -11,7 +11,7 @@ class ALU extends Module with UnitOpConstants {
   val io = IO(new Bundle {
     val bypass = ValidIO(new BypassIO)
     val isu = Flipped(DecoupledIO(new ISU_ALU_IO))
-    val wbu = DecoupledIO(new ALU_WBU_IO)
+    val wbu = DecoupledIO(new EXU_WBU_IO)
     val flush = Flipped(ValidIO(new FlushIO))
   })
 
@@ -46,10 +46,12 @@ class ALU extends Module with UnitOpConstants {
   io.bypass.bits.rd_idx := rd_idx
   io.bypass.bits.data := result
 
-  io.wbu.bits.pc := fu_in.pc
-  io.wbu.bits.rd_idx := rd_idx
-  io.wbu.bits.data := result
   io.wbu.valid := fu_valid
+  io.wbu.bits.wb.pc := fu_in.pc
+  io.wbu.bits.wb.wen := Y
+  io.wbu.bits.wb.rd_idx := rd_idx
+  io.wbu.bits.wb.data := result
+  io.wbu.bits.ex := 0.U.asTypeOf(io.wbu.bits.ex)
 
   when (io.flush.valid || (!io.isu.fire() && io.wbu.fire())) {
     fu_valid := N

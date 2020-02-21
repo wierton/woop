@@ -139,32 +139,13 @@ class ISU_LSU_IO extends Bundle {
 //========================================================//
 //        {ALU, LSU, MDU, BRU}  -->  WBU           //
 //========================================================//
-class LSU_WBU_IO extends Bundle {
-  val pc = Output(UInt(conf.xprlen.W)); // deleted by dce
-  val need_wb = Output(Bool())
-  val rd_idx = Output(UInt(REG_SZ.W))
-  val data = Output(UInt(conf.xprlen.W))
+class EXU_WBU_IO extends Bundle {
+  val wb = new WriteBackIO
+  val ex = Output(new CP0Exception)
 }
 
-class ALU_WBU_IO extends Bundle {
-  val pc = Output(UInt(conf.xprlen.W)); // deleted by dce
-  val rd_idx = Output(UInt(REG_SZ.W))
-  val data = Output(UInt(conf.xprlen.W))
-}
-
-class MDU_WBU_IO extends Bundle {
-  val pc = Output(UInt(conf.xprlen.W)); // deleted by dce
-  val need_wb = Output(Bool())
-  val rd_idx = Output(UInt(REG_SZ.W))
-  val data = Output(UInt(conf.xprlen.W))
-}
-
-class BRU_WBU_IO extends Bundle {
-  val pc = Output(UInt(conf.xprlen.W)); // deleted by dce
+class BRINFO_IO extends Bundle {
   val need_br = Output(Bool())
   val br_target = Output(UInt(conf.xprlen.W))
-  val need_wb = Output(Bool())
-  val rd_idx = Output(UInt(REG_SZ.W))
-  val data = Output(UInt(conf.xprlen.W))
 }
 

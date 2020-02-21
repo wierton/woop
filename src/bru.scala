@@ -10,7 +10,8 @@ import njumips.configs._
 class BRU extends Module with UnitOpConstants {
   val io = IO(new Bundle {
     val isu = Flipped(DecoupledIO(new ISU_BRU_IO))
-    val wbu = DecoupledIO(new BRU_WBU_IO)
+    val wbu = DecoupledIO(new EXU_WBU_IO)
+    val brinfo = ValidIO(new BRINFO_IO)
     val bypass = ValidIO(new BypassIO)
     val flush = Flipped(ValidIO(new FlushIO))
     val bp_failed = Output(Bool())
@@ -40,18 +41,22 @@ class BRU extends Module with UnitOpConstants {
 
   /* bypass signals */
   io.bypass.valid := io.wbu.valid
-  io.bypass.bits.wen := io.wbu.bits.need_wb
-  io.bypass.bits.rd_idx := io.wbu.bits.rd_idx
-  io.bypass.bits.data := io.wbu.bits.data
+  io.bypass.bits.wen := io.wbu.bits.wb.wen
+  io.bypass.bits.rd_idx := io.wbu.bits.wb.rd_idx
+  io.bypass.bits.data := io.wbu.bits.wb.data
 
   /* wbu signals */
-  io.wbu.bits.pc := fu_in.pc
-  io.wbu.bits.need_br := br_info(33)
-  io.wbu.bits.need_wb := br_info(32)
-  io.wbu.bits.br_target := br_info(31, 0)
-  io.wbu.bits.data := fu_in.pc + 4.U
-  io.wbu.bits.rd_idx := Mux(fu_in.fu_op === BR_JAL, 31.U, fu_in.rd_idx)
   io.wbu.valid := fu_valid
+  io.wbu.bits.wb.pc := fu_in.pc
+  io.wbu.bits.wb.wen := br_info(32)
+  io.wbu.bits.wb.data := fu_in.pc + 4.U
+  io.wbu.bits.wb.rd_idx := Mux(fu_in.fu_op === BR_JAL, 31.U, fu_in.rd_idx)
+  io.wbu.bits.ex := 0.U.asTypeOf(io.wbu.bits.ex)
+
+  /* branch signals */
+  io.brinfo.valid := fu_valid
+  io.brinfo.bits.need_br := br_info(33)
+  io.brinfo.bits.br_target := br_info(31, 0)
 
   when (io.flush.valid || (!io.isu.fire() && io.wbu.fire())) {
     fu_valid := N
