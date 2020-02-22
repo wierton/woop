@@ -8,13 +8,13 @@ import njumips.utils._
 import njumips.core._
 
 object dumps {
-  implicit class IFU_IDU_IO_Dump(data:IFU_IDU_IO) {
+  implicit class IFU_BRIDU_IO_Dump(data:IFU_BRIDU_IO) {
     def dump(msg:String) = {
       printf("%d: "+msg+": {pc:%x, instr:%x}\n", GTimer(), data.pc, data.instr)
     }
   }
 
-  implicit class Decoupled_IFU_IDU_IO_Dump(data:DecoupledIO[IFU_IDU_IO]) {
+  implicit class Decoupled_IFU_BRIDU_IO_Dump(data:DecoupledIO[IFU_BRIDU_IO]) {
     def dump(msg:String) = {
       printf("%d: "+msg+": [%d,%d]={pc:%x, instr:%x}\n", GTimer(), data.valid, data.ready, data.bits.pc, data.bits.instr)
     }
@@ -50,13 +50,13 @@ object dumps {
     }
   }
 
-  implicit class IDU_ISU_IO_Dump(data:IDU_ISU_IO) {
+  implicit class BRIDU_ISU_IO_Dump(data:BRIDU_ISU_IO) {
     def dump(msg:String) = {
       printf("%d: "+msg+": pc:%x,instr:%x,fu_type:%d,fu_op:%d,op1_sel:%d,op2_sel:%d,rd:%d\n", GTimer(), data.pc, data.instr, data.fu_type, data.fu_op, data.op1_sel, data.op2_sel, data.rd_sel)
     }
   }
 
-  implicit class Decoupled_IDU_ISU_IO_Dump(data:DecoupledIO[IDU_ISU_IO]) {
+  implicit class Decoupled_BRIDU_ISU_IO_Dump(data:DecoupledIO[BRIDU_ISU_IO]) {
     def dump(msg:String) = {
       printf("%d: "+msg+": [%d,%d]={pc:%x,instr:%x,fu_type:%d,fu_op:%d,op1_sel:%d,op2_sel:%d,rd:%d}\n", GTimer(), data.valid, data.ready, data.bits.pc, data.bits.instr, data.bits.fu_type, data.bits.fu_op, data.bits.op1_sel, data.bits.op2_sel, data.bits.rd_sel)
     }

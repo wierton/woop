@@ -16,7 +16,7 @@ class Core extends Module {
   io.commit := DontCare
 
   val ifu = Module(new IFU)
-  val idu = Module(new IDU)
+  val idu = Module(new BRIDU)
   val isu = Module(new ISU(4)) // rf
   val lsu = Module(new LSU)
   val alu = Module(new ALU)

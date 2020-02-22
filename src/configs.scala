@@ -12,7 +12,7 @@ object conf {
   val axi_data_width = 32
   val axi_id_width = 4
   val log_IFU = true
-  val log_IDU = true
+  val log_BRIDU = true
   val log_ISU = true
   val log_CrossbarNx1 = true
   val log_Cistern = false

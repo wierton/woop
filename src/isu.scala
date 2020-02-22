@@ -11,7 +11,7 @@ import njumips.utils._
 class ISU(nbps:Int) extends Module {
   val io = IO(new Bundle {
     val wb = Flipped(ValidIO(new WriteBackIO))
-    val idu = Flipped(DecoupledIO(new IDU_ISU_IO))
+    val idu = Flipped(DecoupledIO(new BRIDU_ISU_IO))
     val bypasses = Vec(nbps, Flipped(ValidIO(new BypassIO)))
     val alu = DecoupledIO(new ISU_ALU_IO)
     val mdu = DecoupledIO(new ISU_MDU_IO)

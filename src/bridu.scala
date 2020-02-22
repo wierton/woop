@@ -8,11 +8,15 @@ import njumips.configs._
 import njumips.dumps._
 import njumips.utils._
 
-class IDU extends Module with UnitOpConstants {
+class BRIDU extends Module {
   val io = IO(new Bundle {
-    val ifu = Flipped(DecoupledIO(new IFU_IDU_IO))
-    val isu = DecoupledIO(new IDU_ISU_IO)
-    val flush = Flipped(ValidIO(new FlushIO))
+    val ifu = Flipped(DecoupledIO(new IFU_BRIDU_IO))
+    val pralu = DecoupledIO(new BRIDU_PRALU_IO)
+    val rs_idx = Output(REG_SZ.W)
+    val rt_idx = Output(REG_SZ.W)
+    val rs_data = Flipped(ValidIO(Output(conf.xprlen.W)))
+    val rt_data = Flipped(ValidIO(Output(conf.xprlen.W)))
+    val br_flush = ValidIO(new FlushIO)
   })
 
   val fu_in = RegEnable(next=io.ifu.bits, enable=io.ifu.fire())
@@ -85,31 +89,61 @@ class IDU extends Module with UnitOpConstants {
 
   val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: rd_sel :: Nil = csignals
 
+  val instr = fu_in.instr.asTypeOf(new Instr)
+  /* pralu */
+  io.pralu.bits.fu_type := fu_type
+  io.pralu.bits.fu_op := fu_op
+  io.pralu.bits.op1_sel := op1_sel
+  io.pralu.bits.op2_sel := op2_sel
+  io.pralu.bits.rd_sel := rd_sel
 
-  io.ifu.ready := io.isu.ready || !fu_valid
+  /* register RW */
+  io.rs_idx := instr.rs_idx
+  io.rt_idx := instr.rt_idx
 
-  // ISU
-  io.isu.valid := fu_valid
-  io.isu.bits.pc := fu_in.pc
-  io.isu.bits.instr := fu_in.instr
-  io.isu.bits.fu_type := fu_type
-  io.isu.bits.fu_op := fu_op
-  io.isu.bits.op1_sel := op1_sel
-  io.isu.bits.op2_sel := op2_sel
-  io.isu.bits.rd_sel := rd_sel
+  /* branch check */
+  val se_imm = instr.imm.asTypeOf(SInt(conf.xprlen.W)).asUInt
+  val I = (fu_in.pc + (fu_in.se_imm << 2))(31, 0)
+  val J = Cat(Seq(fu_in.pc(31, 28), instr.addr, 0.U(2.W)))
+  val JR = io.rs_data.bits
+  /* br_info={34:ready, 33:jump, 32:wb, 31..0:target} */
+  val br_info = Mux1H(Array(
+    (fu_op === BR_EQ) -> Cat(io.rs_data.valid && io.rt_data.valid, io.rs_data.bits === io.rt_data.bits, N, I),
+    (fu_op === BR_NE) -> Cat(io.rs_data.valid && io.rt_data.valid, io.rs_data.bits =/= io.rt_data.bits, N, I),
+    (fu_op === BR_LEZ) -> Cat(io.rs_data.valid, io.rs_data.bits.asSInt <= 0.S, N, I),
+    (fu_op === BR_GTZ) -> Cat(io.rs_data.valid, io.rs_data.bits.asSInt > 0.S, N, I),
+    (fu_op === BR_LTZ) -> Cat(io.rs_data.valid, io.rs_data.bits.asSInt < 0.S, N, I),
+    (fu_op === BR_J) -> Cat(Y, Y, N, J),
+    (fu_op === BR_JAL) -> Cat(Y, Y, Y, J),
+    (fu_op === BR_JR) -> Cat(Y, Y, N, JR),
+    (fu_op === BR_JALR) -> Cat(Y, Y, Y, JR)))
 
-  when (io.flush.valid || (!io.ifu.fire() && io.isu.fire())) {
+  io.ifu.ready := (io.pralu.ready && br_info(34)) || !fu_valid
+  io.br_flush.valid := fu_valid && fu_type === FU_BRU && br_info(34) && br_info(33)
+  io.br_flush.bits.br_target := br_info(31, 0)
+
+  /* wb */
+  io.pralu.valid := fu_valid
+  io.pralu.bits.wb.pc := fu_in.pc
+  io.pralu.bits.wb.instr := instr
+  /* only valid for bru */
+  io.pralu.bits.wb.rd_idx := Mux(rd_sel === DEST_RT, instr.rt_idx, instr.rd_idx)
+  io.pralu.bits.wb.wen := br_info(32)
+  io.pralu.bits.wb.data := fu_in.pc + 8.U
+  /* only valid for bru */
+
+  when (io.br_flush.valid || (!io.ifu.fire() && io.pralu.fire())) {
     fu_valid := N
-  } .elsewhen(!io.flush.valid && io.ifu.fire()) {
+  } .elsewhen(!io.br_flush.valid && io.ifu.fire()) {
     fu_valid := Y
   }
 
-  if (conf.log_IDU) {
-    printf("%d: IDU: fu_valid=%b\n", GTimer(), fu_valid)
-    fu_in.dump("IDU.fu_in")
-    io.ifu.dump("IDU.ifu")
-    io.isu.dump("IDU.isu")
-    io.flush.dump("IDU.flush")
+  if (conf.log_BRIDU) {
+    printf("%d: BRIDU: fu_valid=%b\n", GTimer(), fu_valid)
+    fu_in.dump("BRIDU.fu_in")
+    io.ifu.dump("BRIDU.ifu")
+    io.pralu.dump("BRIDU.pralu")
+    io.br_flush.dump("BRIDU.flush")
   }
 }
 

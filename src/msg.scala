@@ -7,12 +7,12 @@ import njumips.configs._
 import njumips.consts._
 
 class Instr extends Bundle {
-  val op     = UInt(OP_SZ.W)
-  val rs_idx = UInt(REG_SZ.W)
-  val rt_idx = UInt(REG_SZ.W)
   val rd_idx = UInt(REG_SZ.W)
-  val shamt  = UInt(SHAMT_SZ.W)
   val func   = UInt(FUNC_SZ.W)
+  val rt_idx = UInt(REG_SZ.W)
+  val shamt  = UInt(SHAMT_SZ.W)
+  val rs_idx = UInt(REG_SZ.W)
+  val op     = UInt(OP_SZ.W)
 
   def imm    = Cat(rd_idx, shamt, func)
   def addr   = Cat(rs_idx, rt_idx, imm)
@@ -83,19 +83,19 @@ class BypassIO extends Bundle {
 
 class WriteBackIO extends Bundle {
   val pc = Output(UInt(conf.xprlen.W))
+  val instr = Output(new Instr)
   val rd_idx = Output(UInt(REG_SZ.W))
   val wen = Output(Bool());
   val data = Output(UInt(conf.xprlen.W))
 }
 
-class IFU_IDU_IO extends Bundle {
+class IFU_BRIDU_IO extends Bundle {
   val pc = Output(UInt(conf.xprlen.W))
   val instr = Output(UInt(conf.xprlen.W))
 }
 
-class IDU_ISU_IO extends Bundle {
-  val pc = Output(UInt(conf.xprlen.W))
-  val instr = Output(UInt(conf.xprlen.W))
+class BRIDU_PRALU_IO extends Bundle {
+  val wb = new WriteBackIO
   val fu_type = Output(UInt(FU_TYPE_SZ.W))
   val fu_op = Output(UInt(FU_OP_SZ.W))
   val op1_sel = Output(UInt(OP1_SEL_SZ.W))

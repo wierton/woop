@@ -12,8 +12,8 @@ class IFU extends Module {
   val io = IO(new Bundle {
     val imem = new MemIO
     val iaddr = new TLBTransaction
-    val idu = DecoupledIO(new IFU_IDU_IO)
-    val flush = Flipped(ValidIO(new FlushIO))
+    val idu = DecoupledIO(new IFU_BRIDU_IO)
+    val br_flush = Flipped(ValidIO(new FlushIO))
   })
 
   // init to be valid, the first instruction
@@ -29,7 +29,7 @@ class IFU extends Module {
   val mio_cycles = 23
   val s2_in = RegEnable(next=pc, enable=io.iaddr.req.fire())
   val s2_datas = Module(new Queue(UInt(32.W), mio_cycles))
-  s2_datas.reset := io.flush.valid
+  s2_datas.reset := io.br_flush.valid
   s2_datas.io.enq.valid := io.imem.req.fire()
   s2_datas.io.enq.bits := s2_in
   s2_datas.io.deq.ready := io.imem.resp.fire()
@@ -53,7 +53,7 @@ class IFU extends Module {
     io.imem.dump("IFU.imem")
     io.iaddr.dump("IFU.iaddr")
     io.idu.dump("IFU.idu")
-    io.flush.dump("IFU.flush")
+    io.br_flush.dump("IFU.flush")
   }
 }
 
