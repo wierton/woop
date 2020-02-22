@@ -7,12 +7,12 @@ import njumips.configs._
 import njumips.consts._
 
 class Instr extends Bundle {
-  val rd_idx = UInt(REG_SZ.W)
-  val func   = UInt(FUNC_SZ.W)
-  val rt_idx = UInt(REG_SZ.W)
-  val shamt  = UInt(SHAMT_SZ.W)
+  val op     = UInt(6.W)
   val rs_idx = UInt(REG_SZ.W)
-  val op     = UInt(OP_SZ.W)
+  val rt_idx = UInt(REG_SZ.W)
+  val rd_idx = UInt(REG_SZ.W)
+  val shamt  = UInt(5.W)
+  val func   = UInt(6.W)
 
   def imm    = Cat(rd_idx, shamt, func)
   def addr   = Cat(rs_idx, rt_idx, imm)

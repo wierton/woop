@@ -11,10 +11,13 @@ object conf {
   val start_addr = "hbfc00000".U
   val axi_data_width = 32
   val axi_id_width = 4
+  val mio_cycles = 3
+  val log_rf = true
   val log_IFU = true
   val log_BRIDU = true
-  val log_ISU = true
-  val log_CrossbarNx1 = true
+  val log_PRALU = true
+  val log_LSMDU = true
+  val log_CrossbarNx1 = false
   val log_Cistern = false
   val diff = true
 }

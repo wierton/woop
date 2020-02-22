@@ -48,11 +48,10 @@ class LSU extends Module with UnitOpConstants {
   io.fu_in.ready := io.fu_out.ready
 
   /* stage 2: send memory request */
-  val mio_cycles = 2
   val s2_in = Wire(new LSUStage2Data)
   s2_in.load(io.fu_in.bits)
-  val s2_datas = Module(new Queue(new LSUStage2Data, mio_cycles))
-  val s2_valids = RegInit(0.U(mio_cycles.W))
+  val s2_datas = Module(new Queue(new LSUStage2Data, conf.mio_cycles))
+  val s2_valids = RegInit(0.U(conf.mio_cycles.W))
   s2_datas.io.enq.valid := io.dmem.req.fire()
   s2_datas.io.enq.bits := s2_in
   s2_datas.io.deq.ready := io.dmem.resp.fire()

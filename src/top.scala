@@ -41,7 +41,7 @@ class SOC_EMU_TOP extends Module {
 
   crossbar.io.out.req <> dev.io.in.req
 
-  val cistern = Module(new Cistern(new MemResp, 20))
+  val cistern = Module(new Cistern(new MemResp, conf.mio_cycles - 1))
   cistern.io.enq <> dev.io.in.resp
   crossbar.io.out.resp <> cistern.io.deq
 
@@ -51,6 +51,8 @@ class SOC_EMU_TOP extends Module {
   }
 
   core.io.commit <> io.commit
+
+  printf("------------\n")
 }
 
 class AXI4_EMU_TOP extends Module {

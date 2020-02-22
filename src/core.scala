@@ -13,8 +13,6 @@ class Core extends Module {
     val commit = new CommitIO
   })
 
-  io.commit := DontCare
-
   val rf = Module(new RegFile)
   val ifu = Module(new IFU)
   val bridu = Module(new BRIDU)
@@ -39,4 +37,6 @@ class Core extends Module {
 
   pralu.io.rs_data := rf.io.rfreq.rs_data
   pralu.io.rt_data := rf.io.rfreq.rt_data
+
+  io.commit <> rf.io.commit
 }

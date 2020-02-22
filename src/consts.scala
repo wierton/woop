@@ -73,38 +73,6 @@ trait CP0Constants {
 
 trait InstrConstants {
   val REG_SZ    = 5;
-  val OP_MSB    = 31;
-  val OP_LSB    = 26;
-  val OP_SZ     = (OP_MSB - OP_LSB + 1);
-  val OP_LZ     = 32 - OP_SZ;
-  val RS_MSB    = 25;
-  val RS_LSB    = 21;
-  val RS_SZ     = (RS_MSB - RS_LSB + 1);
-  val RS_LZ     = 32 - RS_SZ;
-  val RT_MSB    = 20;
-  val RT_LSB    = 16;
-  val RT_SZ     = (RT_MSB - RT_LSB + 1);
-  val RT_LZ     = 32 - RT_SZ;
-  val RD_MSB    = 15;
-  val RD_LSB    = 11;
-  val RD_SZ     = (RD_MSB - RD_LSB + 1);
-  val RD_LZ     = 32 - RD_SZ;
-  val IMM_MSB   = 15;
-  val IMM_LSB   = 0;
-  val IMM_SZ    = (IMM_MSB - IMM_LSB + 1);
-  val IMM_LZ    = 32 - IMM_SZ;
-  val ADDR_MSB  = 25;
-  val ADDR_LSB  = 0;
-  val ADDR_SZ   = (ADDR_MSB - ADDR_LSB + 1);
-  val ADDR_LZ   = 32 - ADDR_SZ;
-  val SHAMT_MSB = 10;
-  val SHAMT_LSB = 6;
-  val SHAMT_SZ  = (SHAMT_MSB - SHAMT_LSB + 1);
-  val SHAMT_LZ  = 32 - SHAMT_SZ;
-  val FUNC_MSB  = 5;
-  val FUNC_LSB  = 0;
-  val FUNC_SZ   = (FUNC_MSB - FUNC_LSB + 1);
-  val FUNC_LZ   = 32 - FUNC_SZ;
 }
 
 trait InstrPattern {

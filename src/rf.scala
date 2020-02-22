@@ -13,6 +13,7 @@ class RegFile extends Module {
     val bp = Flipped(ValidIO(new BypassIO))
     val wb = Flipped(ValidIO(new WriteBackIO))
     val rfreq = Flipped(new RegFileReq)
+    val commit = Output(new CommitIO)
   })
 
   val wb_rf = Mem(32, UInt(conf.xprlen.W))
@@ -50,5 +51,17 @@ class RegFile extends Module {
       bp_rf(io.bp.bits.rd_idx) := io.bp.bits.data
     }
     bp_readys(io.bp.bits.rd_idx) := Y
+  }
+
+  io.commit.valid := io.wb.valid
+  io.commit.pc := io.wb.bits.pc
+  io.commit.instr := io.wb.bits.instr.asUInt
+  for (i <- 0 until 32) {
+    io.commit.gpr(i) := Mux(io.wb.valid && io.wb.bits.wen && io.wb.bits.rd_idx === i.U, io.wb.bits.data, wb_rf(i))
+  }
+
+  if (conf.log_rf) {
+    printf("%d: RF.commit: valid=%b, pc=%x, instr=%x\n", GTimer(), io.commit.valid, io.commit.pc, io.commit.instr)
+    io.wb.dump("RF.wb")
   }
 }

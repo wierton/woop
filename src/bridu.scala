@@ -117,5 +117,14 @@ class BRIDU extends Module {
   } .elsewhen(!io.br_flush.valid && io.fu_in.fire()) {
     fu_valid := Y
   }
+
+  if (conf.log_BRIDU) {
+    printf("%d: BRIDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, se_imm=%x, Ia=%x, Ja=%x, JRa=%x, br_info=%x\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, se_imm, Ia, Ja, JRa, br_info);
+    io.fu_in.dump("BRIDU.io.fu_in")
+    io.fu_out.dump("BRIDU.io.fu_out")
+    io.rfreq.dump("BRIDU.io.rfreq")
+    io.br_flush.dump("BRIDU.io.br_flush")
+    io.ex_flush.dump("BRIDU.io.ex_flush")
+  }
 }
 

@@ -8,9 +8,40 @@ import njumips.utils._
 import njumips.core._
 
 object dumps {
+  implicit class Instr_Dump(data:Instr) {
+    def dump(msg:String) = {
+      printf("%d: "+msg+": instr[%x]={func:%d, shamt:%d, rd:%d, rt:%d, rs:%d, op:%d, imm:%x, addr:%x}\n", GTimer(), data.asUInt, data.func, data.shamt, data.rd_idx, data.rt_idx, data.rs_idx, data.op, data.imm, data.addr)
+    }
+  }
+
+  implicit class WritebackIO_Dump(data:WriteBackIO) {
+    def dump(msg:String) = {
+      printf("%d: "+msg+": pc=%x, instr=%x, rd=%d, wen=%d, data=%x\n", GTimer(), data.pc, data.instr.asUInt, data.rd_idx, data.wen, data.data)
+    }
+  }
+
+  implicit class Decoupled_BRIDU_PRALU_IO_Dump(data:DecoupledIO[BRIDU_PRALU_IO]) {
+    def dump(msg:String) = {
+      printf("%d: "+msg+": [%b]: fu_type=%d, fu_op=%d, op1_sel=%d, op2_sel=%d, rd_sel=%d\n", GTimer(), data.valid, data.bits.fu_type, data.bits.fu_op, data.bits.op1_sel, data.bits.op2_sel, data.bits.rd_sel)
+      data.bits.wb.dump(msg+".wb")
+    }
+  }
+
+  implicit class Decoupled_PRALU_LSMDU_IO_Dump(data:DecoupledIO[PRALU_LSMDU_IO]) {
+    def dump(msg:String) = {
+      printf("%d: "+msg+": [%b]: wb={rd:%d, wen:%b, data:%x}, ops={fu_type=%d, fu_op=%d, op1=%x, op2=%x}, paddr=%x, is_cached=%b\n", GTimer(), data.valid, data.bits.wb.rd_idx, data.bits.wb.wen, data.bits.wb.data, data.bits.ops.fu_type, data.bits.ops.fu_op, data.bits.ops.op1, data.bits.ops.op2, data.bits.paddr, data.bits.is_cached)
+    }
+  }
+
+  implicit class RegFileReq_Dump(data:RegFileReq) {
+    def dump(msg:String) = {
+      printf("%d: "+msg+": rs_idx=%d, rt_idx=%d, rs[%d]=%x, rt[%d]=%x, rd[%b]=%x\n", GTimer(), data.rs_idx, data.rt_idx, data.rs_data.valid, data.rs_data.bits, data.rt_data.valid, data.rt_data.bits, data.dest_ridx.valid, data.dest_ridx.bits)
+    }
+  }
+
   implicit class IFU_BRIDU_IO_Dump(data:IFU_BRIDU_IO) {
     def dump(msg:String) = {
-      printf("%d: "+msg+": {pc:%x, instr:%x}\n", GTimer(), data.pc, data.instr)
+      printf("%d: "+msg+": pc:%x, instr:%x\n", GTimer(), data.pc, data.instr.asUInt)
     }
   }
 

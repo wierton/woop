@@ -57,12 +57,11 @@ class CrossbarNx1(m:Int) extends Module {
   val in_req = Mux1H(for (i <- 0 until m) yield in_valids_1H(i) -> io.in(i).req.bits)
 
   /* q_datas [0:head, ..., nstages-1:tail] */
-  val nstages = 25
   val q_data_tail = RegInit(~(0.U(log2Ceil(m+1).W)))
-  val q_datas = Mem(nstages, UInt(m.W))
+  val q_datas = Mem(conf.mio_cycles, UInt(m.W))
   val p_data = q_datas(q_data_tail)
   when (io.out.req.fire()) {
-    for (i <- 1 until nstages) {
+    for (i <- 1 until conf.mio_cycles) {
       q_datas(i) := q_datas(i - 1)
     }
     q_datas(0) := in_valids
@@ -92,8 +91,8 @@ class CrossbarNx1(m:Int) extends Module {
     in_req.dump(msg+".in_req")
     printf("%d: "+msg+": in_valids=%b, in_valids_1H=%b, in_readys=%b, in_resp_readys=%b\n", GTimer(), in_valids, in_valids_1H, in_readys, in_resp_readys)
     val p = Seq[Bits](GTimer(), q_data_tail, p_data)
-    val q = for (i <- 0 until nstages) yield q_datas(i)
-    printf("%d: "+msg+": q_data_tail=%d, p_data=%b, q_datas={"+List.fill(nstages)("%b,").mkString+"}\n", (p++q):_*)
+    val q = for (i <- 0 until conf.mio_cycles) yield q_datas(i)
+    printf("%d: "+msg+": q_data_tail=%d, p_data=%b, q_datas={"+List.fill(conf.mio_cycles)("%b,").mkString+"}\n", (p++q):_*)
   }
 }
 
