@@ -78,6 +78,5 @@ class IFU extends Module {
     io.br_flush.dump("IFU.br_flush")
     io.ex_flush.dump("IFU.ex_flush")
   }
-  assert (!(io.imem.req.fire() && !io.imem.resp.fire() && s2_datas(conf.mio_cycles - 1)(32)))
 }
 

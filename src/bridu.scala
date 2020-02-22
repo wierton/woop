@@ -112,7 +112,7 @@ class BRIDU extends Module {
   io.fu_out.bits.wb.data := fu_in.pc + 8.U
   /* only valid for bru */
 
-  when (!io.fu_in.fire() && io.fu_out.fire()) {
+  when (!io.fu_in.fire() && (io.br_flush.valid || io.fu_out.fire())) {
     fu_valid := N
   } .elsewhen(io.fu_in.fire()) {
     fu_valid := Y
