@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 import njumips.consts._
 import njumips.configs._
+import njumips.dumps._
 
 
 class ALU extends Module with UnitOpConstants {

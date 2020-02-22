@@ -20,16 +20,28 @@ object dumps {
     }
   }
 
+  implicit class Decoupled_PRALU_OUT_Dump(data:DecoupledIO[PRALU_OUT]) {
+    def dump(msg:String) = {
+      printf("%d: "+msg+": [%b,%b]: wb={pc:%x, instr:%x, rd:%d, wen:%b, data:%x}\n", GTimer(), data.valid, data.ready, data.bits.wb.pc, data.bits.wb.instr.asUInt, data.bits.wb.rd_idx, data.bits.wb.wen, data.bits.wb.data)
+    }
+  }
+
+  implicit class Decoupled_PRALU_FU_IO_Dump(data:DecoupledIO[PRALU_FU_IO]) {
+    def dump(msg:String) = {
+      printf("%d: "+msg+": [%b,%b]: wb={pc:%x, instr:%x, rd:%d, wen:%b, data:%x}, ops={fu_type=%d, fu_op=%d, op1=%x, op2=%x}\n", GTimer(), data.valid, data.ready, data.bits.wb.pc, data.bits.wb.instr.asUInt, data.bits.wb.rd_idx, data.bits.wb.wen, data.bits.wb.data, data.bits.ops.fu_type, data.bits.ops.fu_op, data.bits.ops.op1, data.bits.ops.op2)
+    }
+  }
+
   implicit class Decoupled_BRIDU_PRALU_IO_Dump(data:DecoupledIO[BRIDU_PRALU_IO]) {
     def dump(msg:String) = {
-      printf("%d: "+msg+": [%b]: fu_type=%d, fu_op=%d, op1_sel=%d, op2_sel=%d, rd_sel=%d\n", GTimer(), data.valid, data.bits.fu_type, data.bits.fu_op, data.bits.op1_sel, data.bits.op2_sel, data.bits.rd_sel)
+      printf("%d: "+msg+": [%b,%b]: fu_type=%d, fu_op=%d, op1_sel=%d, op2_sel=%d, rd_sel=%d\n", GTimer(), data.valid, data.ready, data.bits.fu_type, data.bits.fu_op, data.bits.op1_sel, data.bits.op2_sel, data.bits.rd_sel)
       data.bits.wb.dump(msg+".wb")
     }
   }
 
   implicit class Decoupled_PRALU_LSMDU_IO_Dump(data:DecoupledIO[PRALU_LSMDU_IO]) {
     def dump(msg:String) = {
-      printf("%d: "+msg+": [%b]: wb={rd:%d, wen:%b, data:%x}, ops={fu_type=%d, fu_op=%d, op1=%x, op2=%x}, paddr=%x, is_cached=%b\n", GTimer(), data.valid, data.bits.wb.rd_idx, data.bits.wb.wen, data.bits.wb.data, data.bits.ops.fu_type, data.bits.ops.fu_op, data.bits.ops.op1, data.bits.ops.op2, data.bits.paddr, data.bits.is_cached)
+      printf("%d: "+msg+": [%b,%b]: wb={pc:%x, instr:%x, rd:%d, wen:%b, data:%x}, ops={fu_type=%d, fu_op=%d, op1=%x, op2=%x}, paddr=%x, is_cached=%b\n", GTimer(), data.valid, data.ready, data.bits.wb.pc, data.bits.wb.instr.asUInt, data.bits.wb.rd_idx, data.bits.wb.wen, data.bits.wb.data, data.bits.ops.fu_type, data.bits.ops.fu_op, data.bits.ops.op1, data.bits.ops.op2, data.bits.paddr, data.bits.is_cached)
     }
   }
 
@@ -89,7 +101,7 @@ object dumps {
 
   implicit class Valid_WriteBack_IO_Dump(data:ValidIO[WriteBackIO]) {
     def dump(msg:String) = {
-      printf("%d: "+msg+": [%b]={pc:%x, rd:%d, wen:%b, data:%x}\n", GTimer(), data.valid, data.bits.pc, data.bits.rd_idx, data.bits.wen, data.bits.data)
+      printf("%d: "+msg+": [%b]={pc:%x, instr:%x, rd:%d, wen:%b, data:%x}\n", GTimer(), data.valid, data.bits.pc, data.bits.instr.asUInt, data.bits.rd_idx, data.bits.wen, data.bits.data)
     }
   }
 }

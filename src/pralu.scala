@@ -71,7 +71,7 @@ class PRALU extends Module {
   when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
     fu_valid := N
   } .elsewhen(!io.ex_flush.valid && io.fu_in.fire() &&
-    (io.fu_in.bits.fu_type === FU_LSU || io.fu_in.bits.fu_type === FU_MDU)) {
+    io.fu_in.bits.fu_type =/= FU_PRU && io.fu_in.bits.fu_type =/= FU_ALU) {
     fu_valid := Y
   }
 
@@ -108,15 +108,19 @@ class PRALU extends Module {
     alu.io.fu_out.valid -> alu.io.fu_out.bits.ex,
     pru.io.fu_out.valid -> pru.io.fu_out.bits.ex,
     fu_valid -> fu_in.ex))
-  assert (AtMost1H(alu.io.fu_out.valid, pru.io.fu_out.valid, fu_valid))
 
   if (conf.log_PRALU) {
-    printf("%d: PRALU: io.{rs_data[%d]=%x, rt_data[%d]=%x}, shamt_ext=%x, se_imm=%x, ze_imm=%x, ue_imm=%x, op1_data=%x, op2_data=%x\n", GTimer(), io.rs_data.valid, io.rs_data.bits, io.rt_data.valid, io.rt_data.bits, shamt_ext, se_imm, ze_imm, ue_imm, op1_data, op2_data)
+    printf("%d: PRALU: fu_valid=%b, io.{rs_data[%d]=%x, rt_data[%d]=%x}, shamt_ext=%x, se_imm=%x, ze_imm=%x, ue_imm=%x, op1_data=%x, op2_data=%x\n", GTimer(), fu_valid, io.rs_data.valid, io.rs_data.bits, io.rt_data.valid, io.rt_data.bits, shamt_ext, se_imm, ze_imm, ue_imm, op1_data, op2_data)
     instr.dump("PRALU.instr")
     io.fu_in.dump("PRALU.io.fu_in")
     io.fu_out.dump("PRALU.io.fu_out")
     io.bp.dump("PRALU.io.bp")
     io.ex_flush.dump("PRALU.io.ex_flush")
     io.iaddr.dump("PRALU.io.iaddr")
+    alu.io.fu_in.dump("ALU.io.fu_in")
+    alu.io.fu_out.dump("ALU.io.fu_out")
+    pru.io.fu_in.dump("PRU.io.fu_in")
+    pru.io.fu_out.dump("PRU.io.fu_out")
   }
+  assert (AtMost1H(alu.io.fu_out.valid, pru.io.fu_out.valid, fu_valid))
 }
