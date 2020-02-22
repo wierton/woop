@@ -76,13 +76,16 @@ class PRALU extends Module {
   }
 
   /* PRALU IO */
-  val rs_ready = MuxCase(Y, Array(
-    (io.fu_in.bits.op1_sel === OP1_RS) -> io.rs_data.valid,
-    (io.fu_in.bits.op1_sel === OP1_RT) -> io.rt_data.valid))
-  val rt_ready = MuxCase(Y, Array(
-    (io.fu_in.bits.op2_sel === OP2_RS) -> io.rs_data.valid,
-    (io.fu_in.bits.op2_sel === OP2_RT) -> io.rt_data.valid))
-  io.fu_in.ready := rs_ready && rt_ready && io.fu_out.ready
+  val rs_ready = Mux((io.fu_in.bits.op1_sel === OP1_RS) ||
+    (io.fu_in.bits.op2_sel === OP2_RS), io.rs_data.valid, Y)
+  val rt_ready = Mux((io.fu_in.bits.op1_sel === OP1_RT) ||
+    (io.fu_in.bits.op2_sel === OP2_RT), io.rt_data.valid, Y)
+  io.fu_in.ready := rs_ready && rt_ready && io.fu_out.ready && Mux1H(Array(
+    (io.fu_in.bits.fu_type === FU_LSU) -> Y,
+    (io.fu_in.bits.fu_type === FU_MDU) -> Y,
+    (io.fu_in.bits.fu_type === FU_ALU) -> alu.io.fu_in.ready,
+    (io.fu_in.bits.fu_type === FU_PRU) -> pru.io.fu_in.ready,
+    (io.fu_in.bits.fu_type === FU_LSU) -> pru.io.fu_in.ready))
   io.fu_out.valid := alu.io.fu_out.valid || pru.io.fu_out.valid || fu_valid
   io.fu_out.bits.wb := Mux1H(Array(
     alu.io.fu_out.valid -> alu.io.fu_out.bits.wb,

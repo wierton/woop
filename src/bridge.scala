@@ -57,31 +57,31 @@ class CrossbarNx1(m:Int) extends Module {
   val in_req = Mux1H(for (i <- 0 until m) yield in_valids_1H(i) -> io.in(i).req.bits)
 
   /* q_datas [0:head, ..., nstages-1:tail] */
-  val q_data_tail = RegInit(~(0.U(log2Ceil(m+1).W)))
+  val q_data_sz = RegInit(~(0.U(log2Ceil(m+1).W)))
   val q_datas = Mem(conf.mio_cycles, UInt(m.W))
-  val p_data = q_datas(q_data_tail)
+  val q_out = q_datas(q_data_sz)
   when (io.out.req.fire()) {
     for (i <- 1 until conf.mio_cycles) {
       q_datas(i) := q_datas(i - 1)
     }
     q_datas(0) := in_valids
   }
-  q_data_tail := q_data_tail + io.out.req.fire() - io.out.resp.fire()
+  q_data_sz := q_data_sz + io.out.req.fire() - io.out.resp.fire()
 
   for (i <- 0 until m) {
     io.in(i).req.ready := io.out.req.ready && in_valids_1H(i)
-    io.in(i).resp.valid := io.out.resp.valid && p_data(i)
+    io.in(i).resp.valid := io.out.resp.valid && q_out(i)
     io.in(i).resp.bits := io.out.resp.bits
   }
 
-  io.out.resp.ready := (p_data & in_resp_readys).orR
+  io.out.resp.ready := (q_out & in_resp_readys).orR
   io.out.req.valid := in_valids.orR
   io.out.req.bits := in_req
 
   if (conf.log_CrossbarNx1) {
     dump("crossbar")
   }
-  assert ((~q_data_tail).orR =/= 0.U || !io.out.resp.valid)
+  assert ((~q_data_sz).orR =/= 0.U || !io.out.resp.valid)
 
   def dump(msg:String) = {
     for (i <- 0 until io.in.size) {
@@ -90,9 +90,9 @@ class CrossbarNx1(m:Int) extends Module {
     io.out.dump(msg+".io.out")
     in_req.dump(msg+".in_req")
     printf("%d: "+msg+": in_valids=%b, in_valids_1H=%b, in_readys=%b, in_resp_readys=%b\n", GTimer(), in_valids, in_valids_1H, in_readys, in_resp_readys)
-    val p = Seq[Bits](GTimer(), q_data_tail, p_data)
+    val p = Seq[Bits](GTimer(), q_data_sz, q_out)
     val q = for (i <- 0 until conf.mio_cycles) yield q_datas(i)
-    printf("%d: "+msg+": q_data_tail=%d, p_data=%b, q_datas={"+List.fill(conf.mio_cycles)("%b,").mkString+"}\n", (p++q):_*)
+    printf("%d: "+msg+": q_data_sz=%d, q_out=%b, q_datas={"+List.fill(conf.mio_cycles)("%b,").mkString+"}\n", (p++q):_*)
   }
 }
 
