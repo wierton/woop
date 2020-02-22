@@ -12,10 +12,7 @@ class BRIDU extends Module {
   val io = IO(new Bundle {
     val ifu = Flipped(DecoupledIO(new IFU_BRIDU_IO))
     val pralu = DecoupledIO(new BRIDU_PRALU_IO)
-    val rs_idx = Output(REG_SZ.W)
-    val rt_idx = Output(REG_SZ.W)
-    val rs_data = Flipped(ValidIO(Output(conf.xprlen.W)))
-    val rt_data = Flipped(ValidIO(Output(conf.xprlen.W)))
+    val rfreq = new RegFileReq
     val br_flush = ValidIO(new FlushIO)
   })
 
@@ -98,21 +95,21 @@ class BRIDU extends Module {
   io.pralu.bits.rd_sel := rd_sel
 
   /* register RW */
-  io.rs_idx := instr.rs_idx
-  io.rt_idx := instr.rt_idx
+  io.rfreq.rs_idx := instr.rs_idx
+  io.rfreq.rt_idx := instr.rt_idx
 
   /* branch check */
   val se_imm = instr.imm.asTypeOf(SInt(conf.xprlen.W)).asUInt
   val I = (fu_in.pc + (fu_in.se_imm << 2))(31, 0)
   val J = Cat(Seq(fu_in.pc(31, 28), instr.addr, 0.U(2.W)))
-  val JR = io.rs_data.bits
+  val JR = io.rfreq.rs_data.bits
   /* br_info={34:ready, 33:jump, 32:wb, 31..0:target} */
   val br_info = Mux1H(Array(
-    (fu_op === BR_EQ) -> Cat(io.rs_data.valid && io.rt_data.valid, io.rs_data.bits === io.rt_data.bits, N, I),
-    (fu_op === BR_NE) -> Cat(io.rs_data.valid && io.rt_data.valid, io.rs_data.bits =/= io.rt_data.bits, N, I),
-    (fu_op === BR_LEZ) -> Cat(io.rs_data.valid, io.rs_data.bits.asSInt <= 0.S, N, I),
-    (fu_op === BR_GTZ) -> Cat(io.rs_data.valid, io.rs_data.bits.asSInt > 0.S, N, I),
-    (fu_op === BR_LTZ) -> Cat(io.rs_data.valid, io.rs_data.bits.asSInt < 0.S, N, I),
+    (fu_op === BR_EQ) -> Cat(io.rfreq.rs_data.valid && io.rfreq.rt_data.valid, io.rfreq.rs_data.bits === io.rfreq.rt_data.bits, N, I),
+    (fu_op === BR_NE) -> Cat(io.rfreq.rs_data.valid && io.rfreq.rt_data.valid, io.rfreq.rs_data.bits =/= io.rfreq.rt_data.bits, N, I),
+    (fu_op === BR_LEZ) -> Cat(io.rfreq.rs_data.valid, io.rfreq.rs_data.bits.asSInt <= 0.S, N, I),
+    (fu_op === BR_GTZ) -> Cat(io.rfreq.rs_data.valid, io.rfreq.rs_data.bits.asSInt > 0.S, N, I),
+    (fu_op === BR_LTZ) -> Cat(io.rfreq.rs_data.valid, io.rfreq.rs_data.bits.asSInt < 0.S, N, I),
     (fu_op === BR_J) -> Cat(Y, Y, N, J),
     (fu_op === BR_JAL) -> Cat(Y, Y, Y, J),
     (fu_op === BR_JR) -> Cat(Y, Y, N, JR),

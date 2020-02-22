@@ -12,10 +12,7 @@ class RegFile extends Module {
   val io = IO(new Bundle {
     val bp = Flipped(new BypassIO)
     val wb = Flipped(new WriteBackIO)
-    val rs_idx = Input(UInt(REG_SZ.W))
-    val rs_data = ValidIO(Output(UInt(conf.xprlen.W)))
-    val rt_idx = Input(UInt(REG_SZ.W))
-    val rt_data = ValidIO(Output(UInt(conf.xprlen.W)))
+    val rfreq = Flipped(new RegFileReq)
     val dest_ridx = ValidIO(Input(UInt(REG_SZ.W)))
   })
 
@@ -31,11 +28,11 @@ class RegFile extends Module {
     bypass_match(idx) -> io.bp.bits.data,
     bp_readys(idx) -> bp_rf(idx)))
 
-  io.rs_data.valid := rf_data_ready(io.rs_idx)
-  io.rs_data.bits := rf_data_bits(io.rs_idx)
+  io.rfreq.rs_data.valid := rf_data_ready(io.rfreq.rs_idx)
+  io.rfreq.rs_data.bits := rf_data_bits(io.rfreq.rs_idx)
 
-  io.rt_data.valid := rf_data_ready(io.rt_idx)
-  io.rt_data.bits := rf_data_bits(io.rt_idx)
+  io.rfreq.rt_data.valid := rf_data_ready(io.rfreq.rt_idx)
+  io.rfreq.rt_data.bits := rf_data_bits(io.rfreq.rt_idx)
 
   when (io.dest_ridx.valid) {
     rf_dirtys(io.dest_ridx.bits).write(Y)

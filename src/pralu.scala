@@ -18,6 +18,7 @@ class PRALU extends Module {
     val bp = new BypassIO
     val exinfo = ValidIO(new CP0Exception)
     val ex_flush = Flipped(ValidIO(new FlushIO))
+    val iaddr = Flipped(new TLBTransaction)
   })
 
   /* prepare operands */
@@ -53,6 +54,7 @@ class PRALU extends Module {
 
   /* PRU IO */
   val pru = Module(new PRU)
+  pru.io.iaddr <> io.iaddr
   pru.io.fu_in.valid := io.bridu.valid && (
     io.bridu.ops.fu_type === FU_PRU || io.bridu.ops.fu_type === FU_LSU)
   pru.io.fu_in.bits.wb <> io.wb
