@@ -92,6 +92,7 @@ class WriteBackIO extends Bundle {
 class IFU_BRIDU_IO extends Bundle {
   val pc = Output(UInt(conf.xprlen.W))
   val instr = Output(UInt(conf.xprlen.W))
+  val ex = new CP0Exception
 }
 
 class BRIDU_PRALU_IO extends Bundle {
@@ -100,30 +101,16 @@ class BRIDU_PRALU_IO extends Bundle {
   val fu_op = Output(UInt(FU_OP_SZ.W))
   val op1_sel = Output(UInt(OP1_SEL_SZ.W))
   val op2_sel = Output(UInt(OP2_SEL_SZ.W))
-  val rd_sel = Output(UInt(DEST_SEL_SZ.W))
+  val ex = new CP0Exception
 }
 
-//========================================================
-//         ISU --> {ALU, LSU, MDU, BRU}
-//========================================================
-class ISU_ALU_IO extends Bundle {
+class EXU_IO extends Bundle {
+  val wb = new WriteBackIO
+  val fu_type = Output(UInt(FU_TYPE_SZ.W))
   val fu_op = Output(UInt(FU_OP_SZ.W))
-  val pc = Output(UInt(conf.xprlen.W)); // deleted by dce
-  val op1 = Output(UInt(conf.xprlen.W))
-  val op2 = Output(UInt(conf.xprlen.W))
-  val rd_idx = Output(UInt(REG_SZ.W))
-}
-
-class ISU_MDU_IO extends ISU_ALU_IO { }
-
-class ISU_BRU_IO extends Bundle {
-  val fu_op = Output(UInt(FU_OP_SZ.W))
-  val pc = Output(UInt(conf.xprlen.W)); // PC next
-  val rs_data = Output(UInt(conf.xprlen.W))
-  val rt_data = Output(UInt(conf.xprlen.W))
-  val addr = Output(UInt(ADDR_SZ.W))
-  val se_off = Output(UInt(conf.xprlen.W))
-  val rd_idx = Output(UInt(REG_SZ.W))
+  val op1 = ValidIO(Output(UInt(conf.xprlen.W)))
+  val op2 = ValidIO(Output(UInt(conf.xprlen.W)))
+  val ex = new CP0Exception
 }
 
 class ISU_LSU_IO extends Bundle {
@@ -135,10 +122,6 @@ class ISU_LSU_IO extends Bundle {
   val rd_idx = Output(UInt(REG_SZ.W))
 }
 
-
-//========================================================//
-//        {ALU, LSU, MDU, BRU}  -->  WBU           //
-//========================================================//
 class EXU_WBU_IO extends Bundle {
   val wb = new WriteBackIO
   val ex = Output(new CP0Exception)

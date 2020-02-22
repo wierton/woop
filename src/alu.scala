@@ -10,15 +10,15 @@ import njumips.configs._
 class ALU extends Module with UnitOpConstants {
   val io = IO(new Bundle {
     val bypass = ValidIO(new BypassIO)
-    val isu = Flipped(DecoupledIO(new ISU_ALU_IO))
-    val wbu = DecoupledIO(new EXU_WBU_IO)
-    val flush = Flipped(ValidIO(new FlushIO))
+    val fu_in = Flipped(DecoupledIO(new EXU_IO))
+    val fu_out = DecoupledIO(new EXU_IO)
+    val ex_flush = Flipped(ValidIO(new FlushIO))
   })
 
-  val fu_in = RegEnable(next=io.isu.bits, enable=io.isu.fire())
+  val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
   val fu_valid = RegInit(N)
 
-  io.isu.ready := io.wbu.ready || !fu_valid
+  io.fu_in.ready := io.fu_out.ready || !fu_valid
 
   val fu_op = fu_in.fu_op
   val op1   = fu_in.op1
@@ -41,21 +41,25 @@ class ALU extends Module with UnitOpConstants {
     (fu_op === ALU_COPY1) -> op1.asUInt))
 
 
-  io.bypass.valid := io.wbu.valid
+  io.bypass.valid := io.fu_out.valid
   io.bypass.bits.wen := Y
   io.bypass.bits.rd_idx := rd_idx
   io.bypass.bits.data := result
 
-  io.wbu.valid := fu_valid
-  io.wbu.bits.wb.pc := fu_in.pc
-  io.wbu.bits.wb.wen := Y
-  io.wbu.bits.wb.rd_idx := rd_idx
-  io.wbu.bits.wb.data := result
-  io.wbu.bits.ex := 0.U.asTypeOf(io.wbu.bits.ex)
+  io.fu_out.valid := fu_valid
+  io.fu_out.bits.wb.pc := fu_in.wb.pc
+  io.fu_out.bits.wb.wen := Y
+  io.fu_out.bits.wb.rd_idx := rd_idx
+  io.fu_out.bits.wb.data := result
+  io.fu_out.bits.fu_type := fu_in.fu_type
+  io.fu_out.bits.fu_op := fu_in.fu_op
+  io.fu_out.bits.op1 := fu_in.op1
+  io.fu_out.bits.op2 := fu_in.op2
+  io.fu_out.bits.ex := 0.U.asTypeOf(io.fu_out.bits.ex)
 
-  when (io.flush.valid || (!io.isu.fire() && io.wbu.fire())) {
+  when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
     fu_valid := N
-  } .elsewhen(!io.flush.valid && io.isu.fire()) {
+  } .elsewhen(!io.ex_flush.valid && io.fu_in.fire()) {
     fu_valid := Y
   }
 }
