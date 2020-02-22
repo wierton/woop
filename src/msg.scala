@@ -24,10 +24,10 @@ class CP0Exception extends Bundle {
 }
 
 class RegFileReq extends Bundle {
-  val rs_idx = Output(REG_SZ.W)
-  val rt_idx = Output(REG_SZ.W)
-  val rs_data = Flipped(ValidIO(Output(conf.xprlen.W)))
-  val rt_data = Flipped(ValidIO(Output(conf.xprlen.W)))
+  val rs_idx = Output(UInt(REG_SZ.W))
+  val rt_idx = Output(UInt(REG_SZ.W))
+  val rs_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
+  val rt_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
 }
 
 class TLBReq extends Bundle {
@@ -107,9 +107,20 @@ class EXU_OPS extends Bundle {
   val fu_op = Output(UInt(FU_OP_SZ.W))
   val op1 = Output(UInt(conf.xprlen.W))
   val op2 = Output(UInt(conf.xprlen.W))
+  val rd_sel = Output(UInt(DEST_SEL_SZ.W))
 }
 
 class BRIDU_PRALU_IO extends Bundle {
+  val wb = new WriteBackIO
+  val fu_type = Output(UInt(FU_TYPE_SZ.W))
+  val fu_op = Output(UInt(FU_OP_SZ.W))
+  val op1_sel = Output(UInt(OP1_SEL_SZ.W))
+  val op2_sel = Output(UInt(OP2_SEL_SZ.W))
+  val rd_sel = Output(UInt(DEST_SEL_SZ.W))
+  val ex = new CP0Exception
+}
+
+class PRALU_FU_IO extends Bundle {
   val wb = new WriteBackIO
   val ops = new EXU_OPS
   val ex = new CP0Exception
@@ -118,8 +129,9 @@ class BRIDU_PRALU_IO extends Bundle {
 class PRALU_LSMDU_IO extends Bundle {
   val wb = new WriteBackIO
   val ops = new EXU_OPS
+  val ex = new CP0Exception
   val paddr = Output(UInt(conf.xprlen.W))
-  val is_cached = Output(UInt(Bool()))
+  val is_cached = Output(Bool())
 }
 
 class PRALU_OUT extends Bundle {

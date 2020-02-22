@@ -12,7 +12,7 @@ class IFU extends Module {
   val io = IO(new Bundle {
     val imem = new MemIO
     val iaddr = new TLBTransaction
-    val idu = DecoupledIO(new IFU_BRIDU_IO)
+    val fu_out = DecoupledIO(new IFU_BRIDU_IO)
     val br_flush = Flipped(ValidIO(new FlushIO))
   })
 
@@ -41,18 +41,18 @@ class IFU extends Module {
   io.imem.req.bits.func  := MX_RD
   io.imem.req.bits.wstrb := 0.U
   io.imem.req.bits.data  := 0.U
-  io.imem.resp.ready := io.idu.ready
+  io.imem.resp.ready := io.fu_out.ready
 
   /* stage 3: blocking */
-  io.idu.valid := io.imem.resp.valid
-  io.idu.bits.pc := s2_datas.io.deq.bits
-  io.idu.bits.instr := io.imem.resp.bits.data
+  io.fu_out.valid := io.imem.resp.valid
+  io.fu_out.bits.pc := s2_datas.io.deq.bits
+  io.fu_out.bits.instr := io.imem.resp.bits.data
 
   if (conf.log_IFU) {
     printf("%d: IFU: pc=%x, s2_datas={[%b,%b]:%x, [%b,%b]:%x}\n", GTimer(), pc, s2_datas.io.enq.valid, s2_datas.io.enq.ready, s2_datas.io.enq.bits, s2_datas.io.deq.valid, s2_datas.io.deq.ready, s2_datas.io.deq.bits)
     io.imem.dump("IFU.imem")
     io.iaddr.dump("IFU.iaddr")
-    io.idu.dump("IFU.idu")
+    io.fu_out.dump("IFU.fu_out")
     io.br_flush.dump("IFU.flush")
   }
 }

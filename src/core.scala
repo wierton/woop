@@ -21,11 +21,11 @@ class Core extends Module {
   val pralu = Module(new PRALU)
   val lsmdu = Module(new LSMDU)
 
-  ifu.fu_out <> bridu.fu_in
-  bridu.fu_out <> pralu.fu_in
-  pralu.fu_out <> lsmdu.fu_in
-  lsmdu.fu_out <> rf.wb
+  ifu.io.fu_out <> bridu.io.fu_in
+  bridu.io.fu_out <> pralu.io.fu_in
+  pralu.io.fu_out <> lsmdu.io.fu_in
+  lsmdu.io.fu_out <> rf.io.wb
 
-  rf.rfreq <> bridu.rfreq
-  ifu.iaddr <> pralu.iaddr
+  rf.io.rfreq <> bridu.io.rfreq
+  ifu.io.iaddr <> pralu.io.iaddr
 }

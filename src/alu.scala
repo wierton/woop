@@ -10,7 +10,7 @@ import njumips.configs._
 class ALU extends Module with UnitOpConstants {
   val io = IO(new Bundle {
     val bypass = ValidIO(new BypassIO)
-    val fu_in = Flipped(DecoupledIO(new PRIDU_IN))
+    val fu_in = Flipped(DecoupledIO(new PRALU_FU_IO))
     val fu_out = DecoupledIO(new PRALU_OUT)
     val ex_flush = Flipped(ValidIO(new FlushIO))
   })
@@ -20,10 +20,10 @@ class ALU extends Module with UnitOpConstants {
 
   io.fu_in.ready := io.fu_out.ready || !fu_valid
 
-  val fu_op = fu_in.fu_op
-  val op1   = fu_in.op1.bits
-  val op2   = fu_in.op2.bits
-  val rd_idx = fu_in.rd_idx
+  val fu_op = fu_in.ops.fu_op
+  val op1   = fu_in.ops.op1
+  val op2   = fu_in.ops.op2
+  val rd_idx = fu_in.wb.rd_idx
   val op2_shamt = op2(REG_SZ - 1, 0).asUInt
 
   val result = Mux1H(Array(

@@ -10,8 +10,8 @@ import njumips.utils._
 
 class RegFile extends Module {
   val io = IO(new Bundle {
-    val bp = Flipped(new BypassIO)
-    val wb = Flipped(new WriteBackIO)
+    val bp = Flipped(ValidIO(new BypassIO))
+    val wb = Flipped(ValidIO(new WriteBackIO))
     val rfreq = Flipped(new RegFileReq)
     val dest_ridx = ValidIO(Input(UInt(REG_SZ.W)))
   })
@@ -21,9 +21,9 @@ class RegFile extends Module {
   val rf_dirtys = Mem(32, N)
   val bp_readys = Mem(32, N)
 
-  val bypass_match(idx:UInt) = io.bp.valid && io.bp.rd_idx === idx
-  val rf_data_ready(idx:UInt) = !rf_dirtys(idx) || bp_readys(idx) || bypass_match(idx)
-  val rf_data_bits(idx:UInt) = MuxCase(Array(
+  def bypass_match(idx:UInt) = io.bp.valid && io.bp.bits.rd_idx === idx
+  def rf_data_ready(idx:UInt) = !rf_dirtys(idx) || bp_readys(idx) || bypass_match(idx)
+  def rf_data_bits(idx:UInt) = MuxCase(0.U, Array(
     !rf_dirtys(idx) -> wb_rf(idx),
     bypass_match(idx) -> io.bp.bits.data,
     bp_readys(idx) -> bp_rf(idx)))
@@ -35,21 +35,21 @@ class RegFile extends Module {
   io.rfreq.rt_data.bits := rf_data_bits(io.rfreq.rt_idx)
 
   when (io.dest_ridx.valid) {
-    rf_dirtys(io.dest_ridx.bits).write(Y)
-    bp_readys(io.bp.bits.rd_idx).write(N)
+    rf_dirtys(io.dest_ridx.bits) := Y
+    bp_readys(io.bp.bits.rd_idx) := N
   }
 
   when (io.wb.valid) {
     when (io.wb.bits.wen) {
-      wb_rf(io.wb.bits.rd_idx).write(io.wb.bits.data)
+      wb_rf(io.wb.bits.rd_idx) := io.wb.bits.data
     }
-    rf_dirtys(io.wb.bits.rd_idx).write(N)
+    rf_dirtys(io.wb.bits.rd_idx) := N
   }
 
   when (io.bp.valid) {
     when (io.bp.bits.wen) {
-      bp_rf(io.bp.bits.rd_idx).write(io.bp.bits.data)
+      bp_rf(io.bp.bits.rd_idx) := io.bp.bits.data
     }
-    bp_readys(io.bp.bits.rd_idx).write(Y)
+    bp_readys(io.bp.bits.rd_idx) := Y
   }
 }

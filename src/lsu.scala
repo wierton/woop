@@ -31,9 +31,9 @@ class LSUStage2Data extends Bundle {
   val addr = UInt(conf.xprlen.W)
   val is_cached = Bool()
 
-  def load(lsu:ISU_LSU_IO, tlb:TLBResp) = {
-    this := Cat(tlb.is_cached, tlb.paddr,lsu.data,
-      lsu.pc, lsu.rd_idx, lsu.fu_op).asTypeOf(this)
+  def load(ind:PRALU_LSMDU_IO) = {
+    this := Cat(ind.is_cached, ind.paddr, ind.wb.data,
+      ind.wb.pc, ind.wb.rd_idx, ind.ops.fu_op).asTypeOf(this)
   }
 }
 
@@ -47,10 +47,9 @@ class LSU extends Module with UnitOpConstants {
   /* stage 2: send memory request */
   val mio_cycles = 2
   val s2_in = Wire(new LSUStage2Data)
-  s2_in.load(io.fu_in.bits, io.fu_in.paddr)
+  s2_in.load(io.fu_in.bits)
   val s2_datas = Module(new Queue(new LSUStage2Data, mio_cycles))
   val s2_valids = RegInit(0.U(mio_cycles.W))
-  s2_datas.reset := io.flush.valid
   s2_datas.io.enq.valid := io.dmem.req.fire()
   s2_datas.io.enq.bits := s2_in
   s2_datas.io.deq.ready := io.dmem.resp.fire()

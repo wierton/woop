@@ -214,6 +214,7 @@ trait ISUConstants extends MDUConstants with LSUConstants
   val FU_BRU = 2.U(FU_TYPE_SZ.W)
   val FU_LSU = 3.U(FU_TYPE_SZ.W)
   val FU_MDU = 4.U(FU_TYPE_SZ.W)
+  val FU_PRU = 5.U(FU_TYPE_SZ.W)
 
   // RS Operand Select Signal
   val OP1_SEL_SZ = 2
@@ -237,11 +238,6 @@ trait ISUConstants extends MDUConstants with LSUConstants
   val DEST_RD = 0.U(2.W)
   val DEST_RT = 1.U(2.W)
 }
-
-
-object ISUConstantsImpl extends ISUConstants { }
-import ISUConstantsImpl._
-
 
 // UInt definition cannot occur in Bundle subclass
 trait UnitOpConstants extends ISUConstants with MemConstants {
@@ -302,5 +298,6 @@ object consts extends InstrPattern
   with InstrConstants
   with MemConstants
   with CP0Constants
+  with UnitOpConstants
 {
 }
