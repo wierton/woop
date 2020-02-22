@@ -10,8 +10,8 @@ import njumips.configs._
 class ALU extends Module with UnitOpConstants {
   val io = IO(new Bundle {
     val bypass = ValidIO(new BypassIO)
-    val fu_in = Flipped(DecoupledIO(new EXU_IO))
-    val fu_out = DecoupledIO(new EXU_IO)
+    val fu_in = Flipped(DecoupledIO(new PRIDU_IN))
+    val fu_out = DecoupledIO(new PRALU_OUT)
     val ex_flush = Flipped(ValidIO(new FlushIO))
   })
 
@@ -21,8 +21,8 @@ class ALU extends Module with UnitOpConstants {
   io.fu_in.ready := io.fu_out.ready || !fu_valid
 
   val fu_op = fu_in.fu_op
-  val op1   = fu_in.op1
-  val op2   = fu_in.op2
+  val op1   = fu_in.op1.bits
+  val op2   = fu_in.op2.bits
   val rd_idx = fu_in.rd_idx
   val op2_shamt = op2(REG_SZ - 1, 0).asUInt
 
@@ -51,10 +51,6 @@ class ALU extends Module with UnitOpConstants {
   io.fu_out.bits.wb.wen := Y
   io.fu_out.bits.wb.rd_idx := rd_idx
   io.fu_out.bits.wb.data := result
-  io.fu_out.bits.fu_type := fu_in.fu_type
-  io.fu_out.bits.fu_op := fu_in.fu_op
-  io.fu_out.bits.op1 := fu_in.op1
-  io.fu_out.bits.op2 := fu_in.op2
   io.fu_out.bits.ex := 0.U.asTypeOf(io.fu_out.bits.ex)
 
   when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {

@@ -95,21 +95,28 @@ class IFU_BRIDU_IO extends Bundle {
   val ex = new CP0Exception
 }
 
-class BRIDU_PRALU_IO extends Bundle {
-  val wb = new WriteBackIO
+class EXU_OPS extends Bundle {
   val fu_type = Output(UInt(FU_TYPE_SZ.W))
   val fu_op = Output(UInt(FU_OP_SZ.W))
-  val op1_sel = Output(UInt(OP1_SEL_SZ.W))
-  val op2_sel = Output(UInt(OP2_SEL_SZ.W))
+  val op1 = Output(UInt(conf.xprlen.W))
+  val op2 = Output(UInt(conf.xprlen.W))
+}
+
+class BRIDU_PRALU_IO extends Bundle {
+  val wb = new WriteBackIO
+  val ops = new EXU_OPS
   val ex = new CP0Exception
 }
 
-class EXU_IO extends Bundle {
+class PRALU_LSMDU_IO extends Bundle {
   val wb = new WriteBackIO
-  val fu_type = Output(UInt(FU_TYPE_SZ.W))
-  val fu_op = Output(UInt(FU_OP_SZ.W))
-  val op1 = ValidIO(Output(UInt(conf.xprlen.W)))
-  val op2 = ValidIO(Output(UInt(conf.xprlen.W)))
+  val ops = new EXU_OPS
+  val paddr = Output(UInt(conf.xprlen.W))
+  val is_cached = Output(UInt(Bool()))
+}
+
+class PRALU_OUT extends Bundle {
+  val wb = new WriteBackIO
   val ex = new CP0Exception
 }
 

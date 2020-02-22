@@ -6,14 +6,13 @@ import chisel3.util._
 import njumips.consts._
 import njumips.configs._
 
-
 class PRU extends Module {
   val io = IO(new Bundle {
     val iaddr = Flipped(new TLBTransaction)
-    val daddr = Flipped(new TLBTransaction)
-    val fu_in = Flipped(DecoupledIO(new EXU_IO))
-    val fu_out = DecoupledIO(new EXU_IO)
-    val ex_flush = Flipped(ValidIO(new FlushIO))
+    val fu_in = Flipped(DecoupledIO(new PRIDU_IN))
+    val pru_out = DecoupledIO(new PRIDU_LSMDU_IO)
+    val exinfo = Flipped(ValidIO(new CP0Expcetion))
+    val ex_flush = ValidIO(new FlushIO)
   })
 
   /* handle memory translate request */
@@ -33,21 +32,21 @@ class PRU extends Module {
   io.iaddr.resp.bits.is_cached := iaddr_req.vaddr(31, 29) =/= "b101".U
   io.iaddr.resp.bits.ex := 0.U.asTypeOf(new CP0Exception)
 
-  io.daddr.req.ready := Y
-  io.daddr.resp.valid := daddr_req_valid
-  io.daddr.resp.bits.paddr := naive_tlb_translate(daddr_req.vaddr)
-  io.daddr.resp.bits.is_cached := daddr_req.vaddr(31, 29) =/= "b101".U
-  io.daddr.resp.bits.ex := 0.U.asTypeOf(new CP0Exception)
-
-
   /* pipeline stage for bru data */
   val fu_valid = RegInit(N)
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
-  when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
+  val se_imm = fu_in.wb.instr.imm.asTypeOf(SInt(conf.xprlen.W)).asUInt
+  val lsu_vaddr = fu_in.op1 + se_imm
+  when (io.ex_flush.valid || (!io.fu_in.fire() && io.pru_out.fire())) {
     fu_valid := N
   } .elsewhen(!io.ex_flush.valid && io.fu_in.fire()) {
     fu_valid := Y
   }
-  io.fu_out.valid := fu_valid
-  io.fu_out.bits := fu_in
+  io.pru_out.valid := fu_valid
+  io.pru_out.bits.fu_out := fu_in
+  io.pru_out.bits.paddr := naive_tlb_translate(lsu_vaddr)
+  io.pru_out.bits.is_cached := lsu_vaddr(31, 29) =/= "b101".U
+
+  /* exception flush */
+  // io.ex_flush.valid := io.fu_in.ex || xx
 }
