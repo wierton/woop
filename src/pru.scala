@@ -10,7 +10,7 @@ class PRU extends Module {
   val io = IO(new Bundle {
     val iaddr = Flipped(new TLBTransaction)
     val fu_in = Flipped(DecoupledIO(new PRALU_FU_IO))
-    val fu_out = DecoupledIO(new PRALU_LSMDU_IO)
+    val fu_out = DecoupledIO(new PRU_OUT_PRALU)
     val exinfo = Flipped(ValidIO(new CP0Exception))
     val ex_flush = ValidIO(new FlushIO)
   })
@@ -45,7 +45,12 @@ class PRU extends Module {
   io.fu_out.bits.ops := fu_in.ops
   io.fu_out.bits.paddr := naive_tlb_translate(lsu_vaddr)
   io.fu_out.bits.is_cached := lsu_vaddr(31, 29) =/= "b101".U
+  io.fu_out.bits.ex := 0.U.asTypeOf(new CP0Exception)
 
   /* exception flush */
-  // io.ex_flush.valid := io.fu_in.ex || xx
+  io.ex_flush.valid := N
+  io.ex_flush.bits.br_target := 0.U
+
+  /* PRU IO */
+  io.fu_in.ready := io.fu_out.ready
 }

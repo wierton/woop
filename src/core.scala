@@ -26,6 +26,17 @@ class Core extends Module {
   pralu.io.fu_out <> lsmdu.io.fu_in
   lsmdu.io.fu_out <> rf.io.wb
 
+  rf.io.bp <> pralu.io.bp
   rf.io.rfreq <> bridu.io.rfreq
   ifu.io.iaddr <> pralu.io.iaddr
+
+  ifu.io.imem <> io.imem
+  lsmdu.io.dmem <> io.dmem
+
+  ifu.io.br_flush <> bridu.io.br_flush
+  ifu.io.ex_flush <> pralu.io.ex_flush
+  bridu.io.ex_flush <> pralu.io.ex_flush
+
+  pralu.io.rs_data := rf.io.rfreq.rs_data
+  pralu.io.rt_data := rf.io.rfreq.rt_data
 }

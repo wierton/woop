@@ -12,20 +12,20 @@ class LSMDU extends Module {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new PRALU_LSMDU_IO))
     val fu_out = ValidIO(new WriteBackIO)
+    val dmem = new MemIO
   })
 
   /* LSU IO */
   val lsu = Module(new LSU)
   lsu.io.fu_in.valid := io.fu_in.valid && io.fu_in.bits.ops.fu_type === FU_LSU
-  lsu.io.fu_in.bits.wb <> io.fu_out.bits
-  lsu.io.fu_in.bits.ops := io.fu_in.bits.ops
+  lsu.io.fu_in.bits := io.fu_in.bits
   lsu.io.fu_out.ready := Y
+  lsu.io.dmem <> io.dmem
 
   /* MDU IO */
   val mdu = Module(new MDU)
   mdu.io.fu_in.valid := io.fu_in.valid && io.fu_in.bits.ops.fu_type === FU_MDU
-  mdu.io.fu_in.bits.wb := io.fu_out.bits
-  mdu.io.fu_in.bits.ops := io.fu_in.bits.ops
+  mdu.io.fu_in.bits := io.fu_in.bits
   mdu.io.fu_out.ready := Y
 
   /* pipeline stage for ALU,BRU,PRU */

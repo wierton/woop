@@ -14,9 +14,8 @@ class PRALU extends Module {
     val rt_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
     val fu_in = Flipped(DecoupledIO(new BRIDU_PRALU_IO))
     val fu_out = DecoupledIO(new PRALU_LSMDU_IO)
-    val bp = new BypassIO
-    val exinfo = ValidIO(new CP0Exception)
-    val ex_flush = Flipped(ValidIO(new FlushIO))
+    val bp = ValidIO(new BypassIO)
+    val ex_flush = ValidIO(new FlushIO)
     val iaddr = Flipped(new TLBTransaction)
   })
 
@@ -41,17 +40,6 @@ class PRALU extends Module {
     (io.fu_in.bits.op2_sel === OP2_SA)  -> shamt_ext,
   )).asUInt
 
-  /* ALU IO */
-  val alu = Module(new ALU)
-  alu.io.fu_in.valid := io.fu_in.valid && io.fu_in.bits.fu_type === FU_ALU
-  alu.io.fu_in.bits.wb := io.fu_in.bits.wb
-  alu.io.fu_in.bits.ops.fu_type := io.fu_in.bits.fu_type
-  alu.io.fu_in.bits.ops.fu_op := io.fu_in.bits.fu_op
-  alu.io.fu_in.bits.ops.op1 := op1_data
-  alu.io.fu_in.bits.ops.op2 := op2_data
-  alu.io.fu_in.bits.ex := io.fu_in.bits.ex
-  alu.io.fu_out.ready := io.fu_out.ready
-
   /* PRU IO */
   val pru = Module(new PRU)
   pru.io.iaddr <> io.iaddr
@@ -64,6 +52,18 @@ class PRALU extends Module {
   pru.io.fu_in.bits.ops.op2 := op2_data
   pru.io.fu_in.bits.ex := io.fu_in.bits.ex
   pru.io.fu_out.ready := io.fu_out.ready
+
+  /* ALU IO */
+  val alu = Module(new ALU)
+  alu.io.ex_flush <> pru.io.ex_flush
+  alu.io.fu_in.valid := io.fu_in.valid && io.fu_in.bits.fu_type === FU_ALU
+  alu.io.fu_in.bits.wb := io.fu_in.bits.wb
+  alu.io.fu_in.bits.ops.fu_type := io.fu_in.bits.fu_type
+  alu.io.fu_in.bits.ops.fu_op := io.fu_in.bits.fu_op
+  alu.io.fu_in.bits.ops.op1 := op1_data
+  alu.io.fu_in.bits.ops.op2 := op2_data
+  alu.io.fu_in.bits.ex := io.fu_in.bits.ex
+  alu.io.fu_out.ready := io.fu_out.ready
 
   /* pipeline stage for bru data */
   val fu_valid = RegInit(N)
@@ -92,11 +92,19 @@ class PRALU extends Module {
   io.fu_out.bits.ops.fu_op := fu_in.fu_op
   io.fu_out.bits.ops.op1 := op1_data
   io.fu_out.bits.ops.op2 := op2_data
-  io.fu_out.bits.ops.rd_sel := fu_in.rd_sel
+  io.fu_out.bits.is_cached := pru.io.fu_out.bits.is_cached
+  io.fu_out.bits.paddr := pru.io.fu_out.bits.paddr
+  io.ex_flush <> pru.io.ex_flush
+
+  /* bypass */
+  io.bp.valid := alu.io.fu_out.valid || pru.io.fu_out.valid
+  io.bp.bits.wen := io.fu_out.bits.wb.wen
+  io.bp.bits.rd_idx := io.fu_out.bits.wb.rd_idx
+  io.bp.bits.data :=  io.fu_out.bits.wb.data
 
   /* cp0 exception */
-  io.exinfo.valid := io.fu_out.valid
-  io.exinfo.bits := Mux1H(Array(
+  pru.io.exinfo.valid := io.fu_out.valid
+  pru.io.exinfo.bits := Mux1H(Array(
     alu.io.fu_out.valid -> alu.io.fu_out.bits.ex,
     pru.io.fu_out.valid -> pru.io.fu_out.bits.ex,
     fu_valid -> fu_in.ex))

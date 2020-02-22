@@ -14,6 +14,7 @@ class IFU extends Module {
     val iaddr = new TLBTransaction
     val fu_out = DecoupledIO(new IFU_BRIDU_IO)
     val br_flush = Flipped(ValidIO(new FlushIO))
+    val ex_flush = Flipped(ValidIO(new FlushIO))
   })
 
   // init to be valid, the first instruction
@@ -47,6 +48,7 @@ class IFU extends Module {
   io.fu_out.valid := io.imem.resp.valid
   io.fu_out.bits.pc := s2_datas.io.deq.bits
   io.fu_out.bits.instr := io.imem.resp.bits.data
+  io.fu_out.bits.ex := 0.U.asTypeOf(new CP0Exception)
 
   if (conf.log_IFU) {
     printf("%d: IFU: pc=%x, s2_datas={[%b,%b]:%x, [%b,%b]:%x}\n", GTimer(), pc, s2_datas.io.enq.valid, s2_datas.io.enq.ready, s2_datas.io.enq.bits, s2_datas.io.deq.valid, s2_datas.io.deq.ready, s2_datas.io.deq.bits)

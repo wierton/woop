@@ -25,6 +25,7 @@ class LSUOp extends Bundle
 
 class LSUStage2Data extends Bundle {
   val op = new LSUOp
+  val instr = new Instr
   val rd_idx = UInt(REG_SZ.W)
   val pc = UInt(conf.xprlen.W)
   val data = UInt(conf.xprlen.W)
@@ -33,7 +34,7 @@ class LSUStage2Data extends Bundle {
 
   def load(ind:PRALU_LSMDU_IO) = {
     this := Cat(ind.is_cached, ind.paddr, ind.wb.data,
-      ind.wb.pc, ind.wb.rd_idx, ind.ops.fu_op).asTypeOf(this)
+      ind.wb.pc, ind.wb.rd_idx, ind.wb.instr.asUInt, ind.ops.fu_op).asTypeOf(this)
   }
 }
 
@@ -43,6 +44,8 @@ class LSU extends Module with UnitOpConstants {
     val fu_in = Flipped(DecoupledIO(new PRALU_LSMDU_IO))
     val fu_out = DecoupledIO(new PRALU_OUT)
   })
+
+  io.fu_in.ready := io.fu_out.ready
 
   /* stage 2: send memory request */
   val mio_cycles = 2
@@ -80,8 +83,11 @@ class LSU extends Module with UnitOpConstants {
   val lmask = Cat(for (i <- 0 until 4) yield lstrb(i).asTypeOf(SInt(8.W)))
   val rstrb = "b0001111".U >> (~s3_in.addr(1, 0))
   val rmask = Cat(for (i <- 0 until 4) yield rstrb(i).asTypeOf(SInt(8.W)))
+  io.fu_out.bits.wb.wen := Y
+  io.fu_out.bits.wb.rd_idx := s3_in.rd_idx
+  io.fu_out.bits.wb.instr := s3_in.instr
   io.fu_out.bits.wb.data := Mux(s3_in.op.isAligned(),
-  io.dmem.resp.bits.data, Mux(s3_in.op.ext === LSU_L,
+    io.dmem.resp.bits.data, Mux(s3_in.op.ext === LSU_L,
     (lmask & s3_data) | (~lmask & s3_in.data),
     (rmask & s3_data) | (~rmask & s3_in.data)))
   io.fu_out.bits.ex := 0.U.asTypeOf(io.fu_out.bits.ex)

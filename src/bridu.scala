@@ -14,6 +14,7 @@ class BRIDU extends Module {
     val fu_out = DecoupledIO(new BRIDU_PRALU_IO)
     val rfreq = new RegFileReq
     val br_flush = ValidIO(new FlushIO)
+    val ex_flush = Flipped(ValidIO(new FlushIO))
   })
 
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
@@ -77,6 +78,8 @@ class BRIDU extends Module {
   /* register RW */
   io.rfreq.rs_idx := instr.rs_idx
   io.rfreq.rt_idx := instr.rt_idx
+  io.rfreq.dest_ridx.valid := fu_valid
+  io.rfreq.dest_ridx.bits := Mux(rd_sel === DEST_RD, instr.rd_idx, instr.rt_idx)
 
   /* branch check */
   val se_imm = instr.imm.asTypeOf(SInt(conf.xprlen.W)).asUInt
