@@ -27,6 +27,7 @@ class SOC_EMU_TOP extends Module {
   val dev = Module(new SimDev)
   val as = Array(new AddrSpace("h00000000".U, "h20000000".U))
   val crossbar = Module(new CrossbarNx1(4))
+  val icache = Module(new ICacheMemIO)
 
   dev.io.clock := clock
   dev.io.reset := reset
@@ -34,21 +35,14 @@ class SOC_EMU_TOP extends Module {
   imux.io.in <> core.io.imem
   dmux.io.in <> core.io.dmem
 
-  crossbar.io.in(0) <> imux.io.cached
+  imux.io.cached <> icache.io.in
+  crossbar.io.in(0) <> icache.io.out
   crossbar.io.in(1) <> imux.io.uncached
   crossbar.io.in(2) <> dmux.io.cached
   crossbar.io.in(3) <> dmux.io.uncached
+  icache.io.flush <> core.io.flush
 
-  crossbar.io.out.req <> dev.io.in.req
-
-  val cistern = Module(new Cistern(new MemResp, conf.mio_cycles - 1))
-  cistern.io.enq <> dev.io.in.resp
-  crossbar.io.out.resp <> cistern.io.deq
-
-  if (conf.log_Cistern) {
-    cistern.io.enq.dump("cistern.io.enq")
-    cistern.io.deq.dump("cistern.io.deq")
-  }
+  crossbar.io.out <> dev.io.in
 
   core.io.commit <> io.commit
 

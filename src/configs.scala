@@ -12,6 +12,9 @@ object conf {
   val axi_data_width = 32
   val axi_id_width = 4
   val mio_cycles = 3
+  val nICacheSets = 32
+  val nICacheWays = 4
+  val nICacheWordsPerWay = 4
   val log_rf = true
   val log_IFU = true
   val log_BRIDU = true

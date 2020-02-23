@@ -11,6 +11,7 @@ class Core extends Module {
     val imem = new MemIO
     val dmem = new MemIO
     val commit = new CommitIO
+    val flush = Output(Bool())
   })
 
   val rf = Module(new RegFile)
@@ -34,6 +35,7 @@ class Core extends Module {
   ifu.io.br_flush <> bridu.io.br_flush
   ifu.io.ex_flush <> pralu.io.ex_flush
   bridu.io.ex_flush <> pralu.io.ex_flush
+  io.flush := bridu.io.br_flush.valid || pralu.io.ex_flush.valid
 
   pralu.io.rs_data := rf.io.rfreq.rs_data
   pralu.io.rt_data := rf.io.rfreq.rt_data
