@@ -35,22 +35,17 @@ class IFU extends Module {
   val s2_datas = Mem(conf.mio_cycles, UInt(33.W))
   val s2_out = s2_datas(s2_data_tl)
   when (io.ex_flush.valid) {
-  } .elsewhen (io.br_flush.valid) {
-    for (i <- 1 until conf.mio_cycles) {
+    for (i <- 0 until conf.mio_cycles) {
       s2_datas(i) := 0.U
     }
-    when (io.fu_out.fire()) {
-      s2_datas(0) := 0.U
-      s2_data_tl := ~(0.U(log2Ceil(conf.mio_cycles + 1).W))
-    } .otherwise {
-      s2_datas(0) := s2_out
-      s2_data_tl := 0.U
-    }
   } .elsewhen (io.imem.req.fire()) {
-    for (i <- 1 until conf.mio_cycles) {
-      s2_datas(i) := s2_datas(i - 1)
+    when (io.br_flush.valid) {
+    } .otherwise {
+      for (i <- 1 until conf.mio_cycles) {
+        s2_datas(i) := s2_datas(i - 1)
+      }
+      s2_datas(0) := Cat(Y, s2_in)
     }
-    s2_datas(0) := Cat(Y, s2_in)
   }
   s2_data_tl := s2_data_tl + io.imem.req.fire() - io.imem.resp.fire()
   io.imem.req.valid := io.iaddr.resp.valid

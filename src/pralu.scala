@@ -80,9 +80,9 @@ class PRALU extends Module {
     (io.fu_in.bits.op2_sel === OP2_RS), io.rs_data.valid, Y)
   val rt_ready = Mux((io.fu_in.bits.op1_sel === OP1_RT) ||
     (io.fu_in.bits.op2_sel === OP2_RT), io.rt_data.valid, Y)
-  io.fu_in.ready := rs_ready && rt_ready && io.fu_out.ready && Mux1H(Array(
-    (io.fu_in.bits.fu_type === FU_LSU) -> Y,
-    (io.fu_in.bits.fu_type === FU_MDU) -> Y,
+  io.fu_in.ready := rs_ready && rt_ready && Mux1H(Array(
+    (io.fu_in.bits.fu_type === FU_BRU) -> io.fu_out.ready,
+    (io.fu_in.bits.fu_type === FU_MDU) -> io.fu_out.ready,
     (io.fu_in.bits.fu_type === FU_ALU) -> alu.io.fu_in.ready,
     (io.fu_in.bits.fu_type === FU_PRU) -> pru.io.fu_in.ready,
     (io.fu_in.bits.fu_type === FU_LSU) -> pru.io.fu_in.ready))
