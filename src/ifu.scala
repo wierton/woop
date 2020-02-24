@@ -8,6 +8,63 @@ import njumips.configs._
 import njumips.dumps._
 import njumips.utils._
 
+class IFUPipelineData[T<:Data](gen:T, entries:Int) extends Module {
+  val io = IO(new Bundle {
+    val enq = Flipped(DecoupledIO(gen))
+    val deq = DecoupledIO(gen)
+    val br_flush = Flipped(ValidIO(new FlushIO))
+    val ex_flush = Flipped(ValidIO(new FlushIO))
+  })
+
+  val head = RegInit(0.U(log2Ceil(entries).W))
+  val tail = RegInit(0.U(log2Ceil(entries).W))
+  val is_full = RegInit(N)
+  val is_empty = RegInit(Y)
+  val queue = Mem(entries, gen)
+  def next(v:UInt) = Mux(v + 1.U === entries.U, 0.U, v + 1.U)
+  val next_head = next(head)
+  val next_tail = next(tail)
+
+  io.enq.ready := !is_full || io.deq.ready
+  io.deq.valid := !is_empty
+  io.deq.bits := queue(tail)
+
+  when (io.ex_flush.valid) {
+    head := 0.U
+    tail := 0.U
+    is_full := N
+    is_empty := Y
+  } .elsewhen (io.br_flush.valid) {
+    when (io.deq.fire()) {
+      head := 0.U
+      tail := 0.U
+      is_full := N
+      is_empty := Y
+    } .otherwise {
+      head := next_tail
+      is_full := N
+      is_empty := N
+    }
+  } .otherwise {
+    when (io.enq.fire()) {
+      queue(head) := io.enq.bits
+      head := next_head
+      is_empty := N
+      when (next_head === tail && !io.deq.fire()) {
+        is_full := Y
+      }
+    }
+
+    when (io.deq.fire()) {
+      tail := next_tail
+      when (!(is_full && io.enq.fire())) { is_full := N }
+      when (next_tail === head && !io.enq.fire()) {
+        is_empty := Y
+      }
+    }
+  }
+}
+
 class IFU extends Module {
   val io = IO(new Bundle {
     val imem = new MemIO
@@ -34,7 +91,7 @@ class IFU extends Module {
   val s2_data_tl = RegInit(~(0.U(log2Ceil(conf.mio_cycles + 1).W)))
   val s2_datas = Mem(conf.mio_cycles, UInt(33.W))
   val s2_out = s2_datas(s2_data_tl)
-  when (io.ex_flush.valid) {
+  when (io.ex_flush.valid || io.br_flush.valid) {
     for (i <- 0 until conf.mio_cycles) {
       s2_datas(i) := 0.U
     }

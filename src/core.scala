@@ -6,6 +6,17 @@ import chisel3.util._
 import njumips.consts._
 import njumips.configs._
 
+class BrFlushCtrler extends Module {
+  val io = IO(new Bundle {
+    val flush_in = Flipped(ValidIO(new FlushIO))
+    val flush_out = ValidIO(new FlushIO)
+    val inst_valid = Input(Bool())
+  })
+  val flush = RegEnable(next=io.flush_in, enable=io.flush_in.valid)
+  io.flush_out.valid := flush.valid && RegNext(io.inst_valid)
+  io.flush_out.bits := flush.bits
+}
+
 class Core extends Module {
   val io = IO(new Bundle {
     val imem = new MemIO
@@ -32,7 +43,11 @@ class Core extends Module {
   ifu.io.imem <> io.imem
   lsmdu.io.dmem <> io.dmem
 
-  ifu.io.br_flush <> bridu.io.br_flush
+  val flush_ctrler = Module(new BrFlushCtrler)
+  flush_ctrler.io.inst_valid := bridu.io.fu_in.fire()
+  flush_ctrler.io.flush_in <> bridu.io.br_flush
+  ifu.io.br_flush <> flush_ctrler.io.flush_out
+
   ifu.io.ex_flush <> pralu.io.ex_flush
   bridu.io.ex_flush <> pralu.io.ex_flush
   io.flush := bridu.io.br_flush.valid || pralu.io.ex_flush.valid

@@ -13,7 +13,7 @@ object GTimer {
   }
 }
 
-class Cistern[T<:Data](gen: T, entries: Int) extends Module {
+class Cistern[T<:Data](gen:T, entries:Int) extends Module {
   val io = IO(new Bundle {
     val enq = Flipped(DecoupledIO(gen))
     val deq = DecoupledIO(gen)
