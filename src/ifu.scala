@@ -8,10 +8,11 @@ import njumips.configs._
 import njumips.dumps._
 import njumips.utils._
 
+/* without cache */
 class IFUPipelineData[T<:Data](gen:T, entries:Int) extends Module {
   val io = IO(new Bundle {
     val enq = Flipped(DecoupledIO(gen))
-    val deq = DecoupledIO(gen)
+    val deq = DecoupledIO(ValidIO(gen))
     val br_flush = Flipped(ValidIO(new FlushIO))
     val ex_flush = Flipped(ValidIO(new FlushIO))
   })
@@ -20,7 +21,7 @@ class IFUPipelineData[T<:Data](gen:T, entries:Int) extends Module {
   val tail = RegInit(0.U(log2Ceil(entries).W))
   val is_full = RegInit(N)
   val is_empty = RegInit(Y)
-  val queue = Mem(entries, gen)
+  val queue = Mem(entries, ValidIO(gen))
   def next(v:UInt) = Mux(v + 1.U === entries.U, 0.U, v + 1.U)
   val next_head = next(head)
   val next_tail = next(tail)
@@ -29,33 +30,42 @@ class IFUPipelineData[T<:Data](gen:T, entries:Int) extends Module {
   io.deq.valid := !is_empty
   io.deq.bits := queue(tail)
 
-  when (io.ex_flush.valid || (io.br_flush.valid && io.deq.fire())) {
-    head := 0.U
-    tail := 0.U
-    is_full := N
-    is_empty := Y
-  } .elsewhen (io.br_flush.valid && !io.deq.fire()) {
-    head := next_tail
-    is_full := N
-    is_empty := N
-  } .otherwise {
-    when (io.enq.fire()) {
-      queue(head) := io.enq.bits
-      head := next_head
-      is_empty := N
-      when (next_head === tail && !io.deq.fire()) {
-        is_full := Y
-      }
-    }
-
-    when (io.deq.fire()) {
-      tail := next_tail
-      when (!(is_full && io.enq.fire())) { is_full := N }
-      when (next_tail === head && !io.enq.fire()) {
-        is_empty := Y
-      }
+  when (io.br_flush.valid || io.ex_flush.valid) {
+    val clear_all = io.ex_flush.valid || io.deq.fire()
+    for (i <- 0 until entries) {
+      queue(i).valid := Mux(clear_all,
+        N, Mux(i.U === tail, queue(i).valid, N))
     }
   }
+
+  when (io.enq.fire()) {
+    val q_head = queue(head)
+    when ((!io.br_flush.valid && !io.ex_flush.valid) || is_empty) {
+      q_head.valid := Y
+    }
+    q_head.bits := io.enq.bits
+    head := next_head
+    is_empty := N
+    when (next_head === tail && !io.deq.fire()) {
+      is_full := Y
+    }
+  }
+
+  when (io.deq.fire()) {
+    tail := next_tail
+    when (!(is_full && io.enq.fire())) { is_full := N }
+    when (next_tail === head && !io.enq.fire()) {
+      is_empty := Y
+    }
+  }
+  if (conf.log_IFUPipelineData) {
+    printf("%d: IFUPD.io: enq[%b,%b]=%x, deq[%b,%b]=%b%x, br_flush=%b, ex_flush=%b\n", GTimer(), io.enq.valid, io.enq.ready, io.enq.bits.asUInt, io.deq.valid, io.deq.ready, io.deq.bits.valid, io.deq.bits.bits.asUInt, io.br_flush.valid, io.ex_flush.valid)
+    printf("%d: IFUPD: head=%d, tail=%d, is_full=%d, is_empty=%d, next_head=%d, next_tail=%d\n", GTimer(), head, tail, is_full, is_empty, next_head, next_tail)
+    val p = Seq[Bits](GTimer())
+    val q = for (i <- 0 until entries) yield queue(i).asUInt
+    printf("%d: IFUPD: queue={"+List.fill(entries)("%x,").mkString+"}\n", (p++q):_*)
+  }
+  assert (!is_full || !is_empty)
 }
 
 class IFU extends Module {
@@ -81,10 +91,10 @@ class IFU extends Module {
 
   /* stage 2: blocking */
   val s2_in = RegEnable(next=pc, enable=io.iaddr.req.fire())
-  val s2_datas = Module(new IFUPipelineData(UInt(33.W), conf.mio_cycles))
+  val s2_datas = Module(new IFUPipelineData(UInt(32.W), conf.mio_cycles))
   val s2_out = s2_datas.io.deq.bits
   s2_datas.io.enq.valid := io.imem.req.fire()
-  s2_datas.io.enq.bits := Cat(Y, s2_in)
+  s2_datas.io.enq.bits := s2_in
   s2_datas.io.deq.ready := io.imem.resp.fire()
   s2_datas.io.br_flush <> io.br_flush
   s2_datas.io.ex_flush <> io.ex_flush
@@ -98,13 +108,13 @@ class IFU extends Module {
   io.imem.resp.ready := io.fu_out.ready
 
   /* stage 3: blocking */
-  io.fu_out.valid := io.imem.resp.valid && s2_out(32)
-  io.fu_out.bits.pc := s2_out(31, 0)
+  io.fu_out.valid := io.imem.resp.valid && s2_out.valid
+  io.fu_out.bits.pc := s2_out.bits
   io.fu_out.bits.instr := io.imem.resp.bits.data
   io.fu_out.bits.ex := 0.U.asTypeOf(new CP0Exception)
 
   if (conf.log_IFU) {
-    printf("%d: IFU: pc=%x, s2_datas={enq[%b,%b]:%x, deq[%b,%b]:%x}\n", GTimer(), pc, s2_datas.io.enq.valid, s2_datas.io.enq.ready, s2_datas.io.enq.bits, s2_datas.io.deq.valid, s2_datas.io.deq.ready, s2_datas.io.deq.bits)
+    printf("%d: IFU: pc=%x, s2_datas={enq[%b,%b]:%x, deq[%b,%b]:%b%x}\n", GTimer(), pc, s2_datas.io.enq.valid, s2_datas.io.enq.ready, s2_datas.io.enq.bits, s2_datas.io.deq.valid, s2_datas.io.deq.ready, s2_datas.io.deq.bits.valid, s2_datas.io.deq.bits.bits)
     io.imem.dump("IFU.imem")
     io.iaddr.dump("IFU.iaddr")
     io.fu_out.dump("IFU.fu_out")

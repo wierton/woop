@@ -205,6 +205,7 @@ trait ISUConstants extends MDUConstants with LSUConstants
   val DEST_X = 0.U(2.W)
   val DEST_RD = 0.U(2.W)
   val DEST_RT = 1.U(2.W)
+  val DEST_31 = 2.U(2.W)
 }
 
 // UInt definition cannot occur in Bundle subclass

@@ -17,6 +17,7 @@ object conf {
   val nICacheWordsPerWay = 4
   val log_rf = true
   val log_IFU = true
+  val log_IFUPipelineData = true
   val log_BRIDU = true
   val log_PRALU = true
   val log_PRU = true

@@ -57,15 +57,21 @@ class BRIDU extends Module {
      BGTZ    -> List(Y, FU_BRU,  BR_GTZ,     OP1_RS,   OP2_X,   DEST_RD),
      BLTZ    -> List(Y, FU_BRU,  BR_LTZ,     OP1_RS,   OP2_X,   DEST_RD),
      J       -> List(Y, FU_BRU,  BR_J,       OP1_RS,   OP2_X,   DEST_RD),
-     JAL     -> List(Y, FU_BRU,  BR_JAL,     OP1_RS,   OP2_X,   DEST_RD),
+     JAL     -> List(Y, FU_BRU,  BR_JAL,     OP1_RS,   OP2_X,   DEST_31),
      JR      -> List(Y, FU_BRU,  BR_JR,      OP1_RS,   OP2_X,   DEST_RD),
      JALR    -> List(Y, FU_BRU,  BR_JALR,    OP1_RS,   OP2_X,   DEST_RD),
 
   ))
 
   val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: rd_sel :: Nil = csignals
+  assert (valid)
 
   val instr = fu_in.instr.asTypeOf(new Instr)
+  val dest_ridx = Mux1H(Array(
+    (rd_sel === DEST_RD) -> instr.rd_idx,
+    (rd_sel === DEST_RT) -> instr.rt_idx,
+    (rd_sel === DEST_31) -> 31.U,
+  ))
 
   /* fu_out IO */
   io.fu_out.bits.fu_type := fu_type
@@ -79,7 +85,7 @@ class BRIDU extends Module {
   io.rfreq.rs_idx := instr.rs_idx
   io.rfreq.rt_idx := instr.rt_idx
   io.rfreq.dest_ridx.valid := fu_valid
-  io.rfreq.dest_ridx.bits := Mux(rd_sel === DEST_RD, instr.rd_idx, instr.rt_idx)
+  io.rfreq.dest_ridx.bits := dest_ridx
 
   /* branch check */
   val se_imm = instr.imm.asTypeOf(SInt(conf.xprlen.W)).asUInt
@@ -107,7 +113,7 @@ class BRIDU extends Module {
   io.fu_out.bits.wb.pc := fu_in.pc
   io.fu_out.bits.wb.instr := instr
   /* only valid for bru */
-  io.fu_out.bits.wb.rd_idx := Mux(rd_sel === DEST_RT, instr.rt_idx, instr.rd_idx)
+  io.fu_out.bits.wb.rd_idx := dest_ridx
   io.fu_out.bits.wb.wen := br_info(32)
   io.fu_out.bits.wb.data := fu_in.pc + 8.U
   /* only valid for bru */
@@ -119,7 +125,7 @@ class BRIDU extends Module {
   }
 
   if (conf.log_BRIDU) {
-    printf("%d: BRIDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, se_imm=%x, Ia=%x, Ja=%x, JRa=%x, br_info=%x\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, se_imm, Ia, Ja, JRa, br_info);
+    printf("%d: BRIDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, rd_idx=%d, se_imm=%x, Ia=%x, Ja=%x, JRa=%x, br_info=%x\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, dest_ridx, se_imm, Ia, Ja, JRa, br_info);
     io.fu_in.dump("BRIDU.io.fu_in")
     io.fu_out.dump("BRIDU.io.fu_out")
     io.rfreq.dump("BRIDU.io.rfreq")

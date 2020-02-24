@@ -40,14 +40,14 @@ class RegFile extends Module {
   }
 
   when (io.wb.valid) {
-    when (io.wb.bits.wen) {
+    when (io.wb.bits.wen && io.wb.bits.rd_idx =/= 0.U) {
       wb_rf(io.wb.bits.rd_idx) := io.wb.bits.data
     }
     rf_dirtys(io.wb.bits.rd_idx) := N
   }
 
   when (io.bp.valid) {
-    when (io.bp.bits.wen) {
+    when (io.bp.bits.wen && io.bp.bits.rd_idx =/= 0.U) {
       bp_rf(io.bp.bits.rd_idx) := io.bp.bits.data
     }
     bp_readys(io.bp.bits.rd_idx) := Y

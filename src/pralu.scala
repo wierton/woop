@@ -19,6 +19,12 @@ class PRALU extends Module {
     val iaddr = Flipped(new TLBTransaction)
   })
 
+  val rs_ready = Mux((io.fu_in.bits.op1_sel === OP1_RS) ||
+    (io.fu_in.bits.op2_sel === OP2_RS), io.rs_data.valid, Y)
+  val rt_ready = Mux((io.fu_in.bits.op1_sel === OP1_RT) ||
+    (io.fu_in.bits.op2_sel === OP2_RT), io.rt_data.valid, Y)
+  val reg_ready = rs_ready && rt_ready
+
   /* prepare operands */
   val instr = io.fu_in.bits.wb.instr
   val shamt_ext = instr.shamt.asTypeOf(UInt(conf.xprlen.W))
@@ -44,7 +50,7 @@ class PRALU extends Module {
   val pru = Module(new PRU)
   pru.io.iaddr <> io.iaddr
   pru.io.fu_in.valid := io.fu_in.valid && (
-    io.fu_in.bits.fu_type === FU_PRU || io.fu_in.bits.fu_type === FU_LSU)
+    io.fu_in.bits.fu_type === FU_PRU || io.fu_in.bits.fu_type === FU_LSU) && reg_ready
   pru.io.fu_in.bits.wb := io.fu_in.bits.wb
   pru.io.fu_in.bits.ops.fu_type := io.fu_in.bits.fu_type
   pru.io.fu_in.bits.ops.fu_op := io.fu_in.bits.fu_op
@@ -56,7 +62,7 @@ class PRALU extends Module {
   /* ALU IO */
   val alu = Module(new ALU)
   alu.io.ex_flush <> pru.io.ex_flush
-  alu.io.fu_in.valid := io.fu_in.valid && io.fu_in.bits.fu_type === FU_ALU
+  alu.io.fu_in.valid := io.fu_in.valid && io.fu_in.bits.fu_type === FU_ALU && reg_ready
   alu.io.fu_in.bits.wb := io.fu_in.bits.wb
   alu.io.fu_in.bits.ops.fu_type := io.fu_in.bits.fu_type
   alu.io.fu_in.bits.ops.fu_op := io.fu_in.bits.fu_op
@@ -70,17 +76,16 @@ class PRALU extends Module {
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
   when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
     fu_valid := N
-  } .elsewhen(!io.ex_flush.valid && io.fu_in.fire() &&
-    io.fu_in.bits.fu_type =/= FU_PRU && io.fu_in.bits.fu_type =/= FU_ALU) {
-    fu_valid := Y
+  } .elsewhen(!io.ex_flush.valid && io.fu_in.fire()) {
+    when (io.fu_in.bits.fu_type === FU_BRU || io.fu_in.bits.fu_type === FU_MDU) {
+      fu_valid := Y
+    } .otherwise {
+      fu_valid := N
+    }
   }
 
   /* PRALU IO */
-  val rs_ready = Mux((io.fu_in.bits.op1_sel === OP1_RS) ||
-    (io.fu_in.bits.op2_sel === OP2_RS), io.rs_data.valid, Y)
-  val rt_ready = Mux((io.fu_in.bits.op1_sel === OP1_RT) ||
-    (io.fu_in.bits.op2_sel === OP2_RT), io.rt_data.valid, Y)
-  io.fu_in.ready := rs_ready && rt_ready && Mux1H(Array(
+  io.fu_in.ready := reg_ready && Mux1H(Array(
     (io.fu_in.bits.fu_type === FU_BRU) -> io.fu_out.ready,
     (io.fu_in.bits.fu_type === FU_MDU) -> io.fu_out.ready,
     (io.fu_in.bits.fu_type === FU_ALU) -> alu.io.fu_in.ready,
@@ -114,6 +119,7 @@ class PRALU extends Module {
 
   if (conf.log_PRALU) {
     printf("%d: PRALU: fu_valid=%b, io.{rs_data[%d]=%x, rt_data[%d]=%x}, shamt_ext=%x, se_imm=%x, ze_imm=%x, ue_imm=%x, op1_data=%x, op2_data=%x\n", GTimer(), fu_valid, io.rs_data.valid, io.rs_data.bits, io.rt_data.valid, io.rt_data.bits, shamt_ext, se_imm, ze_imm, ue_imm, op1_data, op2_data)
+    fu_in.wb.dump("PRALU.fu_in.wb")
     instr.dump("PRALU.instr")
     io.fu_in.dump("PRALU.io.fu_in")
     io.fu_out.dump("PRALU.io.fu_out")
