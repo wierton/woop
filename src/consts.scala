@@ -173,10 +173,11 @@ trait ISUConstants extends MDUConstants with LSUConstants
   val Y      = true.B
   val N      = false.B
 
-  val FU_TYPE_SZ = 3
   val FU_OP_SZ = 5
   val FU_OP_X = 0.U(FU_OP_SZ.W)
+
   // Functional Unit Select Signal
+  val FU_TYPE_SZ = 3
   val FU_X   = 0.U(FU_TYPE_SZ.W)
   val FU_ALU = 1.U(FU_TYPE_SZ.W)
   val FU_BRU = 2.U(FU_TYPE_SZ.W)
@@ -187,25 +188,25 @@ trait ISUConstants extends MDUConstants with LSUConstants
   // RS Operand Select Signal
   val OP1_SEL_SZ = 2
   val OP1_X   = 0.U(OP1_SEL_SZ.W)
-  val OP1_RS = 0.U(OP1_SEL_SZ.W); // Register Source #1
-  val OP1_RT = 1.U(OP1_SEL_SZ.W)
-  val OP1_IMU = 2.U(OP1_SEL_SZ.W); // immediate, U-type
+  val OP1_RS  = 1.U(OP1_SEL_SZ.W) // Register Source #1
+  val OP1_RT  = 2.U(OP1_SEL_SZ.W)
+  val OP1_IMU = 3.U(OP1_SEL_SZ.W) // immediate, U-type
 
   // RT Operand Select Signal
   val OP2_SEL_SZ = 3
   val OP2_X   = 0.U(OP2_SEL_SZ.W)
-  val OP2_RS = 0.U(OP2_SEL_SZ.W); // Register Source #2
-  val OP2_RT = 1.U(OP2_SEL_SZ.W); // Register Source #2
-  val OP2_IMI = 2.U(OP2_SEL_SZ.W); // immediate, I-type
-  val OP2_IMZ = 3.U(OP2_SEL_SZ.W); // zero-extended immediate, I-type
-  val OP2_SA = 4.U(OP2_SEL_SZ.W); // shift amount
+  val OP2_RS  = 1.U(OP2_SEL_SZ.W) // Register Source #2
+  val OP2_RT  = 2.U(OP2_SEL_SZ.W) // Register Source #2
+  val OP2_IMI = 3.U(OP2_SEL_SZ.W) // immediate, I-type
+  val OP2_IMZ = 4.U(OP2_SEL_SZ.W) // zero-extended immediate, I-type
+  val OP2_SA  = 5.U(OP2_SEL_SZ.W) // shift amount
 
   // REG Dest Select Signal
   val DEST_SEL_SZ = 2
-  val DEST_X = 0.U(2.W)
-  val DEST_RD = 0.U(2.W)
-  val DEST_RT = 1.U(2.W)
-  val DEST_31 = 2.U(2.W)
+  val DEST_X  = 0.U(DEST_SEL_SZ.W)
+  val DEST_RD = 1.U(DEST_SEL_SZ.W)
+  val DEST_RT = 2.U(DEST_SEL_SZ.W)
+  val DEST_31 = 3.U(DEST_SEL_SZ.W)
 }
 
 // UInt definition cannot occur in Bundle subclass
@@ -222,17 +223,17 @@ trait UnitOpConstants extends ISUConstants with MemConstants {
   val BR_JALR = 9.U(FU_OP_SZ.W);  // Jump Register
 
   // ALU Operation Signal
-  val ALU_ADD = 0.U(FU_OP_SZ.W)
-  val ALU_SUB = 1.U(FU_OP_SZ.W)
-  val ALU_SLL = 2.U(FU_OP_SZ.W)
-  val ALU_SRL = 3.U(FU_OP_SZ.W)
-  val ALU_SRA = 4.U(FU_OP_SZ.W)
-  val ALU_AND = 5.U(FU_OP_SZ.W)
-  val ALU_OR  = 6.U(FU_OP_SZ.W)
-  val ALU_XOR = 7.U(FU_OP_SZ.W)
-  val ALU_NOR = 8.U(FU_OP_SZ.W)
-  val ALU_SLT = 9.U(FU_OP_SZ.W)
-  val ALU_SLTU = 10.U(FU_OP_SZ.W)
+  val ALU_ADD   =  0.U(FU_OP_SZ.W)
+  val ALU_SUB   =  1.U(FU_OP_SZ.W)
+  val ALU_SLL   =  2.U(FU_OP_SZ.W)
+  val ALU_SRL   =  3.U(FU_OP_SZ.W)
+  val ALU_SRA   =  4.U(FU_OP_SZ.W)
+  val ALU_AND   =  5.U(FU_OP_SZ.W)
+  val ALU_OR    =  6.U(FU_OP_SZ.W)
+  val ALU_XOR   =  7.U(FU_OP_SZ.W)
+  val ALU_NOR   =  8.U(FU_OP_SZ.W)
+  val ALU_SLT   =  9.U(FU_OP_SZ.W)
+  val ALU_SLTU  = 10.U(FU_OP_SZ.W)
   val ALU_COPY1 = 11.U(FU_OP_SZ.W)
 
   //                 1    1      2     1

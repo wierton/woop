@@ -61,6 +61,8 @@ class BRIDU extends Module {
      JR      -> List(Y, FU_BRU,  BR_JR,      OP1_RS,   OP2_X,   DEST_RD),
      JALR    -> List(Y, FU_BRU,  BR_JALR,    OP1_RS,   OP2_X,   DEST_RD),
 
+     // LSU instructions
+     // LW      -> List(Y, FU_LSU,  LSU_LW,     OP1_)
   ))
 
   val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: rd_sel :: Nil = csignals
