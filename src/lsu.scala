@@ -47,7 +47,7 @@ class LSU extends Module with LSUConsts {
     val working = Output(Bool())
   })
 
-  io.fu_in.ready := io.dmem.req.ready
+  io.fu_in.ready := !io.fu_in.valid || io.dmem.req.ready
 
   /* stage 2: send memory request */
   val s2_in = Wire(new LSUStage2Data)
