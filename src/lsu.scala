@@ -32,7 +32,7 @@ class LSUStage2Data extends Bundle {
       ind.wb.instr.asUInt,
       ind.wb.rd_idx,
       ind.wb.pc,
-      ind.wb.data,
+      ind.ops.op2,
       ind.paddr,
       ind.is_cached
     ).asTypeOf(this)
