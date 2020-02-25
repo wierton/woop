@@ -1,12 +1,12 @@
-package njumipsTest
+package woopTest
 
 import chisel3._
 import chisel3.util._
-import njumips.configs._
-import njumips.consts._
-import njumips.utils._
-import njumips.core._
-import njumips._
+import woop.configs._
+import woop.consts._
+import woop.utils._
+import woop.core._
+import woop._
 
 class TestBitsOneWay extends Module {
   val io = IO(new Bundle {

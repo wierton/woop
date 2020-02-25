@@ -1,10 +1,10 @@
-package njumips
+package woop
 package examples
 
 import chisel3._
 import chisel3.util._
 
-import njumips.consts._
+import woop.consts._
 
 /* pipeline:
  * 

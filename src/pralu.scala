@@ -1,12 +1,12 @@
-package njumips
+package woop
 package core
 
 import chisel3._
 import chisel3.util._
-import njumips.consts._
-import njumips.configs._
-import njumips.dumps._
-import njumips.utils._
+import woop.consts._
+import woop.configs._
+import woop.dumps._
+import woop.utils._
 
 class PRALU extends Module {
   val io = IO(new Bundle {
@@ -20,6 +20,7 @@ class PRALU extends Module {
   })
 
   val rs_ready = Mux((io.fu_in.bits.op1_sel === OP1_RS) ||
+    (io.fu_in.bits.op1_sel === OP1_RSO) ||
     (io.fu_in.bits.op2_sel === OP2_RS), io.rs_data.valid, Y)
   val rt_ready = Mux((io.fu_in.bits.op1_sel === OP1_RT) ||
     (io.fu_in.bits.op2_sel === OP2_RT), io.rt_data.valid, Y)
@@ -33,15 +34,16 @@ class PRALU extends Module {
   val ue_imm = Cat(instr.imm, 0.U((conf.xprlen - instr.imm.getWidth).W))
 
   val op1_data = Mux1H(Array(
-    (io.fu_in.bits.op1_sel === OP1_RS) -> io.rs_data.bits,
-    (io.fu_in.bits.op1_sel === OP1_RT) -> io.rt_data.bits,
-    (io.fu_in.bits.op1_sel === OP1_IMU) -> ue_imm,
+    (io.fu_in.bits.op1_sel === OP1_RS)  -> io.rs_data.bits,
+    (io.fu_in.bits.op1_sel === OP1_RT)  -> io.rt_data.bits,
+    (io.fu_in.bits.op1_sel === OP1_RSO) -> (io.rs_data.bits + se_imm),
   )).asUInt
 
   val op2_data = Mux1H(Array(
     (io.fu_in.bits.op2_sel === OP2_RS)  -> io.rs_data.bits,
     (io.fu_in.bits.op2_sel === OP2_RT)  -> io.rt_data.bits,
     (io.fu_in.bits.op2_sel === OP2_IMI) -> se_imm,
+    (io.fu_in.bits.op2_sel === OP2_IMU) -> ue_imm,
     (io.fu_in.bits.op2_sel === OP2_IMZ) -> ze_imm,
     (io.fu_in.bits.op2_sel === OP2_SA)  -> shamt_ext,
   )).asUInt

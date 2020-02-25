@@ -1,12 +1,12 @@
-package njumips
+package woop
 package core
 
 import chisel3._
 import chisel3.util._
-import njumips.consts._
-import njumips.configs._
-import njumips.dumps._
-import njumips.utils._
+import woop.consts._
+import woop.configs._
+import woop.dumps._
+import woop.utils._
 
 class AddrSpace(start:UInt, end:UInt) {
   val st = start

@@ -1,11 +1,11 @@
-package njumips
+package woop
 package core
 
 import chisel3._
 import chisel3.util._
-import njumips.consts._
-import njumips.configs._
-import njumips.dumps._
+import woop.consts._
+import woop.configs._
+import woop.dumps._
 
 
 class ALU extends Module with UnitOpConstants {
@@ -25,21 +25,21 @@ class ALU extends Module with UnitOpConstants {
   val op1   = fu_in.ops.op1
   val op2   = fu_in.ops.op2
   val rd_idx = fu_in.wb.rd_idx
-  val op2_shamt = op2(REG_SZ - 1, 0).asUInt
+  val op2_sa = op2(REG_SZ - 1, 0).asUInt
 
   val result = Mux1H(Array(
-    (fu_op === ALU_ADD)   -> (op1 + op2).asUInt,
-    (fu_op === ALU_SUB)   -> (op1 - op2).asUInt,
-    (fu_op === ALU_SLL)   -> (op1 << op2_shamt).asUInt,
-    (fu_op === ALU_SRL)   -> (op1 >> op2_shamt).asUInt,
-    (fu_op === ALU_SRA)   -> (op1.asSInt >> op2_shamt).asUInt,
-    (fu_op === ALU_AND)   -> (op1 & op2).asUInt,
-    (fu_op === ALU_OR)    -> (op1 | op2).asUInt,
-    (fu_op === ALU_XOR)   -> (op1 ^ op2).asUInt,
-    (fu_op === ALU_NOR)   -> ~(op1 ^ op2).asUInt,
-    (fu_op === ALU_SLT)   -> (op1.asSInt < op2.asSInt).asUInt,
-    (fu_op === ALU_SLTU)  -> (op1 < op2).asUInt,
-    (fu_op === ALU_COPY1) -> op1.asUInt))
+    (fu_op === ALU_ADD)  -> (op1 + op2).asUInt,
+    (fu_op === ALU_SUB)  -> (op1 - op2).asUInt,
+    (fu_op === ALU_SLL)  -> (op1 << op2_sa).asUInt,
+    (fu_op === ALU_SRL)  -> (op1 >> op2_sa).asUInt,
+    (fu_op === ALU_SRA)  -> (op1.asSInt >> op2_sa).asUInt,
+    (fu_op === ALU_AND)  -> (op1 & op2).asUInt,
+    (fu_op === ALU_OR)   -> (op1 | op2).asUInt,
+    (fu_op === ALU_XOR)  -> (op1 ^ op2).asUInt,
+    (fu_op === ALU_NOR)  -> ~(op1 ^ op2).asUInt,
+    (fu_op === ALU_SLT)  -> (op1.asSInt < op2.asSInt).asUInt,
+    (fu_op === ALU_SLTU) -> (op1 < op2).asUInt,
+    (fu_op === ALU_LUI)  -> op2.asUInt))
 
 
   io.bypass.valid := io.fu_out.valid

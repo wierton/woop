@@ -1,10 +1,10 @@
-package njumips
+package woop
 package core
 
 import chisel3._
 import chisel3.util._
-import njumips.configs._
-import njumips.consts._
+import woop.configs._
+import woop.consts._
 
 class Instr extends Bundle {
   val op     = UInt(6.W)
@@ -28,7 +28,7 @@ class RegFileReq extends Bundle {
   val rt_idx = Output(UInt(REG_SZ.W))
   val rs_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
   val rt_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
-  val dest_ridx = ValidIO(Output(UInt(conf.xprlen.W)))
+  val oprd_idx = ValidIO(Output(UInt(conf.xprlen.W)))
 }
 
 class TLBReq extends Bundle {
@@ -116,7 +116,7 @@ class BRIDU_PRALU_IO extends Bundle {
   val fu_op = Output(UInt(FU_OP_SZ.W))
   val op1_sel = Output(UInt(OP1_SEL_SZ.W))
   val op2_sel = Output(UInt(OP2_SEL_SZ.W))
-  val rd_sel = Output(UInt(DEST_SEL_SZ.W))
+  val rd_sel = Output(UInt(OPD_SEL_SZ.W))
   val ex = Output(new CP0Exception)
 }
 

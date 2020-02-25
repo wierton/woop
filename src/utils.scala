@@ -1,10 +1,10 @@
-package njumips
+package woop
 package utils
 
 import chisel3._
 import chisel3.util._
-import njumips.dumps._
-import njumips.configs._
+import woop.dumps._
+import woop.configs._
 
 object GTimer {
   def apply(): UInt = {

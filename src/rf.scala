@@ -1,12 +1,12 @@
-package njumips
+package woop
 package core
 
 import chisel3._
 import chisel3.util._
-import njumips.consts._
-import njumips.configs._
-import njumips.dumps._
-import njumips.utils._
+import woop.consts._
+import woop.configs._
+import woop.dumps._
+import woop.utils._
 
 class RegFile extends Module {
   val io = IO(new Bundle {
@@ -34,8 +34,8 @@ class RegFile extends Module {
   io.rfreq.rt_data.valid := rf_data_ready(io.rfreq.rt_idx)
   io.rfreq.rt_data.bits := rf_data_bits(io.rfreq.rt_idx)
 
-  when (io.rfreq.dest_ridx.valid) {
-    rf_dirtys(io.rfreq.dest_ridx.bits) := Y
+  when (io.rfreq.oprd_idx.valid) {
+    rf_dirtys(io.rfreq.oprd_idx.bits) := Y
     bp_readys(io.bp.bits.rd_idx) := N
   }
 

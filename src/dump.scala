@@ -1,11 +1,11 @@
-package njumips
+package woop
 
 import chisel3._
 import chisel3.util._
-import njumips.consts._
-import njumips.configs._
-import njumips.utils._
-import njumips.core._
+import woop.consts._
+import woop.configs._
+import woop.utils._
+import woop.core._
 
 object dumps {
   implicit class Instr_Dump(data:Instr) {
@@ -47,7 +47,7 @@ object dumps {
 
   implicit class RegFileReq_Dump(data:RegFileReq) {
     def dump(msg:String) = {
-      printf("%d: "+msg+": rs_idx=%d, rt_idx=%d, rs[%d]=%x, rt[%d]=%x, rd[%b]=%x\n", GTimer(), data.rs_idx, data.rt_idx, data.rs_data.valid, data.rs_data.bits, data.rt_data.valid, data.rt_data.bits, data.dest_ridx.valid, data.dest_ridx.bits)
+      printf("%d: "+msg+": rs_idx=%d, rt_idx=%d, rs[%d]=%x, rt[%d]=%x, rd[%b]=%x\n", GTimer(), data.rs_idx, data.rt_idx, data.rs_data.valid, data.rs_data.bits, data.rt_data.valid, data.rt_data.bits, data.oprd_idx.valid, data.oprd_idx.bits)
     }
   }
 

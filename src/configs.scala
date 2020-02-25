@@ -1,4 +1,4 @@
-package njumips
+package woop
 package configs
 
 import chisel3._
