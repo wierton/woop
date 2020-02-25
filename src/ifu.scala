@@ -85,7 +85,7 @@ class IFU extends Module {
     io.imem.req.fire() -> (pc + 4.U)))
 
   /* stage 1: synchronize */
-  io.iaddr.req.valid := Y
+  io.iaddr.req.valid := Y && !io.ex_flush.valid && !io.br_flush.valid
   io.iaddr.req.bits.func := MX_RD
   io.iaddr.req.bits.vaddr := pc
 

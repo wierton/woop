@@ -4,6 +4,7 @@ package core
 import chisel3._
 import chisel3.util._
 import woop.consts._
+import woop.dumps._
 import woop.configs._
 import woop.utils._
 
@@ -42,9 +43,11 @@ class Core extends Module {
   ifu.io.iaddr <> pralu.io.iaddr
 
   val ifu_cistern = Module(new Cistern(new MemResp, conf.mio_cycles - 1))
+  val ifu_queue = Module(new Queue(new MemResp, 1, true))
   ifu.io.imem.req <> io.imem.req
   ifu_cistern.io.enq <> io.imem.resp
-  ifu.io.imem.resp <> ifu_cistern.io.deq
+  ifu_queue.io.enq <> ifu_cistern.io.deq
+  ifu.io.imem.resp <> ifu_queue.io.deq
 
   lsmdu.io.dmem <> io.dmem
 
