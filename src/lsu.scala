@@ -5,6 +5,8 @@ import chisel3._
 import chisel3.util._
 import woop.consts._
 import woop.configs._
+import woop.utils._
+import woop.dumps._
 
 class LSUOp extends Bundle
 {
@@ -26,8 +28,15 @@ class LSUStage2Data extends Bundle {
   val is_cached = Bool()
 
   def load(ind:PRALU_LSMDU_IO) = {
-    this := Cat(ind.is_cached, ind.paddr, ind.wb.data,
-      ind.wb.pc, ind.wb.rd_idx, ind.wb.instr.asUInt, ind.ops.fu_op).asTypeOf(this)
+    this := Cat(
+      ind.ops.fu_op,
+      ind.wb.instr.asUInt,
+      ind.wb.rd_idx,
+      ind.wb.pc,
+      ind.wb.data,
+      ind.paddr,
+      ind.is_cached
+    ).asTypeOf(this)
   }
 }
 
@@ -44,7 +53,6 @@ class LSU extends Module with LSUConsts {
   val s2_in = Wire(new LSUStage2Data)
   s2_in.load(io.fu_in.bits)
   val s2_datas = Module(new Queue(new LSUStage2Data, conf.mio_cycles))
-  val s2_valids = RegInit(0.U(conf.mio_cycles.W))
   s2_datas.io.enq.valid := io.dmem.req.fire()
   s2_datas.io.enq.bits := s2_in
   s2_datas.io.deq.ready := io.dmem.resp.fire()
@@ -83,5 +91,15 @@ class LSU extends Module with LSUConsts {
     (lmask & s3_data) | (~lmask & s3_in.data),
     (rmask & s3_data) | (~rmask & s3_in.data)))
   io.fu_out.bits.ex := 0.U.asTypeOf(io.fu_out.bits.ex)
+
+  if (conf.log_LSU) {
+    printf("%d: LSU: lstrb=%b, lmask=%b, rstrb=%b, rmask=%b, s3_data=%x\n", GTimer(), lstrb, lmask, rstrb, rmask, s3_data)
+    s2_in.dump("LSU.s2_in")
+    s2_datas.io.enq.dump("LSU.s2_datas.enq")
+    s2_datas.io.deq.dump("LSU.s2_datas.deq")
+    io.fu_in.dump("LSU.io.in")
+    io.fu_out.dump("LSU.io.out")
+    io.dmem.dump("LSU.io.dmem")
+  }
 }
 

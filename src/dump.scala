@@ -104,5 +104,17 @@ object dumps {
       printf("%d: "+msg+": [%b]={pc:%x, instr:%x, rd:%d, wen:%b, data:%x}\n", GTimer(), data.valid, data.bits.pc, data.bits.instr.asUInt, data.bits.rd_idx, data.bits.wen, data.bits.data)
     }
   }
+
+  implicit class LSUStage2Data_Dump(data:LSUStage2Data) {
+    def dump(msg:String) = {
+      printf("%d: "+msg+": op=%b, instr=%x, rd=%d, pc=%x, data=%x, addr=%x, cache=%b\n", GTimer(), data.op.asUInt, data.instr.asUInt, data.rd_idx, data.pc, data.data, data.addr, data.is_cached)
+    }
+  }
+
+  implicit class Decoupled_LSUStage2Data_Dump(data:DecoupledIO[LSUStage2Data]) {
+    def dump(msg:String) = {
+      printf("%d: "+msg+": [%b,%b]={op:%b, instr:%x, rd:%d, pc:%x, data:%x, addr:%x, cache:%b}\n", GTimer(), data.valid, data.ready, data.bits.op.asUInt, data.bits.instr.asUInt, data.bits.rd_idx, data.bits.pc, data.bits.data, data.bits.addr, data.bits.is_cached)
+    }
+  }
 }
 

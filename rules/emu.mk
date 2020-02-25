@@ -31,6 +31,8 @@ $(EMU_MK): $(EMU_TOP_V) $(EMU_CXXFILES) $(EMU_LIB_V)
 
 update-emu: $(EMU_MK)
 	@rm -rf $(EMU_BIN)
+	@echo + $(EMU_BIN)
+	@cd $(dir $(EMU_BIN)) && make -s -f $(notdir $<)
 	@touch $<
 
 $(EMU_BIN): $(EMU_MK) $(EMU_CXXFILES)

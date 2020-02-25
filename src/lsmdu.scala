@@ -33,8 +33,12 @@ class LSMDU extends Module {
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
   when (!io.fu_in.fire() && io.fu_out.fire()) {
     fu_valid := N
-  } .elsewhen(io.fu_in.fire() && (io.fu_in.bits.ops.fu_type =/= FU_LSU || io.fu_in.bits.ops.fu_type =/= FU_MDU)) {
-    fu_valid := Y
+  } .elsewhen(io.fu_in.fire()) {
+    when (io.fu_in.bits.ops.fu_type =/= FU_LSU && io.fu_in.bits.ops.fu_type =/= FU_MDU) {
+      fu_valid := Y
+    } .otherwise {
+      fu_valid := N
+    }
   }
 
   /* LSMDU IO */
