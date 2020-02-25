@@ -20,14 +20,17 @@ class LSMDUPipelineStage extends Module {
 
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
   val fu_valid = RegInit(N)
-  io.fu_in.ready := !fu_valid
-  io.fu_out.valid := fu_valid && fu_in.fu_type =/= FU_LSU && fu_in.fu_type =/= FU_MDU
+  io.fu_in.ready := Y
+  io.fu_out.valid := fu_valid
   io.fu_out.bits := fu_in.wb
   when (!io.fu_in.fire() && io.fu_out.fire()) {
     fu_valid := N
   } .elsewhen(io.fu_in.fire()) {
     fu_valid := Y
   }
+
+  printf("%d: LSMDU.psu.io.fu_in: fu_valid=%b, io.fu_in[%b,%b]={fu_type=%d}\n", GTimer(), fu_valid, io.fu_in.valid, io.fu_in.ready, io.fu_in.bits.fu_type)
+  io.fu_out.dump("LSMDU.psu.io.fu_out")
 }
 
 class LSMDU extends Module {
@@ -42,26 +45,28 @@ class LSMDU extends Module {
   val psu = Module(new LSMDUPipelineStage)
 
   /* LSU IO */
-  lsu.io.fu_in.valid := io.fu_in.valid && !mdu.io.working && io.fu_in.bits.ops.fu_type === FU_LSU
+  val to_lsu = !mdu.io.working && io.fu_in.bits.ops.fu_type === FU_LSU
+  lsu.io.fu_in.valid := io.fu_in.valid && to_lsu
   lsu.io.fu_in.bits := io.fu_in.bits
   lsu.io.dmem <> io.dmem
 
   /* MDU IO */
-  mdu.io.fu_in.valid := io.fu_in.valid && io.fu_in.bits.ops.fu_type === FU_MDU
+  val to_mdu = !lsu.io.working && io.fu_in.bits.ops.fu_type === FU_MDU
+  mdu.io.fu_in.valid := io.fu_in.valid && to_mdu
   mdu.io.fu_in.bits := io.fu_in.bits
 
   /* pipeline stage for ALU,BRU,PRU */
-  psu.io.fu_in.valid := io.fu_in.fire()
+  val to_psu = !lsu.io.working && !mdu.io.working &&
+    io.fu_in.bits.ops.fu_type =/= FU_LSU &&
+    io.fu_in.bits.ops.fu_type =/= FU_MDU
+  psu.io.fu_in.valid := io.fu_in.valid && to_psu
   psu.io.fu_in.bits.wb := io.fu_in.bits.wb
   psu.io.fu_in.bits.fu_type := io.fu_in.bits.ops.fu_type
 
   /* LSMDU IO */
-  io.fu_in.ready := Mux1H(Array(
-    (io.fu_in.bits.ops.fu_type === FU_LSU) -> (lsu.io.fu_in.ready && !mdu.io.working),
-    (io.fu_in.bits.ops.fu_type === FU_MDU) -> (mdu.io.fu_in.ready && !lsu.io.working),
-    (io.fu_in.bits.ops.fu_type === FU_BRU) -> !(lsu.io.working && mdu.io.working),
-    (io.fu_in.bits.ops.fu_type === FU_ALU) -> !(lsu.io.working && mdu.io.working),
-    (io.fu_in.bits.ops.fu_type === FU_PRU) -> !(lsu.io.working && mdu.io.working)))
+  io.fu_in.ready := (to_lsu && lsu.io.fu_in.ready) ||
+    (to_mdu && mdu.io.fu_in.ready) ||
+    (to_psu && psu.io.fu_in.ready)
   io.fu_out.valid := lsu.io.fu_out.valid || mdu.io.fu_out.valid || psu.io.fu_out.valid
   io.fu_out.bits := Mux1H(Array(
     lsu.io.fu_out.valid -> lsu.io.fu_out.bits,
@@ -69,9 +74,9 @@ class LSMDU extends Module {
     psu.io.fu_out.valid -> psu.io.fu_out.bits))
 
   if (conf.log_LSMDU) {
+    printf("%d: LSMDU: lsu.working=%b, mdu.working=%b\n", GTimer(), lsu.io.working, mdu.io.working)
     lsu.io.fu_in.dump("LSU.io.fu_in")
     lsu.io.fu_out.dump("LSU.io.fu_out")
-    psu.io.fu_out.dump("LSMDU.psu.io.fu_out")
     io.fu_out.dump("LSMDU.io.fu_out")
     io.fu_in.dump("LSMDU.io.fu_in")
   }

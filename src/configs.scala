@@ -15,6 +15,7 @@ object conf {
   val nICacheSets = 32
   val nICacheWays = 4
   val nICacheWordsPerWay = 4
+  val log_MemMux = true
   val log_rf = true
   val log_IFU = true
   val log_IFUPipelineData = true

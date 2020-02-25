@@ -177,12 +177,7 @@ public:
       n--;
     }
 
-    if (is_finished()) {
-      // two more cycles to wait instr commit
-      emu_finish_hook();
-      return get_exit_code();
-    }
-
+    if (is_finished()) { return get_exit_code(); }
     return n == 0 ? -1 : 0;
   }
 

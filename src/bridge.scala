@@ -41,6 +41,12 @@ class MemMux(name:String) extends Module {
   io.uncached.req.valid := io.in.req.valid && !io.in.req.bits.is_cached
   io.uncached.req.bits := io.in.req.bits
   io.uncached.resp.ready := io.in.resp.ready
+
+  if (conf.log_MemMux) {
+    io.in.dump(name+".in")
+    io.cached.dump(name+".cached")
+    io.uncached.dump(name+".uncached")
+  }
 }
 
 /* assume memory request reach in order */

@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 import woop.consts._
 import woop.configs._
+import woop.utils._
 
 class BrFlushCtrler extends Module {
   val io = IO(new Bundle {
@@ -40,7 +41,11 @@ class Core extends Module {
   rf.io.rfreq <> bridu.io.rfreq
   ifu.io.iaddr <> pralu.io.iaddr
 
-  ifu.io.imem <> io.imem
+  val ifu_cistern = Module(new Cistern(new MemResp, conf.mio_cycles - 1))
+  ifu.io.imem.req <> io.imem.req
+  ifu_cistern.io.enq <> io.imem.resp
+  ifu.io.imem.resp <> ifu_cistern.io.deq
+
   lsmdu.io.dmem <> io.dmem
 
   ifu.io.br_flush <> bridu.io.br_flush

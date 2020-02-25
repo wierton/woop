@@ -103,13 +103,8 @@ class PRALU extends Module {
   psu.io.fu_out.ready := io.fu_out.ready
 
   /* PRALU IO */
-  val pralu_ready = pru.io.fu_in.ready && alu.io.fu_in.ready
-  io.fu_in.ready := reg_ready && Mux1H(Array(
-    (io.fu_in.bits.fu_type === FU_BRU) -> psu.io.fu_in.ready,
-    (io.fu_in.bits.fu_type === FU_MDU) -> psu.io.fu_in.ready,
-    (io.fu_in.bits.fu_type === FU_ALU) -> pralu_ready,
-    (io.fu_in.bits.fu_type === FU_PRU) -> pralu_ready,
-    (io.fu_in.bits.fu_type === FU_LSU) -> pralu_ready))
+  io.fu_in.ready := reg_ready && pru.io.fu_in.ready &&
+    alu.io.fu_in.ready && psu.io.fu_in.ready
   io.fu_out.valid := alu.io.fu_out.valid || pru.io.fu_out.valid || psu.io.fu_out.valid
   io.fu_out.bits.wb := Mux1H(Array(
     alu.io.fu_out.valid -> alu.io.fu_out.bits.wb,
