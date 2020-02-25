@@ -209,7 +209,7 @@ trait ALUConsts extends ISUConsts {
   val ALU_LUI   = 11.U(FU_OP_SZ.W)
 }
 
-/* contains temp node `Cat`, should be extends by Module */
+/* contains temp node `Cat`, should be extended by Module */
 trait LSUConsts extends ISUConsts with MemConsts {
   // LSU Operation Signal
   val LSU_E_SZ = 1
@@ -237,7 +237,7 @@ trait LSUConsts extends ISUConsts with MemConsts {
   val LSU_SWR  = Cat(N, MX_WR, MT_W, LSU_R)
 }
 
-/* contains temp node `Cat`, should be extends by Module */
+/* contains temp node `Cat`, should be extended by Module */
 trait MDUConsts extends ISUConsts {
   val MF_X  = 0.U(1.W)
   val MF_HI = 0.U(1.W)

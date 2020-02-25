@@ -63,6 +63,17 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
 
      // LSU instructions
      LW      -> List(Y, FU_LSU,  LSU_LW,     OP1_RSO,  OP2_X,   OPD_RT),
+     LH      -> List(Y, FU_LSU,  LSU_LH,     OP1_RSO,  OP2_X,   OPD_RT),
+     LHU     -> List(Y, FU_LSU,  LSU_LHU,    OP1_RSO,  OP2_X,   OPD_RT),
+     LB      -> List(Y, FU_LSU,  LSU_LB,     OP1_RSO,  OP2_X,   OPD_RT),
+     LBU     -> List(Y, FU_LSU,  LSU_LBU,    OP1_RSO,  OP2_X,   OPD_RT),
+     LWL     -> List(Y, FU_LSU,  LSU_LWL,    OP1_RSO,  OP2_X,   OPD_RT),
+     LWR     -> List(Y, FU_LSU,  LSU_LWR,    OP1_RSO,  OP2_X,   OPD_RT),
+     SW      -> List(Y, FU_LSU,  LSU_SW,     OP1_RSO,  OP2_RT,  OPD_X),
+     SH      -> List(Y, FU_LSU,  LSU_SH,     OP1_RSO,  OP2_RT,  OPD_X),
+     SB      -> List(Y, FU_LSU,  LSU_SB,     OP1_RSO,  OP2_RT,  OPD_X),
+     SWL     -> List(Y, FU_LSU,  LSU_SWL,    OP1_RSO,  OP2_RT,  OPD_X),
+     SWR     -> List(Y, FU_LSU,  LSU_SWR,    OP1_RSO,  OP2_RT,  OPD_X),
   ))
 
   val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: rd_sel :: Nil = csignals
