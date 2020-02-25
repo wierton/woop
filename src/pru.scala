@@ -34,8 +34,7 @@ class PRU extends Module {
   /* pipeline stage for bru data */
   val fu_valid = RegInit(N)
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
-  val se_imm = fu_in.wb.instr.imm.asTypeOf(SInt(conf.xprlen.W)).asUInt
-  val lsu_vaddr = fu_in.ops.op1 + se_imm
+  val lsu_vaddr = fu_in.ops.op1
   when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
     fu_valid := N
   } .elsewhen(!io.ex_flush.valid && io.fu_in.fire()) {
@@ -53,5 +52,5 @@ class PRU extends Module {
   io.ex_flush.bits.br_target := 0.U
 
   /* PRU IO */
-  io.fu_in.ready := io.fu_out.ready
+  io.fu_in.ready := io.fu_out.ready || !fu_valid
 }

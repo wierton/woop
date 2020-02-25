@@ -53,7 +53,9 @@ class CrossbarNx1(m:Int) extends Module {
   val in_valids = Reverse(Cat(for (i <- 0 until m) yield io.in(i).req.valid))
   val in_readys = Reverse(Cat(for (i <- 0 until m) yield io.in(i).req.ready))
   val in_resp_readys = Reverse(Cat(for (i <- 0 until m) yield io.in(i).resp.ready))
-  val in_valids_1H = BitsOneWay(in_valids)
+  val in_valids_1H = Mux(GTimer()(0),
+    BitsOneWay(in_valids),
+    Reverse(BitsOneWay(Reverse(in_valids))))
   val in_req = Mux1H(for (i <- 0 until m) yield in_valids_1H(i) -> io.in(i).req.bits)
 
   /* q_datas [0:head, ..., nstages-1:tail] */
@@ -64,7 +66,7 @@ class CrossbarNx1(m:Int) extends Module {
     for (i <- 1 until conf.mio_cycles) {
       q_datas(i) := q_datas(i - 1)
     }
-    q_datas(0) := in_valids
+    q_datas(0) := in_valids_1H
   }
   q_data_sz := q_data_sz + io.out.req.fire() - io.out.resp.fire()
 

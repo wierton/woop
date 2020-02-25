@@ -17,11 +17,13 @@ class MDUOp extends Bundle
 class MDU extends Module with MDUConsts {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new PRALU_LSMDU_IO))
-    val fu_out = DecoupledIO(new PRALU_OUT)
+    val fu_out = ValidIO(new WriteBackIO)
+    val working = Output(Bool())
   })
 
   io.fu_in.ready := Y
 
   io.fu_out.valid := N
   io.fu_out.bits := 0.U.asTypeOf(io.fu_out.bits)
+  io.working := N
 }

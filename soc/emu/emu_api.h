@@ -30,21 +30,29 @@ class Emulator {
   uint32_t seed;
   uint64_t max_cycles, cycles;
 
+  void emu_finish_hook() {
+    for (int i = 0; i < 20; i ++) {
+      single_cycle();
+    }
+    abort();
+  }
+
   void check_registers(uint64_t cycles) {
-#define check(cond, ...)                                                   \
-  if (!(cond)) {                                                           \
-    nemu_ptr->dump();                                                      \
-    eprintf("nemu: %s:%d: %s: checkion `%s' failed\n", __FILE__, __LINE__, \
-        __func__, #cond);                                                  \
-    eprintf(__VA_ARGS__);                                                  \
-    abort();                                                               \
+#define check(cond, ...)                                  \
+  if (!(cond)) {                                          \
+    nemu_ptr->dump();                                     \
+    eprintf("nemu: %s:%d: %s: check `%s' failed\n",       \
+        __FILE__, __LINE__, __func__, #cond);             \
+    eprintf(__VA_ARGS__);                                 \
+    emu_finish_hook();                                    \
+    abort();                                              \
   }
 
     check(nemu_ptr->pc() == dut_ptr->io_commit_pc,
-        "cycle: %lu pc %08x <> %08x\n", cycles, nemu_ptr->pc(),
+        "cycle %lu: pc %08x <> %08x\n", cycles, nemu_ptr->pc(),
         dut_ptr->io_commit_pc);
     check(nemu_ptr->get_instr() == dut_ptr->io_commit_instr,
-        "cycle: %lu instr %08x <> %08x\n", cycles, nemu_ptr->get_instr(),
+        "cycle %lu: instr %08x <> %08x\n", cycles, nemu_ptr->get_instr(),
         dut_ptr->io_commit_instr);
 
 #define GPR_TEST(i)                                     \
@@ -171,8 +179,7 @@ public:
 
     if (is_finished()) {
       // two more cycles to wait instr commit
-      single_cycle();
-      single_cycle();
+      emu_finish_hook();
       return get_exit_code();
     }
 
