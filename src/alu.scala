@@ -8,7 +8,7 @@ import woop.configs._
 import woop.dumps._
 
 
-class ALU extends Module with UnitOpConstants {
+class ALU extends Module {
   val io = IO(new Bundle {
     val bypass = ValidIO(new BypassIO)
     val fu_in = Flipped(DecoupledIO(new PRALU_FU_IO))

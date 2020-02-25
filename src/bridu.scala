@@ -8,7 +8,7 @@ import woop.configs._
 import woop.dumps._
 import woop.utils._
 
-class BRIDU extends Module {
+class BRIDU extends Module with LSUConsts with MDUConsts {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new IFU_BRIDU_IO))
     val fu_out = DecoupledIO(new BRIDU_PRALU_IO)
@@ -62,6 +62,7 @@ class BRIDU extends Module {
      JALR    -> List(Y, FU_BRU,  BR_JALR,    OP1_RS,   OP2_X,   OPD_RD),
 
      // LSU instructions
+     LW      -> List(Y, FU_LSU,  LSU_LW,     OP1_RSO,  OP2_X,   OPD_RT),
   ))
 
   val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: rd_sel :: Nil = csignals

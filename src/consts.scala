@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import woop.configs._
 
-trait MemConstants {
+trait MemConsts {
   // MX
   val MX_SZ = 1
   val MX_X  = 0.U(MX_SZ.W)
@@ -18,7 +18,7 @@ trait MemConstants {
   val MT_W  = 3.U(MT_SZ.W)
 }
 
-trait CP0Constants {
+trait CP0Consts {
   val AM_EVL = 0x10000020.U // exception vector location
 
   val EXC_WIDTH = 5
@@ -71,7 +71,7 @@ trait CP0Constants {
   val ETB_TLBS    =  12        // TLB store
 }
 
-trait InstrConstants {
+trait InstrConsts {
   val REG_SZ    = 5;
 }
 
@@ -136,39 +136,8 @@ trait InstrPattern {
   val MOVZ  = BitPat("b000000???????????????00000001010")
 }
 
-trait LSUConstants extends MemConstants {
-  // LSU Operation Signal
-  val LSU_E_SZ = 1
-  val LSU_XE  = 0.U(LSU_E_SZ.W)
-  val LSU_SE  = 0.U(LSU_E_SZ.W)
-  val LSU_ZE  = 1.U(LSU_E_SZ.W)
 
-  val LSU_B_SE = Cat(MT_B, LSU_SE)
-  val LSU_B_ZE = Cat(MT_B, LSU_ZE)
-  val LSU_H_SE = Cat(MT_H, LSU_SE)
-  val LSU_H_ZE = Cat(MT_H, LSU_ZE)
-  val LSU_W_SE = Cat(MT_W, LSU_SE)
-  val LSU_W_ZE = Cat(MT_W, LSU_ZE)
-
-  val LSU_L = 0.U(1.W)
-  val LSU_R = 1.U(1.W)
-}
-
-trait MDUConstants {
-  val MF_X  = 0.U(1.W)
-  val MF_HI = 0.U(1.W)
-  val MF_LO = 1.U(1.W)
-
-  val F_MUL = 0.U(2.W)
-  val F_DIV = 1.U(2.W)
-  val F_MV  = 2.U(2.W)
-  val F_X   = 3.U(2.W)
-
-  val WB_RD = 0.U(1.W)
-  val WB_HL = 1.U(1.W)
-}
-
-trait ISUConstants extends MDUConstants with LSUConstants
+trait ISUConsts
 {
   val Y      = true.B
   val N      = false.B
@@ -211,7 +180,7 @@ trait ISUConstants extends MDUConstants with LSUConstants
 }
 
 // UInt definition cannot occur in Bundle subclass
-trait UnitOpConstants extends ISUConstants with MemConstants {
+trait BRUConsts extends ISUConsts {
   // Branch Operation Signal
   val BR_EQ   = 0.U(FU_OP_SZ.W);  // Branch on Equal
   val BR_NE   = 1.U(FU_OP_SZ.W);  // Branch on NotEqual
@@ -222,7 +191,9 @@ trait UnitOpConstants extends ISUConstants with MemConstants {
   val BR_JAL  = 7.U(FU_OP_SZ.W);  // Jump Register
   val BR_JR   = 8.U(FU_OP_SZ.W);  // Jump Register
   val BR_JALR = 9.U(FU_OP_SZ.W);  // Jump Register
+}
 
+trait ALUConsts extends ISUConsts {
   // ALU Operation Signal
   val ALU_ADD   =  0.U(FU_OP_SZ.W)
   val ALU_SUB   =  1.U(FU_OP_SZ.W)
@@ -236,10 +207,22 @@ trait UnitOpConstants extends ISUConstants with MemConstants {
   val ALU_SLT   =  9.U(FU_OP_SZ.W)
   val ALU_SLTU  = 10.U(FU_OP_SZ.W)
   val ALU_LUI   = 11.U(FU_OP_SZ.W)
+}
+
+/* contains temp node `Cat`, should be extends by Module */
+trait LSUConsts extends ISUConsts with MemConsts {
+  // LSU Operation Signal
+  val LSU_E_SZ = 1
+  val LSU_XE  = 0.U(LSU_E_SZ.W)
+  val LSU_SE  = 0.U(LSU_E_SZ.W)
+  val LSU_ZE  = 1.U(LSU_E_SZ.W)
+
+  val LSU_L = 0.U(1.W)
+  val LSU_R = 1.U(1.W)
 
   //                 1    1      2     1
   val LSU_OP_X = Cat(Y, MX_X,  MT_X, LSU_XE)
-  val LSU_LW   = Cat(Y, MX_RD, MT_W, LSU_SE).asUInt
+  val LSU_LW   = Cat(Y, MX_RD, MT_W, LSU_SE)
   val LSU_LB   = Cat(Y, MX_RD, MT_B, LSU_SE)
   val LSU_LBU  = Cat(Y, MX_RD, MT_B, LSU_ZE)
   val LSU_LH   = Cat(Y, MX_RD, MT_H, LSU_SE)
@@ -252,7 +235,21 @@ trait UnitOpConstants extends ISUConstants with MemConstants {
   val LSU_LWR  = Cat(N, MX_RD, MT_W, LSU_R)
   val LSU_SWL  = Cat(N, MX_WR, MT_W, LSU_L)
   val LSU_SWR  = Cat(N, MX_WR, MT_W, LSU_R)
+}
 
+/* contains temp node `Cat`, should be extends by Module */
+trait MDUConsts extends ISUConsts {
+  val MF_X  = 0.U(1.W)
+  val MF_HI = 0.U(1.W)
+  val MF_LO = 1.U(1.W)
+
+  val F_MUL = 0.U(2.W)
+  val F_DIV = 1.U(2.W)
+  val F_MV  = 2.U(2.W)
+  val F_X   = 3.U(2.W)
+
+  val WB_RD = 0.U(1.W)
+  val WB_HL = 1.U(1.W)
 
   // MDU Operation Signal   1     2      1     1
   val MDU_MFHI  = Cat(MF_HI, F_MV,  Y, WB_RD)
@@ -265,10 +262,13 @@ trait UnitOpConstants extends ISUConstants with MemConstants {
 }
 
 object consts extends InstrPattern
-  with ISUConstants
-  with InstrConstants
-  with MemConstants
-  with CP0Constants
-  with UnitOpConstants
+  with MemConsts
+  with CP0Consts
+  with ISUConsts
+  with BRUConsts
+  // with LSUConsts
+  // with MDUConsts
+  with ALUConsts
+  with InstrConsts
 {
 }

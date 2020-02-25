@@ -14,13 +14,6 @@ class LSUOp extends Bundle
   val ext   = UInt(1.W)
 
   def isAligned()  = align =/= 0.U
-  def isRead()   = func === MX_RD
-  def isWrite()  = func === MX_WR
-  def isSExt()   = ext === LSU_XE
-  def isZExt()   = ext === LSU_ZE
-  def isLeft()   = ext(0) === LSU_L
-  def isRight()  = ext(0) === LSU_R
-  def getDtExt() = Cat(dt, ext)
 }
 
 class LSUStage2Data extends Bundle {
@@ -38,7 +31,7 @@ class LSUStage2Data extends Bundle {
   }
 }
 
-class LSU extends Module with UnitOpConstants {
+class LSU extends Module with LSUConsts {
   val io = IO(new Bundle {
     val dmem = new MemIO
     val fu_in = Flipped(DecoupledIO(new PRALU_LSMDU_IO))
