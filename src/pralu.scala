@@ -34,6 +34,7 @@ class PRALU extends Module {
     val fu_out = DecoupledIO(new PRALU_LSMDU_IO)
     val bp = ValidIO(new BypassIO)
     val ex_flush = ValidIO(new FlushIO)
+    val br_flush = Flipped(ValidIO(new FlushIO))
     val iaddr = Flipped(new TLBTransaction)
   })
 
@@ -78,6 +79,7 @@ class PRALU extends Module {
   pru.io.fu_in.bits.ops.op2 := op2_data
   pru.io.fu_in.bits.ex := io.fu_in.bits.ex
   pru.io.fu_out.ready := io.fu_out.ready
+  pru.io.br_flush <> io.br_flush
 
   /* ALU IO */
   val alu = Module(new ALU)

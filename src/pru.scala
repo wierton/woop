@@ -13,23 +13,31 @@ class PRU extends Module {
     val fu_in = Flipped(DecoupledIO(new PRALU_FU_IO))
     val fu_out = DecoupledIO(new PRU_OUT_PRALU)
     val exinfo = Flipped(ValidIO(new CP0Exception))
+    val br_flush = Flipped(ValidIO(new FlushIO))
     val ex_flush = ValidIO(new FlushIO)
   })
 
-  /* handle memory translate request */
-  val iaddr_req_valid = RegNext(io.iaddr.req.valid, init=N)
-  val iaddr_req = RegNext(io.iaddr.req.bits)
+  def is_cached(vaddr:UInt) = vaddr(31, 29) =/= "b101".U
 
   def naive_tlb_translate(addr:UInt) = Mux1H(Array(
     ("h00000000".U <= addr && addr < "h80000000".U) -> addr,
     ("h80000000".U <= addr && addr < "hA0000000".U) -> (addr - "h80000000".U),
     ("hA0000000".U <= addr && addr < "hC0000000".U) -> (addr - "hA0000000".U)))
 
-  io.iaddr.req.ready := Y
-  io.iaddr.resp.valid := iaddr_req_valid
-  io.iaddr.resp.bits.paddr := naive_tlb_translate(iaddr_req.vaddr)
-  io.iaddr.resp.bits.is_cached := iaddr_req.vaddr(31, 29) =/= "b101".U
+  /* handle memory translate request, a pipeline stage */
+  val iaddr_in = RegEnable(io.iaddr.req.bits, enable=io.iaddr.req.fire())
+  val iaddr_valid = RegInit(N)
+  val flush_valid = io.br_flush.valid || io.ex_flush.valid
+  io.iaddr.req.ready := io.iaddr.resp.ready || !iaddr_valid
+  io.iaddr.resp.valid := iaddr_valid
+  io.iaddr.resp.bits.paddr := naive_tlb_translate(iaddr_in.vaddr)
+  io.iaddr.resp.bits.is_cached := is_cached(iaddr_in.vaddr)
   io.iaddr.resp.bits.ex := 0.U.asTypeOf(new CP0Exception)
+  when (flush_valid || (!io.iaddr.req.fire() && io.iaddr.resp.fire())) {
+    iaddr_valid := N
+  } .elsewhen (!flush_valid && io.iaddr.req.fire()) {
+    iaddr_valid := Y
+  }
 
   /* pipeline stage for bru data */
   val fu_valid = RegInit(N)

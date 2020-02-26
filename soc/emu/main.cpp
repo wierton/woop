@@ -18,11 +18,7 @@
 
 uint8_t ddr_mem[128 * 1024 * 1024];
 
-static bool finished = false;
-static int ret_code = 0;
-
-bool is_finished(void) { return finished; }
-int get_exit_code(void) { return ret_code; }
+EmuGlobalState emu_gbl_state;
 
 extern "C" {
 
@@ -53,8 +49,8 @@ void device_io(
   /* deal with write */
   switch (addr) {
   case GPIO_TRAP:
-    finished = true;
-    ret_code = data;
+    emu_gbl_state.finished = true;
+    emu_gbl_state.ret_code = data;
     if (data == 0)
       printf(ANSI_COLOR_GREEN "EMU: HIT GOOD TRAP" ANSI_COLOR_RESET "\n");
     else

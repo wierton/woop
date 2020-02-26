@@ -21,6 +21,14 @@
 
 // wrappers for nemu-mips32 library
 
+class EmuGlobalState {
+public:
+  bool finished;
+  int ret_code;
+};
+
+extern EmuGlobalState emu_gbl_state;
+
 class Emulator {
   std::shared_ptr<emu> dut_ptr;
   std::shared_ptr<NEMU_MIPS32> nemu_ptr;
@@ -31,6 +39,8 @@ class Emulator {
   uint64_t max_cycles, cycles;
 
   void emu_finish_hook() {
+    if (emu_gbl_state.finished) return;
+    emu_gbl_state.finished = true;
     for (int i = 0; i < 20; i ++) {
       single_cycle();
     }
@@ -172,12 +182,13 @@ public:
   }
 
   int execute_cycles(uint64_t n) {
-    while (!is_finished() && n > 0) {
+    while (emu_gbl_state.finished && n > 0) {
       single_cycle();
       n--;
     }
 
-    if (is_finished()) { return get_exit_code(); }
+    if (emu_gbl_state.finished)
+      return emu_gbl_state.ret_code;
     return n == 0 ? -1 : 0;
   }
 

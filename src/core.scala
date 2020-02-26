@@ -52,6 +52,7 @@ class Core extends Module {
   lsmdu.io.dmem <> io.dmem
 
   ifu.io.br_flush <> bridu.io.br_flush
+  pralu.io.br_flush <> bridu.io.br_flush
   ifu.io.ex_flush <> pralu.io.ex_flush
   bridu.io.ex_flush <> pralu.io.ex_flush
   io.flush := bridu.io.br_flush.valid || pralu.io.ex_flush.valid

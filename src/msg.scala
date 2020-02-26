@@ -45,7 +45,7 @@ class TLBResp extends Bundle {
 class TLBTransaction extends Bundle {
   // when tlbx is executing, the req should be hanged
   val req = DecoupledIO(new TLBReq)
-  val resp = Flipped(ValidIO(new TLBResp))
+  val resp = Flipped(DecoupledIO(new TLBResp))
 }
 
 class MemReq extends Bundle {

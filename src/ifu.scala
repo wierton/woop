@@ -82,12 +82,13 @@ class IFU extends Module {
   pc := MuxCase(pc, Array(
     io.ex_flush.valid -> io.ex_flush.bits.br_target,
     io.br_flush.valid -> io.br_flush.bits.br_target,
-    io.imem.req.fire() -> (pc + 4.U)))
+    io.iaddr.req.fire() -> (pc + 4.U)))
 
   /* stage 1: synchronize */
   io.iaddr.req.valid := Y && !io.ex_flush.valid && !io.br_flush.valid
   io.iaddr.req.bits.func := MX_RD
   io.iaddr.req.bits.vaddr := pc
+  io.iaddr.resp.ready := io.imem.req.ready
 
   /* stage 2: blocking */
   val s2_in = RegEnable(next=pc, enable=io.iaddr.req.fire())
