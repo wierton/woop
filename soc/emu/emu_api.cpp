@@ -77,14 +77,18 @@ DiffTop::DiffTop(int argc, const char *argv[])
   memcpy(ddr, nemu_ddr_map, ddr_size);
 
   /* reset n cycles */
-  for (int i = 0; i < 10; i ++) {
+  reset_ncycles(10);
+
+  /* print seed */
+  printf(ESC_BLUE "seed %u" ESC_RST "\n", seed);
+}
+
+void DiffTop::reset_ncycles(unsigned n) {
+  for (int i = 0; i < n; i ++) {
     dut_ptr->reset = 1;
     single_cycle();
     dut_ptr->reset = 0;
   }
-
-  /* print seed */
-  printf(ESC_BLUE "seed %u" ESC_RST "\n", seed);
 }
 
 void DiffTop::cycle_epilogue() {

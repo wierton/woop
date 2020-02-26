@@ -116,8 +116,9 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
     (fu_op === BR_JAL)  -> Cat(Y, Y, Y, Ja),
     (fu_op === BR_JR)   -> Cat(Y, Y, N, JRa),
     (fu_op === BR_JALR) -> Cat(Y, Y, Y, JRa)))
+  val br_ready = fu_type =/= FU_BRU || br_info(34)
 
-  io.fu_in.ready := (io.fu_out.ready && br_info(34)) || !fu_valid
+  io.fu_in.ready := (io.fu_out.ready && br_ready) || !fu_valid
   io.br_flush.valid := fu_valid && fu_type === FU_BRU && br_info(34) && br_info(33)
   io.br_flush.bits.br_target := br_info(31, 0)
 
@@ -138,7 +139,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   }
 
   if (conf.log_BRIDU) {
-    printf("%d: BRIDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, rd_idx=%d, se_imm=%x, Ia=%x, Ja=%x, JRa=%x, br_info=%x\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, oprd_idx, se_imm, Ia, Ja, JRa, br_info);
+    printf("%d: BRIDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, rd_idx=%d, se_imm=%x, Ia=%x, Ja=%x, JRa=%x, br_info=%x, br_ready=%b\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, oprd_idx, se_imm, Ia, Ja, JRa, br_info, br_ready);
     io.fu_in.dump("BRIDU.io.fu_in")
     io.fu_out.dump("BRIDU.io.fu_out")
     io.rfreq.dump("BRIDU.io.rfreq")

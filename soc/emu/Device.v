@@ -24,46 +24,36 @@ module SimDev(
   output [31:0] in_resp_bits_data
 );
 
-// delayed inputs
-wire #0.1 __in_req_valid = in_req_valid;
-wire [31:0] #0.1 __in_req_bits_addr = in_req_bits_addr;
-wire [31:0] #0.1 __in_req_bits_data = in_req_bits_data;
-wire [7:0] #0.1 __in_req_bits_func = {7'b0, in_req_bits_func};
-wire [7:0] #0.1 __in_req_bits_wstrb = {4'b0, in_req_bits_wstrb};
-
-int __in_resp_bits_data;
-assign #0.1 in_resp_bits_data = resp_data;
-
 reg resp_valid;
+int __in_resp_bits_data;
 reg [31:0] resp_data;
-// we are always ready
+wire in_req_fire;
+
+assign in_resp_bits_data = resp_data;
 assign in_req_ready = !resp_valid;
-// resp will be valid next cycle
 assign in_resp_valid = resp_valid;
+assign in_req_fire = in_req_valid && in_req_ready;
 
 always @(posedge clock)
 begin
   if (!reset) begin
     device_io(
-      __in_req_valid,
-      __in_req_bits_addr,
-      __in_req_bits_data,
-      __in_req_bits_func,
-      __in_req_bits_wstrb,
+      in_req_fire,
+      in_req_bits_addr,
+      in_req_bits_data,
+      {7'b0, in_req_bits_func},
+      {4'b0, in_req_bits_wstrb},
       __in_resp_bits_data
     );
-    if (__in_req_valid && in_req_ready) // in_req_fire
+    if (in_req_fire) begin
       resp_valid <= 1'b1;
-    else if (resp_valid && in_resp_ready) // in_resp_fire
+      resp_data <= __in_resp_bits_data;
+    end else if (resp_valid && in_resp_ready) begin
       resp_valid <= 1'b0;
-    resp_data <= __in_resp_bits_data;
-  end
-end
-
-always @(posedge clock)
-begin
-  if (reset) begin
+    end
+  end else begin
     resp_valid <= 1'b0;
   end
 end
+
 endmodule

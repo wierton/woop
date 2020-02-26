@@ -89,7 +89,7 @@ object dumps {
 
   implicit class TLBTransaction_Dump(data:TLBTransaction) {
     def dump(msg:String) = {
-      printf("%d: "+msg+": req[%d,%d]={func:%d, vaddr:%x}, resp[%d]={paddr:%x, ex:%x}\n", GTimer(), data.req.valid, data.req.ready, data.req.bits.func, data.req.bits.vaddr, data.resp.valid, data.resp.bits.paddr, data.resp.bits.ex.asUInt)
+      printf("%d: "+msg+": req[%d,%d]={func:%d, vaddr:%x}, resp[%b,%b]={paddr:%x, ex:%x}\n", GTimer(), data.req.valid, data.req.ready, data.req.bits.func, data.req.bits.vaddr, data.resp.valid, data.resp.ready, data.resp.bits.paddr, data.resp.bits.ex.asUInt)
     }
   }
 

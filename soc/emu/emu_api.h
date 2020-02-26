@@ -65,11 +65,11 @@ class DiffTop {
   void single_cycle();
   void abort_prologue();
   void cycle_epilogue();
+  void reset_ncycles(unsigned n);
 
 public:
   // argv decay to the secondary pointer
   DiffTop(int argc, const char *argv[]);
-  void reset_ncycles(size_t cycles);
   int execute(uint64_t n = -1ull);
   void device_io(unsigned char valid, int addr, int data,
       char func, char wstrb, int *resp);
