@@ -59,13 +59,11 @@ class DiffTop {
   static constexpr uint32_t ddr_size = 128 * 1024 * 1024;
   uint8_t ddr[ddr_size];
 
-  /* record last write */
+  /* record last memory store */
   bool last_instr_is_store = false;
-  uint32_t write_addr;
-  uint32_t write_data;
-  uint32_t write_strb;
+  uint32_t ls_addr, ls_data;
 
-  void check_registers();
+  void check_states();
   uint32_t get_dut_gpr(uint32_t r);
   static device_t *find_device(const char *name);
   void single_cycle();

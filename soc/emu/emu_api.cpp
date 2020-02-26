@@ -13,7 +13,7 @@ void DiffTop::abort_prologue() {
   single_cycle();
 }
 
-void DiffTop::check_registers() {
+void DiffTop::check_states() {
 #define check(cond, ...)  \
   if (!(cond)) {          \
     nemu_ptr->dump();     \
@@ -28,6 +28,13 @@ void DiffTop::check_registers() {
   check(nemu_ptr->get_instr() == dut_ptr->io_commit_instr,
       "cycle %lu: instr: nemu:%08x <> dut:%08x\n", cycles,
       nemu_ptr->get_instr(), dut_ptr->io_commit_instr);
+
+  if (last_instr_is_store) {
+    uint32_t nemu_mc = dbg_vaddr_read(ls_addr, 4);
+    check(nemu_mc == ls_data,
+        "cycle %lu: M[%08x]: nemu:%08x <> dut:%08x\n",
+        cycles, ls_addr, nemu_mc, ls_data);
+  }
 
 #define GPR_TEST(i)                                     \
   check(nemu_ptr->gpr(i) == dut_ptr->io_commit_gpr_##i, \
@@ -117,7 +124,9 @@ void DiffTop::cycle_epilogue() {
 
   /* don't check eret and syscall instr */
   if (!instr.is_syscall() && !instr.is_eret())
-    check_registers();
+    check_states();
+
+  last_instr_is_store = false;
 }
 
 void DiffTop::single_cycle() {
@@ -155,6 +164,10 @@ void DiffTop::device_io(unsigned char valid, int addr,
         if (wstrb & (1 << i))
           ddr[addr + i] = (data >> (i * 8)) & 0xFF;
       }
+
+      last_instr_is_store = true;
+      ls_addr = addr & ~3;
+      memcpy(&ls_data, &ddr[ls_addr], 4);
     }
     return;
   }
