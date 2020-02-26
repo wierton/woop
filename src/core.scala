@@ -42,12 +42,9 @@ class Core extends Module {
   rf.io.rfreq <> bridu.io.rfreq
   ifu.io.iaddr <> pralu.io.iaddr
 
-  val ifu_cistern = Module(new Cistern(new MemResp, conf.mio_cycles - 1))
-  val ifu_queue = Module(new Queue(new MemResp, 1, true))
-  ifu.io.imem.req <> io.imem.req
-  ifu_cistern.io.enq <> io.imem.resp
-  ifu_queue.io.enq <> ifu_cistern.io.deq
-  ifu.io.imem.resp <> ifu_queue.io.deq
+  val ifu_cistern = Module(new IFUCistern(conf.mio_cycles + 1))
+  ifu.io.imem <> ifu_cistern.io.in
+  ifu_cistern.io.out <> io.imem
 
   lsmdu.io.dmem <> io.dmem
 

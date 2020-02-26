@@ -19,12 +19,12 @@ object conf {
   val log_rf = true
   val log_IFU = true
   val log_IFUPipelineData = true
-  val log_BRIDU = true
-  val log_PRALU = true
-  val log_PRU = true
-  val log_ALU = true
-  val log_LSU = true
-  val log_LSMDU = true
+  val log_BRIDU = false
+  val log_PRALU = false
+  val log_PRU = false
+  val log_ALU = false
+  val log_LSU = false
+  val log_LSMDU = false
   val log_CrossbarNx1 = true
   val log_Cistern = true
 }
