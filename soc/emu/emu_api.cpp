@@ -7,18 +7,18 @@
   X(16) X(17) X(18) X(19) X(20) X(21) X(22) X(23) \
   X(24) X(25) X(26) X(27) X(28) X(29) X(30) X(31)
 
-void Emulator::epilogue() {
+void DiffTop::abort_prologue() {
   if (finished) return;
   finished = true;
   single_cycle();
 }
 
-void Emulator::check_registers() {
+void DiffTop::check_registers() {
 #define check(cond, ...)  \
   if (!(cond)) {          \
     nemu_ptr->dump();     \
     eprintf(__VA_ARGS__); \
-    epilogue();           \
+    abort_prologue();     \
     abort();              \
   }
 
@@ -31,14 +31,14 @@ void Emulator::check_registers() {
 
 #define GPR_TEST(i)                                     \
   check(nemu_ptr->gpr(i) == dut_ptr->io_commit_gpr_##i, \
-      "cycle %lu: gpr[%d] nemu:%08x <> dut:%08x\n",     \
+      "cycle %lu: gpr[%d]: nemu:%08x <> dut:%08x\n",    \
       cycles, i, nemu_ptr->gpr(i),                      \
       dut_ptr->io_commit_gpr_##i);
   GPRS(GPR_TEST);
 #undef GPR_TEST
 }
 
-uint32_t Emulator::get_dut_gpr(uint32_t r) {
+uint32_t DiffTop::get_dut_gpr(uint32_t r) {
   switch (r) {
 #define GET_GPR(i) \
   case i: return dut_ptr->io_commit_gpr_##i;
@@ -48,7 +48,7 @@ uint32_t Emulator::get_dut_gpr(uint32_t r) {
   return 0;
 }
 
-device_t *Emulator::find_device(const char *name) {
+device_t *DiffTop::find_device(const char *name) {
   for (device_t *head = get_device_list_head(); head;
        head = head->next) {
     if (strcmp(head->name, name) == 0) return head;
@@ -57,8 +57,11 @@ device_t *Emulator::find_device(const char *name) {
 }
 
 // argv decay to the secondary pointer
-Emulator::Emulator(int argc, const char *argv[])
-    : cycles(0) {
+DiffTop::DiffTop(int argc, const char *argv[])
+    : cycles(0), finished(false) {
+  /* `emu' must be created before srand */
+  dut_ptr.reset(new emu);
+
   /* srand */
   seed = (unsigned)time(NULL) ^ (unsigned)getpid();
   srand(seed);
@@ -66,7 +69,6 @@ Emulator::Emulator(int argc, const char *argv[])
   Verilated::randReset(seed);
 
   /* init nemu */
-  dut_ptr.reset(new emu);
   nemu_ptr.reset(new NEMU_MIPS32(argc, argv));
 
   /* init ddr */
@@ -74,15 +76,18 @@ Emulator::Emulator(int argc, const char *argv[])
   void *nemu_ddr_map = ddr_dev->map(0, ddr_size);
   memcpy(ddr, nemu_ddr_map, ddr_size);
 
-  /* flush one cycle */
-  single_cycle();
+  /* reset n cycles */
+  for (int i = 0; i < 10; i ++) {
+    dut_ptr->reset = 1;
+    single_cycle();
+    dut_ptr->reset = 0;
+  }
 
   /* print seed */
-  printf(
-      ESC_BLUE "\ruse random seed %u" ESC_RST "\n", seed);
+  printf(ESC_BLUE "seed %u" ESC_RST "\n", seed);
 }
 
-void Emulator::cycle_epilogue() {
+void DiffTop::cycle_epilogue() {
   cycles++;
   silent_cycles++;
 
@@ -111,7 +116,7 @@ void Emulator::cycle_epilogue() {
     check_registers();
 }
 
-void Emulator::single_cycle() {
+void DiffTop::single_cycle() {
   dut_ptr->clock = 0;
   dut_ptr->eval();
 
@@ -119,7 +124,7 @@ void Emulator::single_cycle() {
   dut_ptr->eval();
 }
 
-int Emulator::execute(uint64_t n) {
+int DiffTop::execute(uint64_t n) {
   while (!finished && n > 0) {
     single_cycle();
     cycle_epilogue();
@@ -128,4 +133,36 @@ int Emulator::execute(uint64_t n) {
 
   if (finished) return ret_code;
   return n == 0 ? -1 : 0;
+}
+
+void DiffTop::device_io(unsigned char valid, int addr,
+    int data, char func, char wstrb, int *resp) {
+  if (!valid) return;
+  assert (func == MX_RD || func == MX_WR);
+
+  /* ddr io */
+  if (0 <= addr && addr < 0x08000000) {
+    if (func == MX_RD) {
+      // MX_RD
+      memcpy(resp, &ddr[addr], 4);
+    } else {
+      // MX_WR
+      for (int i = 0; i < 4; i++) {
+        if (wstrb & (1 << i))
+          ddr[addr + i] = (data >> (i * 8)) & 0xFF;
+      }
+    }
+    return;
+  }
+
+  /* deal with dev_io */
+  if (func == MX_RD) {
+    *resp = paddr_peek(addr, 4);
+    return;
+  } else {
+    if (addr == GPIO_TRAP) {
+      finished = true;
+      ret_code = data;
+    }
+  }
 }

@@ -14,6 +14,10 @@
 #include "emu__Dpi.h"
 #include "nemu_api.h"
 
+#define MX_RD 0
+#define MX_WR 1
+#define GPIO_TRAP 0x10000000
+
 class NEMU_MIPS32;
 struct device_t;
 
@@ -43,31 +47,32 @@ public:
   uint32_t get_rt() { return rt; }
 };
 
-class Emulator {
+class DiffTop {
   std::unique_ptr<emu> dut_ptr;
   std::unique_ptr<NEMU_MIPS32> nemu_ptr;
 
   uint32_t seed;
   uint64_t cycles, silent_cycles;
 
-  void epilogue();
-  void check_registers();
-  uint32_t get_dut_gpr(uint32_t r);
-  static device_t *find_device(const char *name);
-  void single_cycle();
-  void cycle_epilogue();
-
-public:
   bool finished;
   int ret_code;
   static constexpr uint32_t ddr_size = 128 * 1024 * 1024;
   uint8_t ddr[ddr_size];
 
+  void check_registers();
+  uint32_t get_dut_gpr(uint32_t r);
+  static device_t *find_device(const char *name);
+  void single_cycle();
+  void abort_prologue();
+  void cycle_epilogue();
+
 public:
   // argv decay to the secondary pointer
-  Emulator(int argc, const char *argv[]);
+  DiffTop(int argc, const char *argv[]);
   void reset_ncycles(size_t cycles);
   int execute(uint64_t n = -1ull);
+  void device_io(unsigned char valid, int addr, int data,
+      char func, char wstrb, int *resp);
 
   uint64_t get_cycles() const { return cycles; }
 };
