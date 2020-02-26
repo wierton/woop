@@ -22,7 +22,7 @@ class IFUCistern(entries:Int) extends Module {
   io.out.req.valid := io.in.req.valid && size < entries.U
   io.out.req.bits := io.in.req.bits
 
-  size := size + io.in.req.fire() - cistern.io.deq.fire()
+  size := size + io.in.req.fire() - io.in.resp.fire()
   io.in.req.ready := io.out.req.ready && size < entries.U
 
   cistern.io.enq <> io.out.resp

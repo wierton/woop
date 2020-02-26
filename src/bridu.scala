@@ -102,7 +102,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
 
   /* branch check */
   val se_imm = instr.imm.asTypeOf(SInt(conf.xprlen.W)).asUInt
-  val Ia = (fu_in.pc + (se_imm << 2))(31, 0)
+  val Ia = (fu_in.pc + 4.U + (se_imm << 2))(31, 0)
   val Ja = Cat(Seq(fu_in.pc(31, 28), instr.addr, 0.U(2.W)))
   val JRa = io.rfreq.rs_data.bits
   /* br_info={34:ready, 33:jump, 32:wb, 31..0:target} */
