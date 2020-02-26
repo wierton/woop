@@ -13,34 +13,33 @@
 #include "nemu_api.h"
 
 #define MX_RD 0
-#define MX_WR 0
+#define MX_WR 1
 #define GPIO_TRAP 0x10000000
 
-uint8_t ddr_mem[128 * 1024 * 1024];
-
-EmuGlobalState emu_gbl_state;
+static std::unique_ptr<Emulator> soc_emu;
 
 extern "C" {
 
-void device_io(
-    unsigned char valid, int addr, int data, char func, char wstrb, int *resp) {
+void device_io(unsigned char valid, int addr, int data,
+    char func, char wstrb, int *resp) {
   if (!valid) return;
 
   if (0 <= addr && addr < 0x08000000) {
-    if (func == 0) {
+    if (func == MX_RD) {
       // MX_RD
-      memcpy(resp, &ddr_mem[addr], 4);
+      memcpy(resp, &soc_emu->ddr[addr], 4);
     } else {
       // MX_WR
       for (int i = 0; i < 4; i++) {
-        if (wstrb & (1 << i)) ddr_mem[addr + i] = (data >> (i * 8)) & 0xFF;
+        if (wstrb & (1 << i))
+          soc_emu->ddr[addr + i] = (data >> (i * 8)) & 0xFF;
       }
     }
     return;
   }
 
   /* deal with read */
-  if (func != 1) {
+  if (func != MX_WR) {
     /* all registers defined in IP manual have length 4 */
     *resp = paddr_peek(addr, 4);
     return;
@@ -49,12 +48,11 @@ void device_io(
   /* deal with write */
   switch (addr) {
   case GPIO_TRAP:
-    emu_gbl_state.finished = true;
-    emu_gbl_state.ret_code = data;
-    if (data == 0)
-      printf(ANSI_COLOR_GREEN "EMU: HIT GOOD TRAP" ANSI_COLOR_RESET "\n");
-    else
-      printf(ANSI_COLOR_RED "EMU: HIT BAD TRAP" ANSI_COLOR_RESET "\n");
+    soc_emu->finished = true;
+    soc_emu->ret_code = data;
+    break;
+  default:
+    /* do nothing */
     break;
   }
 }
@@ -63,17 +61,15 @@ void device_io(
 double sc_time_stamp() { return 0; }
 
 int main(int argc, const char **argv) {
-  auto emu = Emulator(argc, argv);
-
-  auto ret = emu.execute();
+  soc_emu.reset(new Emulator(argc, argv));
+  auto ret = soc_emu->execute();
 
   if (ret == -1) {
-    eprintf(ANSI_COLOR_RED "Timeout after %lld cycles\n" ANSI_COLOR_RESET,
-        (long long)emu.get_max_cycles());
+    eprintf(ESC_RED "Timeout\n" ESC_RST);
   } else if (ret == 0) {
-    eprintf(ANSI_COLOR_GREEN "HIT GOOD TRAP\n" ANSI_COLOR_RESET);
+    eprintf(ESC_GREEN "HIT GOOD TRAP\n" ESC_RST);
   } else {
-    eprintf(ANSI_COLOR_RED "HIT BAD TRAP code: %d\n" ANSI_COLOR_RESET, ret);
+    eprintf(ESC_RED "HIT BAD TRAP (%d)\n" ESC_RST, ret);
   }
 
   return ret;

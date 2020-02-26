@@ -64,9 +64,8 @@ public:
 	return ::get_current_instr();
   }
 
-  void set_c0_count(uint64_t count) {
+  void set_c0_count(uint32_t count) {
 	cpu.cp0.count[0] = count;
-	cpu.cp0.count[1] = count >> 32;
   }
 };
 
