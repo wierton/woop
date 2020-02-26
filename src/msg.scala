@@ -23,12 +23,15 @@ class CP0Exception extends Bundle {
   val code = UInt(ETW_WIDTH.W)
 }
 
-class RegFileReq extends Bundle {
-  val rs_idx = Output(UInt(REG_SZ.W))
-  val rt_idx = Output(UInt(REG_SZ.W))
+class RegFileIO extends Bundle {
+  val ops = ValidIO(new Bundle {
+    val rs_idx = Output(UInt(REG_SZ.W))
+    val rt_idx = Output(UInt(REG_SZ.W))
+    val wen = Output(Bool())
+    val rd_idx = Output(UInt(REG_SZ.W))
+  })
   val rs_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
   val rt_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
-  val oprd_idx = ValidIO(Output(UInt(conf.xprlen.W)))
 }
 
 class TLBReq extends Bundle {

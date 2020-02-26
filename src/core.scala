@@ -39,7 +39,7 @@ class Core extends Module {
   lsmdu.io.fu_out <> rf.io.wb
 
   rf.io.bp <> pralu.io.bp
-  rf.io.rfreq <> bridu.io.rfreq
+  rf.io.rfio <> bridu.io.rfio
   ifu.io.iaddr <> pralu.io.iaddr
 
   val ifu_cistern = Module(new IFUCistern(conf.mio_cycles + 1))
@@ -54,8 +54,8 @@ class Core extends Module {
   bridu.io.ex_flush <> pralu.io.ex_flush
   io.flush := bridu.io.br_flush.valid || pralu.io.ex_flush.valid
 
-  pralu.io.rs_data := rf.io.rfreq.rs_data
-  pralu.io.rt_data := rf.io.rfreq.rt_data
+  pralu.io.rs_data <> rf.io.rfio.rs_data
+  pralu.io.rt_data <> rf.io.rfio.rt_data
 
   io.commit <> rf.io.commit
 }

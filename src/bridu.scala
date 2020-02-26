@@ -12,7 +12,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new IFU_BRIDU_IO))
     val fu_out = DecoupledIO(new BRIDU_PRALU_IO)
-    val rfreq = new RegFileReq
+    val rfio = new RegFileIO
     val br_flush = ValidIO(new FlushIO)
     val ex_flush = Flipped(ValidIO(new FlushIO))
   })
@@ -95,23 +95,24 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   io.fu_out.bits.ex := 0.U.asTypeOf(new CP0Exception)
 
   /* register RW */
-  io.rfreq.rs_idx := instr.rs_idx
-  io.rfreq.rt_idx := instr.rt_idx
-  io.rfreq.oprd_idx.valid := fu_valid && (rd_sel =/= OPD_X)
-  io.rfreq.oprd_idx.bits := oprd_idx
+  io.rfio.ops.valid := fu_valid
+  io.rfio.ops.bits.rs_idx := instr.rs_idx
+  io.rfio.ops.bits.rt_idx := instr.rt_idx
+  io.rfio.ops.bits.wen := rd_sel =/= OPD_X
+  io.rfio.ops.bits.rd_idx := oprd_idx
 
   /* branch check */
   val se_imm = instr.imm.asTypeOf(SInt(conf.xprlen.W)).asUInt
   val Ia = (fu_in.pc + 4.U + (se_imm << 2))(31, 0)
   val Ja = Cat(Seq(fu_in.pc(31, 28), instr.addr, 0.U(2.W)))
-  val JRa = io.rfreq.rs_data.bits
+  val JRa = io.rfio.rs_data.bits
   /* br_info={34:ready, 33:jump, 32:wb, 31..0:target} */
   val br_info = Mux1H(Array(
-    (fu_op === BR_EQ)   -> Cat(io.rfreq.rs_data.valid && io.rfreq.rt_data.valid, io.rfreq.rs_data.bits === io.rfreq.rt_data.bits, N, Ia),
-    (fu_op === BR_NE)   -> Cat(io.rfreq.rs_data.valid && io.rfreq.rt_data.valid, io.rfreq.rs_data.bits =/= io.rfreq.rt_data.bits, N, Ia),
-    (fu_op === BR_LEZ)  -> Cat(io.rfreq.rs_data.valid, io.rfreq.rs_data.bits.asSInt <= 0.S, N, Ia),
-    (fu_op === BR_GTZ)  -> Cat(io.rfreq.rs_data.valid, io.rfreq.rs_data.bits.asSInt > 0.S, N, Ia),
-    (fu_op === BR_LTZ)  -> Cat(io.rfreq.rs_data.valid, io.rfreq.rs_data.bits.asSInt < 0.S, N, Ia),
+    (fu_op === BR_EQ)   -> Cat(io.rfio.rs_data.valid && io.rfio.rt_data.valid, io.rfio.rs_data.bits === io.rfio.rt_data.bits, N, Ia),
+    (fu_op === BR_NE)   -> Cat(io.rfio.rs_data.valid && io.rfio.rt_data.valid, io.rfio.rs_data.bits =/= io.rfio.rt_data.bits, N, Ia),
+    (fu_op === BR_LEZ)  -> Cat(io.rfio.rs_data.valid, io.rfio.rs_data.bits.asSInt <= 0.S, N, Ia),
+    (fu_op === BR_GTZ)  -> Cat(io.rfio.rs_data.valid, io.rfio.rs_data.bits.asSInt > 0.S, N, Ia),
+    (fu_op === BR_LTZ)  -> Cat(io.rfio.rs_data.valid, io.rfio.rs_data.bits.asSInt < 0.S, N, Ia),
     (fu_op === BR_J)    -> Cat(Y, Y, N, Ja),
     (fu_op === BR_JAL)  -> Cat(Y, Y, Y, Ja),
     (fu_op === BR_JR)   -> Cat(Y, Y, N, JRa),
@@ -142,7 +143,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
     printf("%d: BRIDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, rd_idx=%d, se_imm=%x, Ia=%x, Ja=%x, JRa=%x, br_info=%x, br_ready=%b\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, oprd_idx, se_imm, Ia, Ja, JRa, br_info, br_ready);
     io.fu_in.dump("BRIDU.io.fu_in")
     io.fu_out.dump("BRIDU.io.fu_out")
-    io.rfreq.dump("BRIDU.io.rfreq")
+    io.rfio.dump("BRIDU.io.rfio")
     io.br_flush.dump("BRIDU.io.br_flush")
     io.ex_flush.dump("BRIDU.io.ex_flush")
   }
