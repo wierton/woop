@@ -119,6 +119,7 @@ class PRALU extends Module {
 
   /* bypass */
   io.bp.valid := alu.io.fu_out.valid || pru.io.fu_out.valid
+  io.bp.bits.v := io.fu_out.bits.wb.v
   io.bp.bits.wen := io.fu_out.bits.wb.wen
   io.bp.bits.rd_idx := io.fu_out.bits.wb.rd_idx
   io.bp.bits.data :=  io.fu_out.bits.wb.data

@@ -87,16 +87,18 @@ class FlushIO extends Bundle {
 }
 
 class BypassIO extends Bundle {
+  val v = Output(Bool())
   val rd_idx = Output(UInt(REG_SZ.W))
   val wen = Output(Bool())
   val data = Output(UInt(conf.xprlen.W))
 }
 
 class WriteBackIO extends Bundle {
+  val v = Output(Bool())
   val pc = Output(UInt(conf.xprlen.W))
   val instr = Output(new Instr)
   val rd_idx = Output(UInt(REG_SZ.W))
-  val wen = Output(Bool());
+  val wen = Output(Bool())
   val data = Output(UInt(conf.xprlen.W))
 }
 

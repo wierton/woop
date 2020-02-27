@@ -124,6 +124,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
 
   /* wb */
   io.fu_out.valid := fu_valid
+  io.fu_out.bits.wb.v := fu_type === FU_BRU && br_info(32)
   io.fu_out.bits.wb.pc := fu_in.pc
   io.fu_out.bits.wb.instr := instr
   /* only valid for bru */

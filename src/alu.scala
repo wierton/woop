@@ -10,7 +10,6 @@ import woop.dumps._
 
 class ALU extends Module {
   val io = IO(new Bundle {
-    val bypass = ValidIO(new BypassIO)
     val fu_in = Flipped(DecoupledIO(new PRALU_FU_IO))
     val fu_out = DecoupledIO(new PRALU_OUT)
     val ex_flush = Flipped(ValidIO(new FlushIO))
@@ -41,14 +40,9 @@ class ALU extends Module {
     (fu_op === ALU_SLTU) -> (op1 < op2).asUInt,
     (fu_op === ALU_LUI)  -> op2.asUInt))
 
-
-  io.bypass.valid := io.fu_out.valid
-  io.bypass.bits.wen := Y
-  io.bypass.bits.rd_idx := rd_idx
-  io.bypass.bits.data := result
-
   io.fu_out.valid := fu_valid
   io.fu_out.bits.wb.pc := fu_in.wb.pc
+  io.fu_out.bits.wb.v  := Y
   io.fu_out.bits.wb.wen := Y
   io.fu_out.bits.wb.rd_idx := rd_idx
   io.fu_out.bits.wb.data := result

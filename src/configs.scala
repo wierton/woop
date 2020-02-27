@@ -15,16 +15,16 @@ object conf {
   val nICacheSets = 32
   val nICacheWays = 4
   val nICacheWordsPerWay = 4
-  val log_MemMux = true
+  val log_MemMux = false
   val log_rf = true
-  val log_IFU = true
-  val log_IFUPipelineData = true
+  val log_IFU = false
+  val log_IFUPipelineData = false
   val log_BRIDU = true
   val log_PRALU = true
   val log_PRU = true
   val log_ALU = true
   val log_LSU = true
   val log_LSMDU = false
-  val log_CrossbarNx1 = true
-  val log_Cistern = true
+  val log_CrossbarNx1 = false
+  val log_Cistern = false
 }
