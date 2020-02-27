@@ -35,11 +35,6 @@ class RegFile extends Module {
   io.rfio.rt_data.valid := rf_data_ready(io.rfio.rt_idx)
   io.rfio.rt_data.bits := rf_data_bits(io.rfio.rt_idx)
 
-  when (io.rfio.wen) {
-    rf_dirtys(io.rfio.rd_idx) := Y
-    bp_readys(io.bp.bits.rd_idx) := N
-  }
-
   when (io.wb.valid) {
     when (io.wb.bits.wen && io.wb.bits.rd_idx =/= 0.U) {
       wb_rf(io.wb.bits.rd_idx) := io.wb.bits.data
@@ -52,6 +47,12 @@ class RegFile extends Module {
       bp_rf(io.bp.bits.rd_idx) := io.bp.bits.data
     }
     bp_readys(io.bp.bits.rd_idx) := Y
+  }
+
+  /* sequence matter */
+  when (io.rfio.wen) {
+    rf_dirtys(io.rfio.rd_idx) := Y
+    bp_readys(io.bp.bits.rd_idx) := N
   }
 
   io.commit.valid := io.wb.valid
