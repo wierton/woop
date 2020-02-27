@@ -75,8 +75,8 @@ public:
   // argv decay to the secondary pointer
   DiffTop(int argc, const char *argv[]);
   int execute(uint64_t n = -1ull);
-  void device_io(unsigned char valid, int addr, int data,
-      char func, char wstrb, int *resp);
+  void device_io(unsigned char is_aligned, int addr,
+      int len, int data, char func, char wstrb, int *resp);
 
   uint64_t get_cycles() const { return cycles; }
 };

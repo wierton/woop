@@ -8,13 +8,41 @@ import woop.configs._
 import woop.utils._
 import woop.dumps._
 
+object LSUConsts extends LSUConsts { }
+
 class LSUOp extends Bundle {
-  val align = UInt(1.W)
+  val align = Bool()
   val func  = UInt(1.W)
-  val dt    = UInt(2.W)
+  val len   = UInt(2.W)
   val ext   = UInt(1.W)
 
-  def isAligned()  = align =/= 0.U
+  // below functions only used for unaligned rw
+  // 0:0001, 1:0011, 2:0111, 3:1111
+  // R: 0 -> b1111, 1 -> b1110, 2 -> b1100, 3 -> b1000
+  // L: 0 -> b0001, 1 -> b0011, 2 -> b0111, 3 -> b1111
+  def strbOf(addr:UInt) = Mux(align,
+    "b0001111".U >> (~len),
+    Mux(ext === LSUConsts.LSU_L,
+      "b1111000".U >> (~addr(1, 0)),
+      "b0001111".U >> (~addr(1, 0)))) (3, 0)
+  def maskOf(addr:UInt) = {
+    val strb = strbOf(addr)
+    Reverse(Cat(for (i <- 0 until 4) yield strb(i).asTypeOf(SInt(8.W))))
+  }
+  def dataOf(addr:UInt, data:UInt, mask_data:UInt) = {
+    val l2b = addr(1, 0)
+    val mask = maskOf(addr)
+    (data & mask) | (mask_data & ~mask)
+  }
+}
+
+object AddrLen2Strb {
+  def apply(addr:UInt, len:UInt) = {
+    val l2 = addr(1, 0)
+    val h2 = l2 + len
+    assert (h2 < 4.U)
+    Reverse(Cat(for (i <- 0 until 4) yield l2 <= i.U && i.U <= h2))
+  }
 }
 
 class LSUStage2Data extends Bundle {
@@ -58,39 +86,27 @@ class LSU extends Module with LSUConsts {
   s2_datas.io.deq.ready := io.dmem.resp.fire()
   io.working := s2_datas.io.deq.valid
   io.dmem.req.valid := io.fu_in.valid
-  io.dmem.req.bits.is_cached := s2_in.is_cached
-  io.dmem.req.bits.is_aligned := s2_in.op.isAligned()
-  io.dmem.req.bits.addr  := Mux(s2_in.op.isAligned(), s2_in.addr, s2_in.addr & ~(3.U(32.W)))
+  io.dmem.req.bits.is_cached  := s2_in.is_cached
+  io.dmem.req.bits.is_aligned := s2_in.op.align
+  io.dmem.req.bits.addr  := Mux(s2_in.op.align, s2_in.addr, s2_in.addr & ~(3.U(32.W)))
+  io.dmem.req.bits.len   := s2_in.op.len
   io.dmem.req.bits.func  := s2_in.op.func
-  // L: 0 -> b1111, 1 -> b1110, 2 -> b1100, 3 -> b1000
-  // R: 0 -> b0001, 1 -> b0011, 2 -> b0111, 3 -> b1111
-  io.dmem.req.bits.wstrb := Mux(s2_in.op.isAligned(),
-   0.U, Mux(s2_in.op.ext === LSU_L,
-     "b1111000".U >> (~s2_in.addr(1, 0)),
-     "b0001111".U >> (~s2_in.addr(1, 0))))
-  io.dmem.req.bits.data := s2_in.data
+  io.dmem.req.bits.data  := s2_in.data
+  io.dmem.req.bits.strb  := s2_in.op.strbOf(s2_in.addr)
   io.dmem.resp.ready := Y
 
   /* stage 3: recv contents and commit */
   val s3_in = s2_datas.io.deq.bits
-  val s3_data = io.dmem.resp.bits.data
   /* io.fu_out.bits.wb.data */
-  val lstrb = "b1111000".U >> (~s3_in.addr(1, 0))
-  val lmask = Cat(for (i <- 0 until 4) yield lstrb(i).asTypeOf(SInt(8.W)))
-  val rstrb = "b0001111".U >> (~s3_in.addr(1, 0))
-  val rmask = Cat(for (i <- 0 until 4) yield rstrb(i).asTypeOf(SInt(8.W)))
   io.fu_out.valid := io.dmem.resp.valid
   io.fu_out.bits.pc := s3_in.pc
   io.fu_out.bits.wen := Y
   io.fu_out.bits.rd_idx := s3_in.rd_idx
   io.fu_out.bits.instr := s3_in.instr
-  io.fu_out.bits.data := Mux(s3_in.op.isAligned(),
-    io.dmem.resp.bits.data, Mux(s3_in.op.ext === LSU_L,
-    (lmask & s3_data) | (~lmask & s3_in.data),
-    (rmask & s3_data) | (~rmask & s3_in.data)))
+  io.fu_out.bits.data := s3_in.op.dataOf(s3_in.addr,
+    io.dmem.resp.bits.data, 0.U(32.W))
 
   if (conf.log_LSU) {
-    printf("%d: LSU: lstrb=%b, lmask=%b, rstrb=%b, rmask=%b, s3_data=%x\n", GTimer(), lstrb, lmask, rstrb, rmask, s3_data)
     s2_in.dump("LSU.s2_in")
     s2_datas.io.enq.dump("LSU.s2_datas.enq")
     s2_datas.io.deq.dump("LSU.s2_datas.deq")

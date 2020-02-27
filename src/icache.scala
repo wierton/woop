@@ -96,7 +96,7 @@ class ICacheMemIO extends Module {
   io.out.req.bits.is_cached := Y
   io.out.req.bits.is_aligned := Y
   io.out.req.bits.func := MX_RD
-  io.out.req.bits.wstrb := 0.U
+  io.out.req.bits.strb := 0.U
   io.out.req.bits.data := 0.U
   io.out.resp.ready := s2_req_valid
 }

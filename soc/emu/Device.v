@@ -1,10 +1,12 @@
 import "DPI-C" function void device_io
 (
   input  bit  in_req_valid,
+  input  bit  in_req_bits_is_aligned,
   input  int  in_req_bits_addr,
+  input  int  in_req_bits_len,
   input  int  in_req_bits_data,
   input  byte in_req_bits_func,
-  input  byte in_req_bits_wstrb,
+  input  byte in_req_bits_strb,
   output int  in_resp_bits_data
 );
 
@@ -16,9 +18,10 @@ module SimDev(
   input  [0:0]  in_req_bits_is_cached,
   input  [0:0]  in_req_bits_is_aligned,
   input  [31:0] in_req_bits_addr,
+  input  [1:0]  in_req_bits_len,
   input  [31:0] in_req_bits_data,
   input  [0:0]  in_req_bits_func,
-  input  [3:0]  in_req_bits_wstrb,
+  input  [3:0]  in_req_bits_strb,
   input         in_resp_ready,
   output        in_resp_valid,
   output [31:0] in_resp_bits_data
@@ -39,10 +42,12 @@ begin
   if (!reset) begin
     device_io(
       in_req_fire,
+      in_req_bits_is_aligned,
       in_req_bits_addr,
+      {30'b0, in_req_bits_len},
       in_req_bits_data,
       {7'b0, in_req_bits_func},
-      {4'b0, in_req_bits_wstrb},
+      {4'b0, in_req_bits_strb},
       __in_resp_bits_data
     );
     if (in_req_fire) begin

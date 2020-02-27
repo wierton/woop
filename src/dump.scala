@@ -65,7 +65,7 @@ object dumps {
 
   implicit class MemReq_Dump(data:MemReq) {
     def dump(msg:String) = {
-      printf("%d: "+msg+": req={align:%d, addr:%x, data:%x, func:%d, strb:%x}\n", GTimer(), data.is_aligned, data.addr, data.data, data.func, data.wstrb)
+      printf("%d: "+msg+": req={align:%d, addr:%x, len:%d, data:%x, func:%d, strb:%x}\n", GTimer(), data.is_aligned, data.addr, data.len, data.data, data.func, data.strb)
     }
   }
 
@@ -77,7 +77,7 @@ object dumps {
 
   implicit class MemIO_Dump(data:MemIO) {
     def dump(msg:String) = {
-      printf("%d: "+msg+": req[%d,%d]={align:%d, addr:%x, data:%x, func:%d, strb:%x}, resp[%d,%d]={data:%x}\n", GTimer(), data.req.valid, data.req.ready, data.req.bits.is_aligned, data.req.bits.addr, data.req.bits.data, data.req.bits.func, data.req.bits.wstrb, data.resp.valid, data.resp.ready, data.resp.bits.data)
+      printf("%d: "+msg+": req[%d,%d]={align:%d, addr:%x, len:%d, data:%x, func:%d, strb:%x}, resp[%d,%d]={data:%x}\n", GTimer(), data.req.valid, data.req.ready, data.req.bits.is_aligned, data.req.bits.addr, data.req.bits.len, data.req.bits.data, data.req.bits.func, data.req.bits.strb, data.resp.valid, data.resp.ready, data.resp.bits.data)
     }
   }
 

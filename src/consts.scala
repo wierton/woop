@@ -11,11 +11,12 @@ trait MemConsts {
   val MX_RD = 0.U(MX_SZ.W)
   val MX_WR = 1.U(MX_SZ.W)
 
-  val MT_SZ = 2
-  val MT_X  = 0.U(MT_SZ.W)
-  val MT_B  = 1.U(MT_SZ.W)
-  val MT_H  = 2.U(MT_SZ.W)
-  val MT_W  = 3.U(MT_SZ.W)
+  val ML_SZ = 2
+  val ML_X  = 0.U(ML_SZ.W)
+  val ML_1  = 0.U(ML_SZ.W)
+  val ML_2  = 1.U(ML_SZ.W)
+  val ML_3  = 2.U(ML_SZ.W)
+  val ML_4  = 3.U(ML_SZ.W)
 }
 
 trait CP0Consts {
@@ -221,20 +222,20 @@ trait LSUConsts extends ISUConsts with MemConsts {
   val LSU_R = 1.U(1.W)
 
   //                 1    1      2     1
-  val LSU_OP_X = Cat(Y, MX_X,  MT_X, LSU_XE)
-  val LSU_LW   = Cat(Y, MX_RD, MT_W, LSU_SE)
-  val LSU_LB   = Cat(Y, MX_RD, MT_B, LSU_SE)
-  val LSU_LBU  = Cat(Y, MX_RD, MT_B, LSU_ZE)
-  val LSU_LH   = Cat(Y, MX_RD, MT_H, LSU_SE)
-  val LSU_LHU  = Cat(Y, MX_RD, MT_H, LSU_ZE)
-  val LSU_SW   = Cat(Y, MX_WR, MT_W, LSU_SE)
-  val LSU_SB   = Cat(Y, MX_WR, MT_B, LSU_SE)
-  val LSU_SH   = Cat(Y, MX_WR, MT_H, LSU_SE)
+  val LSU_OP_X = Cat(Y, MX_X,  ML_X, LSU_XE)
+  val LSU_LW   = Cat(Y, MX_RD, ML_4, LSU_SE)
+  val LSU_LB   = Cat(Y, MX_RD, ML_1, LSU_SE)
+  val LSU_LBU  = Cat(Y, MX_RD, ML_1, LSU_ZE)
+  val LSU_LH   = Cat(Y, MX_RD, ML_2, LSU_SE)
+  val LSU_LHU  = Cat(Y, MX_RD, ML_2, LSU_ZE)
+  val LSU_SW   = Cat(Y, MX_WR, ML_4, LSU_SE)
+  val LSU_SB   = Cat(Y, MX_WR, ML_1, LSU_SE)
+  val LSU_SH   = Cat(Y, MX_WR, ML_2, LSU_SE)
   //                 1    1      2     1
-  val LSU_LWL  = Cat(N, MX_RD, MT_W, LSU_L)
-  val LSU_LWR  = Cat(N, MX_RD, MT_W, LSU_R)
-  val LSU_SWL  = Cat(N, MX_WR, MT_W, LSU_L)
-  val LSU_SWR  = Cat(N, MX_WR, MT_W, LSU_R)
+  val LSU_LWL  = Cat(N, MX_RD, ML_4, LSU_L)
+  val LSU_LWR  = Cat(N, MX_RD, ML_4, LSU_R)
+  val LSU_SWL  = Cat(N, MX_WR, ML_4, LSU_L)
+  val LSU_SWR  = Cat(N, MX_WR, ML_4, LSU_R)
 }
 
 /* contains temp node `Cat`, should be extended by Module */

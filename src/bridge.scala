@@ -143,12 +143,7 @@ class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
   for (i <- 0 until n) {
     io.out(i).resp.ready := resping
     io.out(i).req.valid := reqing && cached_out_valids(i)
-    io.out(i).req.bits.is_aligned := cached_in_req.is_aligned
-    io.out(i).req.bits.is_cached := cached_in_req.is_cached
-    io.out(i).req.bits.addr := cached_in_req.addr
-    io.out(i).req.bits.data := cached_in_req.data
-    io.out(i).req.bits.func := cached_in_req.func
-    io.out(i).req.bits.wstrb := cached_in_req.wstrb
+    io.out(i).req.bits  := cached_in_req
     when (io.out(i).req.fire()) {
       reqing := N
       resping := Y

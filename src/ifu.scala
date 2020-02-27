@@ -131,8 +131,9 @@ class IFU extends Module {
   io.imem.req.bits.is_cached := io.iaddr.resp.bits.is_cached
   io.imem.req.bits.is_aligned := Y
   io.imem.req.bits.addr  := io.iaddr.resp.bits.paddr
+  io.imem.req.bits.len   := (conf.xprlen / 8 - 1).U
   io.imem.req.bits.func  := MX_RD
-  io.imem.req.bits.wstrb := 0.U
+  io.imem.req.bits.strb  := "b1111".U
   io.imem.req.bits.data  := 0.U
   io.imem.resp.ready := io.fu_out.ready
 
