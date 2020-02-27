@@ -26,6 +26,6 @@ object conf {
   val log_ALU = true
   val log_LSU = true
   val log_LSMDU = false
-  val log_CrossbarNx1 = false
+  val log_CrossbarNx1 = true
   val log_Cistern = false
 }

@@ -23,8 +23,8 @@ class LSUOp extends Bundle {
   def strbOf(addr:UInt) = Mux(align,
     "b0001111".U >> (~len),
     Mux(ext === LSUConsts.LSU_L,
-      "b1111000".U >> (~addr(1, 0)),
-      "b0001111".U >> (~addr(1, 0)))) (3, 0)
+      "b0001111".U >> (~addr(1, 0)),
+      "b1111000".U >> (~addr(1, 0)))) (3, 0)
   def maskOf(addr:UInt) = {
     val strb = strbOf(addr)
     Reverse(Cat(for (i <- 0 until 4) yield strb(i).asTypeOf(SInt(8.W))))
@@ -32,7 +32,10 @@ class LSUOp extends Bundle {
   def dataOf(addr:UInt, data:UInt, mask_data:UInt) = {
     val l2b = addr(1, 0)
     val mask = maskOf(addr)
-    (data & mask) | (mask_data & ~mask)
+    val rdata = Mux(align, data, Mux(ext === LSUConsts.LSU_L, data << ((~l2b) << 3), data >> (l2b << 3)))
+    val rmask = Mux(align, mask, Mux(ext === LSUConsts.LSU_L, mask << ((~l2b) << 3), mask >> (l2b << 3)))
+    printf("%d: LSU.c: addr=%x, data=%x, mdata=%x, mask=%x, rdata=%x, rmask=%x\n", GTimer(), addr, data, mask_data, mask, rdata, rmask)
+    (rdata & rmask) | (mask_data & ~rmask)
   }
 }
 
@@ -99,6 +102,9 @@ class LSU extends Module with LSUConsts {
 
   /* stage 3: recv contents and commit */
   val s3_in = s2_datas.io.deq.bits
+  val ze_data = s3_in.op.dataOf(s3_in.addr,
+    io.dmem.resp.bits.data, Mux(s3_in.op.align,
+      0.U(32.W), s3_in.data))
   /* io.fu_out.bits.wb.data */
   io.fu_out.valid := io.dmem.resp.valid
   io.fu_out.bits.v := s3_in.op.func === MX_RD
@@ -107,11 +113,13 @@ class LSU extends Module with LSUConsts {
   io.fu_out.bits.wen := s3_in.op.func === MX_RD
   io.fu_out.bits.rd_idx := s3_in.rd_idx
   io.fu_out.bits.instr := s3_in.instr
-  io.fu_out.bits.data := s3_in.op.dataOf(s3_in.addr,
-    io.dmem.resp.bits.data, 0.U(32.W))
+  io.fu_out.bits.data := MuxCase(ze_data, Array(
+    (s3_in.op.asUInt === LSU_LB) -> io.dmem.resp.bits.data(7, 0).asTypeOf(SInt(32.W)).asUInt,
+    (s3_in.op.asUInt === LSU_LH) -> io.dmem.resp.bits.data(15, 0).asTypeOf(SInt(32.W)).asUInt))
 
   if (conf.log_LSU) {
     s2_in.dump("LSU.s2_in")
+    s3_in.dump("LSU.s3_in")
     s2_datas.io.enq.dump("LSU.s2_datas.enq")
     s2_datas.io.deq.dump("LSU.s2_datas.deq")
     io.fu_in.dump("LSU.io.in")
