@@ -16,7 +16,6 @@ class RegFile extends Module {
     val commit = Output(new CommitIO)
   })
 
-  val ops = RegEnable(io.rfio.ops.bits, enable=io.rfio.ops.valid)
   val wb_rf = Mem(32, UInt(conf.xprlen.W))
   val bp_rf = Mem(32, UInt(conf.xprlen.W))
   val rf_dirtys = Mem(32, Bool())
@@ -29,14 +28,14 @@ class RegFile extends Module {
     bypass_match(idx) -> io.bp.bits.data,
     bp_readys(idx) -> bp_rf(idx)))
 
-  io.rfio.rs_data.valid := rf_data_ready(io.rfio.ops.bits.rs_idx)
-  io.rfio.rs_data.bits := rf_data_bits(io.rfio.ops.bits.rs_idx)
+  io.rfio.rs_data.valid := rf_data_ready(io.rfio.rs_idx)
+  io.rfio.rs_data.bits := rf_data_bits(io.rfio.rs_idx)
 
-  io.rfio.rt_data.valid := rf_data_ready(io.rfio.ops.bits.rt_idx)
-  io.rfio.rt_data.bits := rf_data_bits(io.rfio.ops.bits.rt_idx)
+  io.rfio.rt_data.valid := rf_data_ready(io.rfio.rt_idx)
+  io.rfio.rt_data.bits := rf_data_bits(io.rfio.rt_idx)
 
-  when (io.rfio.ops.valid && io.rfio.ops.bits.wen) {
-    rf_dirtys(io.rfio.ops.bits.rd_idx) := Y
+  when (io.rfio.wen) {
+    rf_dirtys(io.rfio.rd_idx) := Y
     bp_readys(io.bp.bits.rd_idx) := N
   }
 
@@ -65,10 +64,11 @@ class RegFile extends Module {
     printf("%d: RF.commit: valid=%b, pc=%x, instr=%x\n", GTimer(), io.commit.valid, io.commit.pc, io.commit.instr)
     io.bp.dump("RF.bp")
     io.wb.dump("RF.wb")
+    io.rfio.dump("RF.rfio")
     printf("%d: RF: rf_dirtys=%b\n", GTimer(), Cat(for (i <- 0 until 32) yield rf_dirtys(i)).asUInt)
     printf("%d: RF: bp_readys=%b\n", GTimer(), Cat(for (i <- 0 until 32) yield bp_readys(i)).asUInt)
-    printf("%d: RF: RS@%d={bp_match:%b, rf_ready=%b, bits=%x, wbrf=%x, bprf=%x}\n", GTimer(), io.rfio.ops.bits.rs_idx, bypass_match(io.rfio.ops.bits.rs_idx), rf_data_ready(io.rfio.ops.bits.rs_idx), rf_data_bits(io.rfio.ops.bits.rs_idx), wb_rf(io.rfio.ops.bits.rs_idx), bp_rf(io.rfio.ops.bits.rs_idx))
-    printf("%d: RF: RT@%d={bp_match:%b, rf_ready=%b, bits=%x, wbrf=%x, bprf=%x}\n", GTimer(), io.rfio.ops.bits.rt_idx, bypass_match(io.rfio.ops.bits.rt_idx), rf_data_ready(io.rfio.ops.bits.rt_idx), rf_data_bits(io.rfio.ops.bits.rt_idx), wb_rf(io.rfio.ops.bits.rt_idx), bp_rf(io.rfio.ops.bits.rt_idx))
+    printf("%d: RF: RS@%d={bp_match:%b, rf_ready=%b, bits=%x, wbrf=%x, bprf=%x}\n", GTimer(), io.rfio.rs_idx, bypass_match(io.rfio.rs_idx), rf_data_ready(io.rfio.rs_idx), rf_data_bits(io.rfio.rs_idx), wb_rf(io.rfio.rs_idx), bp_rf(io.rfio.rs_idx))
+    printf("%d: RF: RT@%d={bp_match:%b, rf_ready=%b, bits=%x, wbrf=%x, bprf=%x}\n", GTimer(), io.rfio.rt_idx, bypass_match(io.rfio.rt_idx), rf_data_ready(io.rfio.rt_idx), rf_data_bits(io.rfio.rt_idx), wb_rf(io.rfio.rt_idx), bp_rf(io.rfio.rt_idx))
 
     when (io.commit.valid) {
       printf("$pc:    %x\n", io.commit.pc)

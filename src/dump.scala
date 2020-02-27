@@ -47,7 +47,7 @@ object dumps {
 
   implicit class RegFileIO_Dump(data:RegFileIO) {
     def dump(msg:String) = {
-      printf("%d: "+msg+": rs_idx=%d, rt_idx=%d, rd[%b]=%x, rs[%d]=%x, rt[%d]=%x\n", GTimer(), data.ops.bits.rs_idx, data.ops.bits.rt_idx, data.ops.bits.wen, data.ops.bits.rd_idx, data.rs_data.valid, data.rs_data.bits, data.rt_data.valid, data.rt_data.bits)
+      printf("%d: "+msg+": rs_idx=%d, rt_idx=%d, rd[%b]=%x, rs[%d]=%x, rt[%d]=%x\n", GTimer(), data.rs_idx, data.rt_idx, data.wen, data.rd_idx, data.rs_data.valid, data.rs_data.bits, data.rt_data.valid, data.rt_data.bits)
     }
   }
 

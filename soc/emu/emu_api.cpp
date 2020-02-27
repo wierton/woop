@@ -158,12 +158,14 @@ void DiffTop::device_io(unsigned char valid, int addr,
     if (func == MX_RD) {
       // MX_RD
       memcpy(resp, &ddr[addr], 4);
+      eprintf("[NEMU]: MX_RD[%x]=%x\n", addr, *resp);
     } else {
       // MX_WR
       for (int i = 0; i < 4; i++) {
         if (wstrb & (1 << i))
           ddr[addr + i] = (data >> (i * 8)) & 0xFF;
       }
+      eprintf("[NEMU]: MX_WR[%x]=%x\n", addr, data);
 
       last_instr_is_store = true;
       ls_addr = addr & ~3;

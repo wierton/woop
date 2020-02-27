@@ -24,12 +24,11 @@ class CP0Exception extends Bundle {
 }
 
 class RegFileIO extends Bundle {
-  val ops = ValidIO(new Bundle {
-    val rs_idx = Output(UInt(REG_SZ.W))
-    val rt_idx = Output(UInt(REG_SZ.W))
-    val wen = Output(Bool())
-    val rd_idx = Output(UInt(REG_SZ.W))
-  })
+  val rs_idx = Output(UInt(REG_SZ.W))
+  val rt_idx = Output(UInt(REG_SZ.W))
+  val wen = Output(Bool())
+  val rd_idx = Output(UInt(REG_SZ.W))
+
   val rs_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
   val rt_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
 }

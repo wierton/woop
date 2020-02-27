@@ -95,11 +95,10 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   io.fu_out.bits.ex := 0.U.asTypeOf(new CP0Exception)
 
   /* register RW */
-  io.rfio.ops.valid := fu_valid
-  io.rfio.ops.bits.rs_idx := instr.rs_idx
-  io.rfio.ops.bits.rt_idx := instr.rt_idx
-  io.rfio.ops.bits.wen := rd_sel =/= OPD_X
-  io.rfio.ops.bits.rd_idx := oprd_idx
+  io.rfio.rs_idx := instr.rs_idx
+  io.rfio.rt_idx := instr.rt_idx
+  io.rfio.wen := io.fu_out.fire() && rd_sel =/= OPD_X
+  io.rfio.rd_idx := oprd_idx
 
   /* branch check */
   val se_imm = instr.imm.asTypeOf(SInt(conf.xprlen.W)).asUInt
