@@ -95,7 +95,7 @@ class PRALU extends Module {
 
   /* PipelineStage */
   val psu = Module(new PRALUPipelineStage)
-  psu.io.fu_in.valid := io.fu_in.valid
+  psu.io.fu_in.valid := io.fu_in.fire()
   psu.io.fu_in.bits.wb := io.fu_in.bits.wb
   psu.io.fu_in.bits.ops.fu_type := io.fu_in.bits.fu_type
   psu.io.fu_in.bits.ops.fu_op := io.fu_in.bits.fu_op

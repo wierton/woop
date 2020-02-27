@@ -34,7 +34,9 @@ class LSUOp extends Bundle {
     val mask = maskOf(addr)
     val rdata = Mux(align, data, Mux(ext === LSUConsts.LSU_L, data << ((~l2b) << 3), data >> (l2b << 3)))
     val rmask = Mux(align, mask, Mux(ext === LSUConsts.LSU_L, mask << ((~l2b) << 3), mask >> (l2b << 3)))
-    printf("%d: LSU.c: addr=%x, data=%x, mdata=%x, mask=%x, rdata=%x, rmask=%x\n", GTimer(), addr, data, mask_data, mask, rdata, rmask)
+    if (conf.log_LSU) {
+      printf("%d: LSU.c: addr=%x, data=%x, mdata=%x, mask=%x, rdata=%x, rmask=%x\n", GTimer(), addr, data, mask_data, mask, rdata, rmask)
+    }
     (rdata & rmask) | (mask_data & ~rmask)
   }
 }

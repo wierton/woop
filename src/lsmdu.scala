@@ -74,7 +74,7 @@ class LSMDU extends Module {
     psu.io.fu_out.valid -> psu.io.fu_out.bits))
 
   if (conf.log_LSMDU) {
-    printf("%d: LSMDU: lsu.working=%b, mdu.working=%b\n", GTimer(), lsu.io.working, mdu.io.working)
+    printf("%d: LSMDU: lsu.working=%b, mdu.working=%b, to_lsu=%b, to_mdu=%b, to_psu=%b\n", GTimer(), lsu.io.working, mdu.io.working, to_lsu, to_mdu, to_psu)
     lsu.io.fu_in.dump("LSU.io.fu_in")
     lsu.io.fu_out.dump("LSU.io.fu_out")
     io.fu_out.dump("LSMDU.io.fu_out")

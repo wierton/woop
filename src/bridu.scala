@@ -53,14 +53,14 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
      MOVZ    -> List(Y, FU_ALU,  ALU_MOVZ,   OP1_RS,   OP2_RT,  OPD_RD),
 
      // BRU instructions
-     BEQ     -> List(Y, FU_BRU,  BR_EQ,      OP1_RS,   OP2_RT,  OPD_RD),
-     BNE     -> List(Y, FU_BRU,  BR_NE,      OP1_RS,   OP2_RT,  OPD_RD),
-     BLEZ    -> List(Y, FU_BRU,  BR_LEZ,     OP1_RS,   OP2_X,   OPD_RD),
-     BGTZ    -> List(Y, FU_BRU,  BR_GTZ,     OP1_RS,   OP2_X,   OPD_RD),
-     BLTZ    -> List(Y, FU_BRU,  BR_LTZ,     OP1_RS,   OP2_X,   OPD_RD),
-     J       -> List(Y, FU_BRU,  BR_J,       OP1_RS,   OP2_X,   OPD_RD),
+     BEQ     -> List(Y, FU_BRU,  BR_EQ,      OP1_RS,   OP2_RT,  OPD_X),
+     BNE     -> List(Y, FU_BRU,  BR_NE,      OP1_RS,   OP2_RT,  OPD_X),
+     BLEZ    -> List(Y, FU_BRU,  BR_LEZ,     OP1_RS,   OP2_X,   OPD_X),
+     BGTZ    -> List(Y, FU_BRU,  BR_GTZ,     OP1_RS,   OP2_X,   OPD_X),
+     BLTZ    -> List(Y, FU_BRU,  BR_LTZ,     OP1_RS,   OP2_X,   OPD_X),
+     J       -> List(Y, FU_BRU,  BR_J,       OP1_RS,   OP2_X,   OPD_X),
      JAL     -> List(Y, FU_BRU,  BR_JAL,     OP1_RS,   OP2_X,   OPD_31),
-     JR      -> List(Y, FU_BRU,  BR_JR,      OP1_RS,   OP2_X,   OPD_RD),
+     JR      -> List(Y, FU_BRU,  BR_JR,      OP1_RS,   OP2_X,   OPD_X),
      JALR    -> List(Y, FU_BRU,  BR_JALR,    OP1_RS,   OP2_X,   OPD_RD),
 
      // LSU instructions
@@ -123,7 +123,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   val br_ready = fu_type =/= FU_BRU || br_info(34)
 
   io.fu_in.ready := (io.fu_out.ready && br_ready) || !fu_valid
-  io.br_flush.valid := fu_valid && fu_type === FU_BRU && br_info(34) && br_info(33)
+  io.br_flush.valid := io.fu_out.fire() && fu_type === FU_BRU && br_info(34) && br_info(33)
   io.br_flush.bits.br_target := br_info(31, 0)
 
   /* wb */
