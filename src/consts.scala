@@ -208,6 +208,8 @@ trait ALUConsts extends ISUConsts {
   val ALU_SLT   =  9.U(FU_OP_SZ.W)
   val ALU_SLTU  = 10.U(FU_OP_SZ.W)
   val ALU_LUI   = 11.U(FU_OP_SZ.W)
+  val ALU_MOVN  = 12.U(FU_OP_SZ.W)
+  val ALU_MOVZ  = 13.U(FU_OP_SZ.W)
 }
 
 /* contains temp node `Cat`, should be extended by Module */

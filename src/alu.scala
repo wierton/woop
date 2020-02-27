@@ -38,13 +38,18 @@ class ALU extends Module {
     (fu_op === ALU_NOR)  -> ~(op1 ^ op2).asUInt,
     (fu_op === ALU_SLT)  -> (op1.asSInt < op2.asSInt).asUInt,
     (fu_op === ALU_SLTU) -> (op1 < op2).asUInt,
-    (fu_op === ALU_LUI)  -> op2.asUInt))
+    (fu_op === ALU_LUI)  -> op2.asUInt,
+    (fu_op === ALU_MOVN) -> op1.asUInt,
+    (fu_op === ALU_MOVZ) -> op1.asUInt,
+  ))
 
   io.fu_out.valid := fu_valid
   io.fu_out.bits.wb.pc := fu_in.wb.pc
   io.fu_out.bits.wb.id := fu_in.wb.id
   io.fu_out.bits.wb.v  := Y
-  io.fu_out.bits.wb.wen := Y
+  io.fu_out.bits.wb.wen := MuxCase(Y, Array(
+    (fu_op === ALU_MOVN) -> (op2 =/= 0.U),
+    (fu_op === ALU_MOVZ) -> (op2 === 0.U)))
   io.fu_out.bits.wb.rd_idx := rd_idx
   io.fu_out.bits.wb.data := result
   io.fu_out.bits.wb.instr := fu_in.wb.instr
