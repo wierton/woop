@@ -27,6 +27,7 @@ class RegFileIO extends Bundle {
   val rs_idx = Output(UInt(REG_SZ.W))
   val rt_idx = Output(UInt(REG_SZ.W))
   val wen = Output(Bool())
+  val wid = Output(UInt(conf.INSTR_ID_SZ.W))
   val rd_idx = Output(UInt(REG_SZ.W))
 
   val rs_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
@@ -95,6 +96,7 @@ class BypassIO extends Bundle {
 
 class WriteBackIO extends Bundle {
   val v = Output(Bool())
+  val id = Output(UInt(conf.INSTR_ID_SZ.W))
   val pc = Output(UInt(conf.xprlen.W))
   val instr = Output(new Instr)
   val rd_idx = Output(UInt(REG_SZ.W))

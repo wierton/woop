@@ -95,9 +95,11 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   io.fu_out.bits.ex := 0.U.asTypeOf(new CP0Exception)
 
   /* register RW */
+  val (instr_id, c) = Counter(io.fu_out.fire(), 1 << conf.INSTR_ID_SZ)
   io.rfio.rs_idx := instr.rs_idx
   io.rfio.rt_idx := instr.rt_idx
   io.rfio.wen := io.fu_out.fire() && rd_sel =/= OPD_X
+  io.rfio.wid := instr_id
   io.rfio.rd_idx := oprd_idx
 
   /* branch check */
@@ -125,6 +127,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   /* wb */
   io.fu_out.valid := fu_valid
   io.fu_out.bits.wb.v := fu_type === FU_BRU && br_info(32)
+  io.fu_out.bits.wb.id := instr_id
   io.fu_out.bits.wb.pc := fu_in.pc
   io.fu_out.bits.wb.instr := instr
   /* only valid for bru */

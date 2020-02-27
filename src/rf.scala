@@ -16,6 +16,7 @@ class RegFile extends Module {
     val commit = Output(new CommitIO)
   })
 
+  val wbids = Mem(32, UInt(conf.INSTR_ID_SZ.W))
   val wb_rf = Mem(32, UInt(conf.xprlen.W))
   val bp_rf = Mem(32, UInt(conf.xprlen.W))
   val rf_dirtys = Mem(32, Bool())
@@ -35,7 +36,7 @@ class RegFile extends Module {
   io.rfio.rt_data.valid := rf_data_ready(io.rfio.rt_idx)
   io.rfio.rt_data.bits := rf_data_bits(io.rfio.rt_idx)
 
-  when (io.wb.valid && io.wb.bits.v) {
+  when (io.wb.valid && io.wb.bits.v && wbids(io.wb.bits.rd_idx) === io.wb.bits.id) {
     when (io.wb.bits.wen && io.wb.bits.rd_idx =/= 0.U) {
       wb_rf(io.wb.bits.rd_idx) := io.wb.bits.data
     }
@@ -53,6 +54,7 @@ class RegFile extends Module {
   when (io.rfio.wen) {
     rf_dirtys(io.rfio.rd_idx) := Y
     bp_readys(io.rfio.rd_idx) := N
+    wbids(io.rfio.rd_idx) := io.rfio.wid
   }
 
   io.commit.valid := io.wb.valid
@@ -63,7 +65,7 @@ class RegFile extends Module {
   }
 
   if (conf.log_rf) {
-    printf("%d: RF.commit: valid=%b, pc=%x, instr=%x\n", GTimer(), io.commit.valid, io.commit.pc, io.commit.instr)
+    printf("%d: RF.commit: valid=%b, pc=%x, instr=%x, rd@%d.id=%x\n", GTimer(), io.commit.valid, io.commit.pc, io.commit.instr, io.rfio.rd_idx, wbids(io.rfio.rd_idx))
     io.bp.dump("RF.bp")
     io.wb.dump("RF.wb")
     io.rfio.dump("RF.rfio")

@@ -50,6 +50,7 @@ class LSUStage2Data extends Bundle {
   val instr = new Instr
   val rd_idx = UInt(REG_SZ.W)
   val pc = UInt(conf.xprlen.W)
+  val id = UInt(conf.INSTR_ID_SZ.W)
   val data = UInt(conf.xprlen.W)
   val addr = UInt(conf.xprlen.W)
   val is_cached = Bool()
@@ -60,6 +61,7 @@ class LSUStage2Data extends Bundle {
       ind.wb.instr.asUInt,
       ind.wb.rd_idx,
       ind.wb.pc,
+      ind.wb.id,
       ind.ops.op2,
       ind.paddr,
       ind.is_cached
@@ -101,6 +103,7 @@ class LSU extends Module with LSUConsts {
   io.fu_out.valid := io.dmem.resp.valid
   io.fu_out.bits.v := s3_in.op.func === MX_RD
   io.fu_out.bits.pc := s3_in.pc
+  io.fu_out.bits.id := s3_in.id
   io.fu_out.bits.wen := s3_in.op.func === MX_RD
   io.fu_out.bits.rd_idx := s3_in.rd_idx
   io.fu_out.bits.instr := s3_in.instr

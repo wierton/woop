@@ -42,6 +42,7 @@ class ALU extends Module {
 
   io.fu_out.valid := fu_valid
   io.fu_out.bits.wb.pc := fu_in.wb.pc
+  io.fu_out.bits.wb.id := fu_in.wb.id
   io.fu_out.bits.wb.v  := Y
   io.fu_out.bits.wb.wen := Y
   io.fu_out.bits.wb.rd_idx := rd_idx

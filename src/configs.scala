@@ -15,6 +15,7 @@ object conf {
   val nICacheSets = 32
   val nICacheWays = 4
   val nICacheWordsPerWay = 4
+  val INSTR_ID_SZ = 8
   val log_MemMux = false
   val log_rf = true
   val log_IFU = false
