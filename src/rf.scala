@@ -24,6 +24,7 @@ class RegFile extends Module {
   def bypass_match(idx:UInt) = io.bp.valid && io.bp.bits.rd_idx === idx
   def rf_data_ready(idx:UInt) = !rf_dirtys(idx) || bp_readys(idx) || bypass_match(idx) || idx === 0.U
   def rf_data_bits(idx:UInt) = MuxCase(0.U, Array(
+    (idx === 0.U) -> 0.U,
     !rf_dirtys(idx) -> wb_rf(idx),
     bypass_match(idx) -> io.bp.bits.data,
     bp_readys(idx) -> bp_rf(idx)))

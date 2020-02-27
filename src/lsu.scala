@@ -100,7 +100,7 @@ class LSU extends Module with LSUConsts {
   /* io.fu_out.bits.wb.data */
   io.fu_out.valid := io.dmem.resp.valid
   io.fu_out.bits.pc := s3_in.pc
-  io.fu_out.bits.wen := Y
+  io.fu_out.bits.wen := s3_in.op.func === MX_RD
   io.fu_out.bits.rd_idx := s3_in.rd_idx
   io.fu_out.bits.instr := s3_in.instr
   io.fu_out.bits.data := s3_in.op.dataOf(s3_in.addr,

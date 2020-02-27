@@ -30,7 +30,7 @@ void DiffTop::check_states() {
       nemu_ptr->get_instr(), dut_ptr->io_commit_instr);
 
   if (last_instr_is_store) {
-    uint32_t nemu_mc = dbg_vaddr_read(ls_addr, 4);
+    uint32_t nemu_mc = paddr_peek(ls_addr, 4);
     check(nemu_mc == ls_data,
         "cycle %lu: M[%08x]: nemu:%08x <> dut:%08x\n",
         cycles, ls_addr, nemu_mc, ls_data);
@@ -149,38 +149,45 @@ int DiffTop::execute(uint64_t n) {
 }
 
 void DiffTop::device_io(unsigned char is_aligned, int addr,
-    int len, int data, char func, char wstrb, int *resp) {
-  assert (func == MX_RD || func == MX_WR);
+    int len, int data, char func, char strb, int *resp) {
+  assert(func == MX_RD || func == MX_WR);
 
-  /* ddr io */
-  if (0 <= addr && addr < 0x08000000) {
+  /* mmio */
+  if (!(0 <= addr && addr < 0x08000000)) {
+    /* deal with dev_io */
     if (func == MX_RD) {
-      // MX_RD
-      memcpy(resp, &ddr[addr], 4);
-      eprintf("[NEMU]: MX_RD[%x]=%x\n", addr, *resp);
+      *resp = paddr_peek(addr, len + 1);
     } else {
-      // MX_WR
-      for (int i = 0; i < 4; i++) {
-        if (wstrb & (1 << i))
-          ddr[addr + i] = (data >> (i * 8)) & 0xFF;
+      if (addr == GPIO_TRAP) {
+        finished = true;
+        ret_code = data;
       }
-      eprintf("[NEMU]: MX_WR[%x]=%x\n", addr, data);
-
-      last_instr_is_store = true;
-      ls_addr = addr & ~3;
-      memcpy(&ls_data, &ddr[ls_addr], 4);
     }
     return;
   }
 
-  /* deal with dev_io */
+  /* ddr io */
   if (func == MX_RD) {
-    *resp = paddr_peek(addr, 4);
-    return;
+    // MX_RD
+    memcpy(resp, &ddr[addr], 4);
+    eprintf("[NEMU]: MX_RD[%x]=%x\n", addr, *resp);
   } else {
-    if (addr == GPIO_TRAP) {
-      finished = true;
-      ret_code = data;
+    // MX_WR
+    if (is_aligned) {
+      int l2b = addr & 3;
+      assert (l2b + len < 4);
+      memcpy(&ddr[addr], &data, len + 1);
+    } else {
+      addr = addr & ~3;
+      for (int i = 0; i < 4; i++) {
+        if (strb & (1 << i))
+          ddr[addr + i] = (data >> (i * 8)) & 0xFF;
+      }
     }
+    eprintf("[NEMU]: MX_WR[%x]=%x\n", addr, data);
+
+    last_instr_is_store = true;
+    ls_addr = addr & ~3;
+    memcpy(&ls_data, &ddr[ls_addr], 4);
   }
 }
