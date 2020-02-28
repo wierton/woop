@@ -17,9 +17,26 @@ class LSUOp extends Bundle {
   val ext   = UInt(1.W)
 
   // below functions only used for unaligned rw
-  // 0:0001, 1:0011, 2:0111, 3:1111
-  // R: 0 -> b1111, 1 -> b1110, 2 -> b1100, 3 -> b1000
-  // L: 0 -> b0001, 1 -> b0011, 2 -> b0111, 3 -> b1111
+  // LWL: A strb   mem[A]        Reg           RegF
+  //      0 0001 0xAABBCCDD | 0x11223344 -> 0xDD223344
+  //      1 0011 0xAABBCCDD | 0x11223344 -> 0xCCDD3344
+  //      2 0111 0xAABBCCDD | 0x11223344 -> 0xBBCCDD44
+  //      3 1111 0xAABBCCDD | 0x11223344 -> 0xAABBCCDD
+  // LWR: A strb   mem[A]        Reg           RegF
+  //      0 1111 0xAABBCCDD | 0x11223344 -> 0xAABBCCDD
+  //      1 1110 0xAABBCCDD | 0x11223344 -> 0x11AABBCC
+  //      2 1100 0xAABBCCDD | 0x11223344 -> 0x1122AABB
+  //      3 1000 0xAABBCCDD | 0x11223344 -> 0x112233AA
+  // SWL: A strb   mem[A]        Reg           MemF
+  //      0 0001 0xAABBCCDD | 0x11223344 -> 0xAABBCC11
+  //      1 0011 0xAABBCCDD | 0x11223344 -> 0xAABB1122
+  //      2 0111 0xAABBCCDD | 0x11223344 -> 0xAA112233
+  //      3 1111 0xAABBCCDD | 0x11223344 -> 0x11223344
+  // SWR: A strb   mem[A]        Reg           MemF
+  //      0 1111 0xAABBCCDD | 0x11223344 -> 0x11223344
+  //      1 1110 0xAABBCCDD | 0x11223344 -> 0x223344DD
+  //      2 1100 0xAABBCCDD | 0x11223344 -> 0x3344CCDD
+  //      3 1000 0xAABBCCDD | 0x11223344 -> 0x44BBCCDD
   def strbOf(addr:UInt) = Mux(align,
     "b0001111".U >> (~len),
     Mux(ext === LSUConsts.LSU_L,
@@ -38,6 +55,13 @@ class LSUOp extends Bundle {
       printf("%d: LSU.c: addr=%x, data=%x, mdata=%x, mask=%x, rdata=%x, rmask=%x\n", GTimer(), addr, data, mask_data, mask, rdata, rmask)
     }
     (rdata & rmask) | (mask_data & ~rmask)
+  }
+  def memReqDataOf(addr:UInt, data:UInt) = {
+    val l2b = addr(1, 0)
+    Mux(align, data,
+      Mux(ext === LSUConsts.LSU_L,
+        data >> (~l2b << 3),
+        data << (l2b << 3)))
   }
 }
 
@@ -98,7 +122,7 @@ class LSU extends Module with LSUConsts {
   io.dmem.req.bits.addr  := Mux(s2_in.op.align, s2_in.addr, s2_in.addr & ~(3.U(32.W)))
   io.dmem.req.bits.len   := s2_in.op.len
   io.dmem.req.bits.func  := s2_in.op.func
-  io.dmem.req.bits.data  := s2_in.data
+  io.dmem.req.bits.data  := s2_in.op.memReqDataOf(s2_in.addr, s2_in.data)
   io.dmem.req.bits.strb  := s2_in.op.strbOf(s2_in.addr)
   io.dmem.resp.ready := Y
 
