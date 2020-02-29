@@ -101,3 +101,13 @@ class ICacheMemIO extends Module {
   io.out.resp.ready := s2_req_valid
 }
 
+class ICache extends Module {
+  val io = IO(new Bundle {
+    val in = Flipped(new MemIO)
+    val out = new AXI4IO(4, conf.xprlen)
+    val flush = Input(Bool())
+  })
+
+  io.in <> DontCare
+  io.out <> DontCare
+}

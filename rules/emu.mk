@@ -18,7 +18,7 @@ emu: $(EMU_BIN)
 
 $(EMU_TOP_V): $(SCALA_FILES)
 	@mkdir -p $(@D)
-	@sbt "run $(EMU_TOP_MODULE) -td $(@D) --output-file $@"
+	@sbt "run $(EMU_TOP_MODULE) -td $(@D) --output-file $(@F)"
 	@sed -i '/ bram /a`undef RANDOMIZE_MEM_INIT' $@
 
 $(EMU_MK): $(EMU_TOP_V) $(EMU_CXXFILES) $(EMU_LIB_V)

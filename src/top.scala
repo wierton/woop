@@ -3,9 +3,7 @@ package core
 
 import chisel3._
 import chisel3.util._
-import woop.consts._
 import woop.configs._
-import woop.dumps._
 import woop.utils._
 
 class SimDev extends BlackBox {
@@ -25,7 +23,6 @@ class SOC_EMU_TOP extends Module {
   val imux = Module(new MemMux("imux"))
   val dmux = Module(new MemMux("dmux"))
   val dev = Module(new SimDev)
-  val as = Array(new AddrSpace("h00000000".U, "h20000000".U))
   val crossbar = Module(new CrossbarNx1(4))
 
   dev.io.clock := clock
@@ -34,13 +31,12 @@ class SOC_EMU_TOP extends Module {
   imux.io.in <> core.io.imem
   dmux.io.in <> core.io.dmem
 
-  crossbar.io.in(0) <> imux.io.cached
-  crossbar.io.in(1) <> imux.io.uncached
-  crossbar.io.in(2) <> dmux.io.cached
-  crossbar.io.in(3) <> dmux.io.uncached
+  imux.io.cached   <> crossbar.io.in(0)
+  imux.io.uncached <> crossbar.io.in(1)
+  dmux.io.cached   <> crossbar.io.in(2)
+  dmux.io.uncached <> crossbar.io.in(3)
 
-  crossbar.io.out.req <> dev.io.in.req
-  crossbar.io.out.resp <> dev.io.in.resp
+  crossbar.io.out <> dev.io.in
 
   core.io.commit <> io.commit
 
@@ -49,8 +45,40 @@ class SOC_EMU_TOP extends Module {
 
 class AXI4_EMU_TOP extends Module {
   val io = IO(new Bundle {
-    val in = new MemIO
+    val commit = new CommitIO
   })
+
+  val core = Module(new Core)
+  val imux = Module(new MemMux("imux"))
+  val dmux = Module(new MemMux("dmux"))
+  val dev = Module(new SimDev)
+  val crossbar = Module(new CrossbarNx1(4))
+  val icache = Module(new ICache)
+  val i2sram = Module(new AXI42SRAM)
+  val dcache = Module(new DCache)
+  val d2sram = Module(new AXI42SRAM)
+
+  dev.io.clock := clock
+  dev.io.reset := reset
+
+  imux.io.in <> core.io.imem
+  dmux.io.in <> core.io.dmem
+  imux.io.cached <> icache.io.in
+  icache.io.out <> i2sram.io.in
+  dmux.io.cached <> dcache.io.in
+  dcache.io.out <> d2sram.io.in
+
+  icache.io.flush <> core.io.flush
+  dcache.io.flush <> core.io.flush
+
+  i2sram.io.out    <> crossbar.io.in(0)
+  imux.io.uncached <> crossbar.io.in(1)
+  d2sram.io.out    <> crossbar.io.in(2)
+  dmux.io.uncached <> crossbar.io.in(3)
+
+  crossbar.io.out <> dev.io.in
+
+  core.io.commit <> io.commit
 }
 
 class ZEDBOARD_TOP extends Module {
@@ -65,9 +93,14 @@ class LOONGSON_TOP extends Module {
   })
 }
 
-import woopTest._
-
-object Main extends App {
-  chisel3.Driver.execute(args, () => new SOC_EMU_TOP);
-  // chisel3.Driver.execute(args, () => new SOC_EMU_TOP);
+object Main {
+  def main(args:Array[String]):Unit = {
+    val top = args(0)
+    val chiselArgs = args.slice(1, args.length)
+    chisel3.Driver.execute(chiselArgs, () => {
+      val clazz = Class.forName("woop.core."+top)
+      val constructor = clazz.getConstructor()
+      constructor.newInstance().asInstanceOf[Module]
+    })
+  }
 }
