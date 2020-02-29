@@ -6,3 +6,4 @@
 *.str
 *.log
 *.out
+/sync

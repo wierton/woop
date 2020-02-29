@@ -1,10 +1,11 @@
 .PHONY: all emu clean-emu clean-am clean-all update minicom
 
-export ARCH=mips32-npc
-export CROSS_COMPILE=mips-linux-gnu-
+export ARCH             := mips32-npc
+export CROSS_COMPILE    := mips-linux-gnu-
 export AM_HOME          := $(PWD)/../nexus-am
 export MIPS32_NEMU_HOME := $(PWD)/../nemu-mips32
 export INSTTEST_HOME    := $(PWD)/../insttest
+export TLBTEST_HOME     := $(PWD)/../tlbtest
 export U_BOOT_HOME      := $(PWD)/../u-boot
 export LINUX_HOME       := $(PWD)/../linux
 export NANOS_HOME       := $(PWD)/../nanos
