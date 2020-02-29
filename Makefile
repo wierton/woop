@@ -26,7 +26,7 @@ minicom:
 	cd $(OBJ_DIR) && sudo minicom -D /dev/ttyUSB1 -b 115200 -c on -C cpu.log -S ../minicom.script
 
 include rules/emu.mk
-include rules/test-all.mk
+include rules/test.mk
 include rules/loongson.mk
 include rules/nscscc.mk
 include rules/linux.mk

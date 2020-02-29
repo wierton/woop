@@ -6,7 +6,7 @@ LINUX_BIN    := $(LINUX_HOME)/vmlinux
 U_BOOT_BIN   := $(U_BOOT_HOME)/u-boot
 
 $(U_BOOT_BIN) $(LINUX_BIN):
-	@ARCH=mips CROSS_COMPILE=mips-linux-gnu- make -s $(@D) -j32
+	@ARCH=mips CROSS_COMPILE=mips-linux-gnu- make -s -C $(@D) -j32
 
 compile-u-boot: $(U_BOOT_BIN)
 compile-linux: $(LINUX_BIN)

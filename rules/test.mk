@@ -1,4 +1,4 @@
-include rules/am-test.mk
+include rules/test-template.mk
 
 INPUT ?= REF # for microbench, another mode is TEST
 
@@ -13,6 +13,9 @@ $(foreach app,$(AM_TESTS),$(eval $(call test_template,$(AM_HOME)/tests/$(app),$(
 
 # insttest
 $(eval $(call test_template,$(INSTTEST_HOME),insttest,))
+
+# tlbtest
+$(eval $(call test_template,$(TLBTEST_HOME),tlbtest,))
 
 # nanos
 $(eval $(call test_template,$(NANOS_HOME),nanos,))
