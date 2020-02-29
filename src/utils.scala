@@ -16,7 +16,7 @@ object GTimer {
 object TraceTrigger {
   def apply(): Bool = {
     val (t, c) = Counter(true.B, 0x7fffffff)
-    t >= (183984 - 40).U
+    t >= (233940 - 40).U
   }
 }
 

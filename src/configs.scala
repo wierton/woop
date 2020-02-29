@@ -28,5 +28,6 @@ object conf {
   val log_PRU = true
   val log_ALU = true
   val log_LSU = true
+  val log_MDU = true
   val log_LSMDU = true
 }

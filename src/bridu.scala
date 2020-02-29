@@ -69,6 +69,8 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
      // MDU instructions
      MFHI    -> List(Y, FU_MDU,  MDU_MFHI,   OP1_X,    OP2_X,   OPD_RD),
      MFLO    -> List(Y, FU_MDU,  MDU_MFLO,   OP1_X,    OP2_X,   OPD_RD),
+     MTHI    -> List(Y, FU_MDU,  MDU_MTHI,   OP1_RS,   OP2_X,   OPD_X),
+     MTLO    -> List(Y, FU_MDU,  MDU_MTLO,   OP1_RS,   OP2_X,   OPD_X),
      MUL     -> List(Y, FU_MDU,  MDU_MUL,    OP1_RS,   OP2_RT,  OPD_RD),
      MULT    -> List(Y, FU_MDU,  MDU_MULT,   OP1_RS,   OP2_RT,  OPD_HL),
      MULTU   -> List(Y, FU_MDU,  MDU_MULTU,  OP1_RS,   OP2_RT,  OPD_HL),

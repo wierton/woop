@@ -23,11 +23,12 @@ $(EMU_TOP_V): $(SCALA_FILES)
 
 $(EMU_MK): $(EMU_TOP_V) $(EMU_CXXFILES) $(EMU_LIB_V)
 	@mkdir -p $(@D)
-	@verilator --cc --exe --top-module $(EMU_TOP_MODULE) \
+	@verilator -Wno-lint --cc --exe \
+	  --top-module $(EMU_TOP_MODULE) \
 	  -o $(notdir $(EMU_BIN)) -Mdir $(@D) \
-		-CFLAGS "-I $(MIPS32_NEMU_HOME)/include" \
-		-LDFLAGS "$(MIPS32_NEMU_LIB) -lpthread -lreadline -lSDL" \
-		--prefix $(basename $(notdir $(EMU_MK))) $^ 
+	  -CFLAGS "-I $(MIPS32_NEMU_HOME)/include" \
+	  -LDFLAGS "$(MIPS32_NEMU_LIB) -lpthread -lreadline -lSDL" \
+	  --prefix $(basename $(notdir $(EMU_MK))) $^ 
 
 update-emu: $(EMU_MK)
 	@rm -rf $(EMU_BIN)

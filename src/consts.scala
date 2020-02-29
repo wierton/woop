@@ -133,6 +133,8 @@ trait InstrPattern {
 
   val MFHI  = BitPat("b0000000000000000?????00000010000")
   val MFLO  = BitPat("b0000000000000000?????00000010010")
+  def MTHI  = BitPat("b000000?????000000000000000010001")
+  def MTLO  = BitPat("b000000?????000000000000000010011")
   val MUL   = BitPat("b011100???????????????00000000010")
   val MULT  = BitPat("b000000??????????0000000000011000")
   val MULTU = BitPat("b000000??????????0000000000011001")
@@ -249,26 +251,19 @@ trait LSUConsts extends ISUConsts with MemConsts {
 
 /* contains temp node `Cat`, should be extended by Module */
 trait MDUConsts extends ISUConsts {
-  val MF_X  = 0.U(1.W)
-  val MF_HI = 0.U(1.W)
-  val MF_LO = 1.U(1.W)
-
-  val F_MUL = 0.U(2.W)
-  val F_DIV = 1.U(2.W)
-  val F_MV  = 2.U(2.W)
-  val F_X   = 3.U(2.W)
-
   val WB_RD = 0.U(1.W)
   val WB_HL = 1.U(1.W)
 
-  // MDU               1      2     1    1
-  val MDU_MFHI  = Cat(MF_HI, F_MV,  Y, WB_RD)
-  val MDU_MFLO  = Cat(MF_LO, F_MV,  Y, WB_RD)
-  val MDU_MUL   = Cat(MF_X,  F_MUL, Y, WB_RD)
-  val MDU_MULT  = Cat(MF_X,  F_MUL, Y, WB_HL)
-  val MDU_MULTU = Cat(MF_X,  F_MUL, N, WB_HL)
-  val MDU_DIV   = Cat(MF_X,  F_DIV, Y, WB_HL)
-  val MDU_DIVU  = Cat(MF_X,  F_DIV, N, WB_HL)
+  // MDU                     4          1
+  val MDU_MFHI  = Cat("b0000".U(4.W), WB_RD)
+  val MDU_MFLO  = Cat("b0001".U(4.W), WB_RD)
+  val MDU_MTHI  = Cat("b0010".U(4.W), WB_HL)
+  val MDU_MTLO  = Cat("b0011".U(4.W), WB_HL)
+  val MDU_MUL   = Cat("b0100".U(4.W), WB_RD)
+  val MDU_MULT  = Cat("b0101".U(4.W), WB_HL)
+  val MDU_MULTU = Cat("b0110".U(4.W), WB_HL)
+  val MDU_DIV   = Cat("b0111".U(4.W), WB_HL)
+  val MDU_DIVU  = Cat("b1000".U(4.W), WB_HL)
 }
 
 object consts extends InstrPattern

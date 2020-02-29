@@ -43,9 +43,11 @@ class MemMux(name:String) extends Module {
   io.uncached.resp.ready := io.in.resp.ready
 
   if (conf.log_MemMux) {
-    io.in.dump(name+".in")
-    io.cached.dump(name+".cached")
-    io.uncached.dump(name+".uncached")
+    when (TraceTrigger()) {
+      io.in.dump(name+".in")
+      io.cached.dump(name+".cached")
+      io.uncached.dump(name+".uncached")
+    }
   }
 }
 
