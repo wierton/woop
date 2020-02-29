@@ -40,7 +40,13 @@ class SOC_EMU_TOP extends Module {
 
   core.io.commit <> io.commit
 
-  printf("------------\n")
+  if (conf.log_Top) {
+    when (TraceTrigger()) { dump() }
+  }
+
+  def dump():Unit = {
+    printf("------------\n")
+  }
 }
 
 class AXI4_EMU_TOP extends Module {

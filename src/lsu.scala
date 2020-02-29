@@ -52,8 +52,12 @@ class LSUOp extends Bundle {
     val rdata = Mux(align, data, Mux(ext === LSUConsts.LSU_L, data << ((~l2b) << 3), data >> (l2b << 3)))
     val rmask = Mux(align, mask, Mux(ext === LSUConsts.LSU_L, mask << ((~l2b) << 3), mask >> (l2b << 3)))
     if (conf.log_LSU) {
-      printf("%d: LSU.c: addr=%x, data=%x, mdata=%x, mask=%x, rdata=%x, rmask=%x\n", GTimer(), addr, data, mask_data, mask, rdata, rmask)
+      when (TraceTrigger()) { dump() }
     }
+
+    def dump():Unit = {
+        printf("%d: LSU.c: addr=%x, data=%x, mdata=%x, mask=%x, rdata=%x, rmask=%x\n", GTimer(), addr, data, mask_data, mask, rdata, rmask)
+      }
     (rdata & rmask) | (mask_data & ~rmask)
   }
   def memReqDataOf(addr:UInt, data:UInt) = {
@@ -144,6 +148,10 @@ class LSU extends Module with LSUConsts {
     (s3_in.op.asUInt === LSU_LH) -> io.dmem.resp.bits.data(15, 0).asTypeOf(SInt(32.W)).asUInt))
 
   if (conf.log_LSU) {
+    when (TraceTrigger()) { dump() }
+  }
+
+  def dump():Unit = {
     s2_in.dump("LSU.s2_in")
     s3_in.dump("LSU.s3_in")
     s2_datas.io.enq.dump("LSU.s2_datas.enq")

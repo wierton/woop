@@ -87,7 +87,7 @@ class CrossbarNx1(m:Int) extends Module {
   io.out.req.bits := in_req
 
   if (conf.log_CrossbarNx1) {
-    dump("crossbar")
+    when (TraceTrigger()) { dump("crossbar") }
   }
   assert ((~q_data_sz).orR =/= 0.U || !io.out.resp.valid)
 

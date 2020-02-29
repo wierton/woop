@@ -35,7 +35,7 @@ class ALU extends Module {
     (fu_op === ALU_AND)  -> (op1 & op2).asUInt,
     (fu_op === ALU_OR)   -> (op1 | op2).asUInt,
     (fu_op === ALU_XOR)  -> (op1 ^ op2).asUInt,
-    (fu_op === ALU_NOR)  -> ~(op1 ^ op2).asUInt,
+    (fu_op === ALU_NOR)  -> ~(op1 | op2).asUInt,
     (fu_op === ALU_SLT)  -> (op1.asSInt < op2.asSInt).asUInt,
     (fu_op === ALU_SLTU) -> (op1 < op2).asUInt,
     (fu_op === ALU_LUI)  -> op2.asUInt,

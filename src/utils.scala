@@ -13,6 +13,13 @@ object GTimer {
   }
 }
 
+object TraceTrigger {
+  def apply(): Bool = {
+    val (t, c) = Counter(true.B, 0x7fffffff)
+    t >= (183984 - 40).U
+  }
+}
+
 class Cistern[T<:Data](gen:T, entries:Int) extends Module {
   val io = IO(new Bundle {
     val enq = Flipped(DecoupledIO(gen))
@@ -35,6 +42,10 @@ class Cistern[T<:Data](gen:T, entries:Int) extends Module {
   }
 
   if (conf.log_Cistern) {
+    when (TraceTrigger()) { dump() }
+  }
+
+  def dump():Unit = {
     printf("%d: Cistern: onoff=%b, size=%d\n", GTimer(), onoff, size)
   }
 }

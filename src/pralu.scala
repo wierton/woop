@@ -131,6 +131,10 @@ class PRALU extends Module {
     pru.io.fu_out.valid -> pru.io.fu_out.bits.ex))
 
   if (conf.log_PRALU) {
+    when (TraceTrigger()) { dump() }
+  }
+
+  def dump():Unit = {
     printf("%d: PRALU: io.{rs_data[%d]=%x, rt_data[%d]=%x}, shamt_ext=%x, se_imm=%x, ze_imm=%x, ue_imm=%x, op1_data=%x, op2_data=%x\n", GTimer(), io.rs_data.valid, io.rs_data.bits, io.rt_data.valid, io.rt_data.bits, shamt_ext, se_imm, ze_imm, ue_imm, op1_data, op2_data)
     instr.dump("PRALU.instr")
     psu.io.fu_in.dump("PRALU.psu.io.fu_in")

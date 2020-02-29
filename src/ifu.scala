@@ -30,6 +30,10 @@ class IFUCistern(entries:Int) extends Module {
   io.in.resp <> queue.io.deq
 
   if (conf.log_Cistern) {
+    when (TraceTrigger()) { dump() }
+  }
+
+  def dump():Unit = {
     printf ("%d: IFUCistern: size=%d\n", GTimer(), size)
     cistern.io.enq.dump("cistern.io.enq")
     cistern.io.deq.dump("cistern.io.deq")
@@ -87,6 +91,10 @@ class IFUPipelineData[T<:Data](gen:T, entries:Int) extends Module {
     }
   }
   if (conf.log_IFUPipelineData) {
+    when (TraceTrigger()) { dump() }
+  }
+
+  def dump():Unit = {
     printf("%d: IFUPD.io: enq[%b,%b]=%x, deq[%b,%b]=%b%x, br_flush=%b, ex_flush=%b\n", GTimer(), io.enq.valid, io.enq.ready, io.enq.bits.asUInt, io.deq.valid, io.deq.ready, io.deq.bits.valid, io.deq.bits.bits.asUInt, io.br_flush.valid, io.ex_flush.valid)
     printf("%d: IFUPD: head=%d, tail=%d, is_full=%d, is_empty=%d, next_head=%d, next_tail=%d\n", GTimer(), head, tail, is_full, is_empty, next_head, next_tail)
     val p = Seq[Bits](GTimer())
@@ -144,6 +152,10 @@ class IFU extends Module {
   io.fu_out.bits.ex := 0.U.asTypeOf(new CP0Exception)
 
   if (conf.log_IFU) {
+    when (TraceTrigger()) { dump() }
+  }
+
+  def dump():Unit = {
     printf("%d: IFU: pc=%x, s2_datas={enq[%b,%b]:%x, deq[%b,%b]:%b%x}\n", GTimer(), pc, s2_datas.io.enq.valid, s2_datas.io.enq.ready, s2_datas.io.enq.bits, s2_datas.io.deq.valid, s2_datas.io.deq.ready, s2_datas.io.deq.bits.valid, s2_datas.io.deq.bits.bits)
     io.imem.dump("IFU.imem")
     io.iaddr.dump("IFU.iaddr")

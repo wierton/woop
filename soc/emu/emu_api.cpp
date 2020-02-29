@@ -170,7 +170,6 @@ void DiffTop::device_io(unsigned char is_aligned, int addr,
   if (func == MX_RD) {
     // MX_RD
     memcpy(resp, &ddr[addr], 4);
-    eprintf("[NEMU]: MX_RD[%x]=%x vs %x\n", addr, *resp, paddr_peek(addr, 4));
   } else {
     // MX_WR
     if (is_aligned) {
@@ -184,7 +183,6 @@ void DiffTop::device_io(unsigned char is_aligned, int addr,
           ddr[addr + i] = (data >> (i * 8)) & 0xFF;
       }
     }
-    eprintf("[NEMU]: MX_WR[%x]=%x\n", addr, data);
 
     last_instr_is_store = true;
     ls_addr = addr & ~3;

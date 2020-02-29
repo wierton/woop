@@ -64,6 +64,10 @@ class RegFile extends Module {
   }
 
   if (conf.log_rf) {
+    when (TraceTrigger()) { dump() }
+  }
+
+  def dump():Unit = {
     printf("%d: RF.commit: valid=%b, pc=%x, instr=%x, rd@%d.id=%x\n", GTimer(), io.commit.valid, io.commit.pc, io.commit.instr, io.rfio.rd_idx, wbids(io.rfio.rd_idx))
     io.bp.dump("RF.bp")
     io.wb.dump("RF.wb")
