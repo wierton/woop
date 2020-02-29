@@ -1,59 +1,63 @@
-.PHONY: clean-submit submit-func submit-perf submit
-.PHONY: loongson submit-sync submit-test-env minicom
-.PHONY: uboot-coe
+.PHONY: clean-nscscc nscscc-func nscscc-perf
+.PHONY: nscscc-sync u-boot-coe
 
-LS_SUBMIT_DIR := $(abspath $(OBJ_DIR)/nscscc-submit)
+nscscc-sync: nscscc-sync-func nscscc-sync-perf nscscc-sync-final
 
-submit-sync: submit-sync-func submit-sync-perf submit-sync-final
+NSCSCC_OBJDIR := $(abspath $(OBJ_DIR)/nscscc)
+NSCSCC_SOFTDIR := $(NSCSCC_OBJDIR)/soft
+LOONGSON_TOP_V := $(OBJ_DIR)/loongson/LoongsonTop.v
 
-FUNC_COE  := $(LS_SUBMIT_DIR)/soft/func/obj/inst_ram.coe
-GAME_COE  := $(LS_SUBMIT_DIR)/soft/memory_game/obj/axi_ram.coe
-PERF_COE  := $(LS_SUBMIT_DIR)/soft/perf_func/obj/allbench/axi_ram.coe
-UBOOT_COE := $(LS_SUBMIT_DIR)/soft/u-boot/u-boot.coe
-GOLDEN_TRACE := $(LS_SUBMIT_DIR)/cpu132_gettrace/golden_trace.txt
+FUNC_COE  := $(NSCSCC_SOFTDIR)/func/obj/inst_ram.coe
+GAME_COE  := $(NSCSCC_SOFTDIR)/memory_game/obj/axi_ram.coe
+PERF_COE  := $(NSCSCC_SOFTDIR)/perf_func/obj/allbench/axi_ram.coe
+U_BOOT_COE := $(NSCSCC_SOFTDIR)/u-boot/u-boot.coe
+GOLDEN_TRACE := $(NSCSCC_OBJDIR)/cpu132_gettrace/golden_trace.txt
 
-uboot-coe: $(UBOOT_COE)
+u-boot-coe: $(U_BOOT_COE)
 
-$(UBOOT_COE):
-	ARCH=mips32 CROSS_COMPILE=mips-linux-gnu- make -C $(UBOOT_HOME) -j16
-	mkdir -p $(@D)
-	hexdump -ve 1/$l\ \"%016x\\n\" $(UBOOT_HOME)/u-boot.bin | \
-	  sed 1i'memory_initialization_radix = 16;\nmemory_initialization_vector =' > $(UBOOT_COE)
-	#cp nscscc/u-boot.coe $@
+$(U_BOOT_COE): $(U_BOOT_BIN)
+	@mkdir -p $(@D)
+	@hexdump -ve '1/4 "%08x\n"' $< > $@
+	@sed -i 1i'memory_initialization_radix = 8;\nmemory_initialization_vector =' $@
 
-clean-submit:
-	rm -rf $(LS_SUBMIT_DIR)
+$(LOONGSON_TOP_V): $(SCALA_FILES)
+	@mkdir -p $(@D)
+	@sbt "run LOONGSON_TOP -td $(@D) --output-file $(@F)"
+	@sed -i '/ bram /a`undef RANDOMIZE_MEM_INIT' $@
+
+clean-nscscc:
+	rm -rf $(NSCSCC_OBJDIR)
 
 # 1: name, 2: dependent .coe file
-define submit_template =
-.PHONY: submit-$(1) clean-submit-$(1) submit-sync-$(1)
+define nscscc_template =
+.PHONY: nscscc-$(1) clean-nscscc-$(1) nscscc-sync-$(1)
 
-$(1)_LS_TOP_V=$$(LS_SUBMIT_DIR)/soc_axi_$(1)/rtl/myCPU/LoongsonTop.v
-$(1)_LS_XPR=$$(LS_SUBMIT_DIR)/soc_axi_$(1)/run_vivado/mycpu_prj1/mycpu.xpr
+$(1)_LS_TOP_V=$$(NSCSCC_OBJDIR)/soc_axi_$(1)/rtl/myCPU/LoongsonTop.v
+$(1)_LS_XPR=$$(NSCSCC_OBJDIR)/soc_axi_$(1)/run_vivado/mycpu_prj1/mycpu.xpr
 
-$$($(1)_LS_TOP_V): $$(LOONGSON_NPC_RTL)
+$$($(1)_LS_TOP_V): $$(LOONGSON_TOP_V)
 	mkdir -p $$(@D)
 	cp $$< $$@
 
 $$($(1)_LS_XPR):
-	rm -rf $$(LS_SUBMIT_DIR)/soc_axi_$(1)
-	cp -r nscscc/soc_axi_$(1) $$(LS_SUBMIT_DIR)
+	rm -rf $$(NSCSCC_OBJDIR)/soc_axi_$(1)
+	cp -r nscscc/soc_axi_$(1) $$(NSCSCC_OBJDIR)
 
-submit-$(1): $$($(1)_LS_XPR) $$($(1)_LS_TOP_V) $(2)
+nscscc-$(1)-prj: $$($(1)_LS_XPR) $$($(1)_LS_TOP_V) $(2)
 
-clean-submit-$(1):
-	cd $$(LS_SUBMIT_DIR) && rm -rf soc_axi_$(1)
+nscscc-sync-$(1): $$($(1)_LS_TOP_V)
 
-submit-sync-$(1): $$($(1)_LS_TOP_V)
-
-submit-$(1)-bit: $$($(1)_LS_XPR)
-	SOC_XPR=mycpu.xpr SOC_DIR=$$(LS_SUBMIT_DIR)/soc_axi_$(1)/run_vivado/mycpu_prj1 \
+nscscc-$(1)-bit: $$($(1)_LS_XPR)
+	SOC_XPR=mycpu.xpr SOC_DIR=$$(dir $$($(1)_LS_XPR)) \
 	  $(VIVADO_18) $(VIVADO_FLAG) -mode batch -source nscscc/mk.tcl
 
-submit-$(1)-vivado: $$($(1)_LS_XPR)
+nscscc-$(1)-vivado: $$($(1)_LS_XPR)
 	cd $$(<D) && nohup $$(VIVADO_18) $$< &>/dev/null &
+
+clean-nscscc-$(1):
+	cd $$(NSCSCC_OBJDIR) && rm -rf soc_axi_$(1)
 endef
 
-$(eval $(call submit_template,func,$(FUNC_COE) $(GOLDEN_TRACE)))
-# $(eval $(call submit_template,perf,$(PERF_COE)))
-$(eval $(call submit_template,final,$(UBOOT_COE)))
+$(eval $(call nscscc_template,func,$(FUNC_COE) $(GOLDEN_TRACE)))
+$(eval $(call nscscc_template,perf,$(PERF_COE)))
+$(eval $(call nscscc_template,final,$(U_BOOT_COE)))

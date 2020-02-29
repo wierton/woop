@@ -255,7 +255,7 @@ trait MDUConsts extends ISUConsts {
   val WB_RD = 0.U(1.W)
   val WB_HL = 1.U(1.W)
 
-  // MDU Operation Signal   1     2      1     1
+  // MDU               1      2     1    1
   val MDU_MFHI  = Cat(MF_HI, F_MV,  Y, WB_RD)
   val MDU_MFLO  = Cat(MF_LO, F_MV,  Y, WB_RD)
   val MDU_MUL   = Cat(MF_X,  F_MUL, Y, WB_RD)
