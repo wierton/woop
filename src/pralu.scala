@@ -115,7 +115,6 @@ class PRALU extends Module {
   io.fu_out.bits.ops := psu.io.fu_out.bits.ops
   io.fu_out.bits.is_cached := pru.io.fu_out.bits.is_cached
   io.fu_out.bits.paddr := pru.io.fu_out.bits.paddr
-  io.ex_flush <> pru.io.ex_flush
 
   /* bypass */
   io.bp.valid := alu.io.fu_out.valid || pru.io.fu_out.valid
@@ -124,11 +123,13 @@ class PRALU extends Module {
   io.bp.bits.rd_idx := io.fu_out.bits.wb.rd_idx
   io.bp.bits.data :=  io.fu_out.bits.wb.data
 
-  /* cp0 exception */
+  /* exception */
   pru.io.exinfo.valid := io.fu_out.valid
   pru.io.exinfo.bits := Mux1H(Array(
     alu.io.fu_out.valid -> alu.io.fu_out.bits.ex,
-    pru.io.fu_out.valid -> pru.io.fu_out.bits.ex))
+    pru.io.fu_out.valid -> pru.io.fu_out.bits.ex,
+    psu.io.fu_out.valid -> psu.io.fu_out.bits.ex))
+  io.ex_flush <> pru.io.ex_flush
 
   if (conf.log_PRALU) {
     when (TraceTrigger()) { dump() }

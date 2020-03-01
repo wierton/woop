@@ -90,6 +90,9 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
      SB      -> List(Y, FU_LSU,  LSU_SB,     OP1_RSO,  OP2_RT,  OPD_X),
      SWL     -> List(Y, FU_LSU,  LSU_SWL,    OP1_RSO,  OP2_RT,  OPD_X),
      SWR     -> List(Y, FU_LSU,  LSU_SWR,    OP1_RSO,  OP2_RT,  OPD_X),
+
+     SYSCALL -> List(Y, FU_PRU,  PRU_SYSCALL,OP1_X,    OP2_X,   OPD_X),
+     BREAK   -> List(Y, FU_PRU,  PRU_BREAK,  OP1_X,    OP2_X,   OPD_X),
   ))
 
   val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: rd_sel :: Nil = csignals
@@ -149,7 +152,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   io.br_flush.bits.br_target := br_info(31, 0)
 
   /* wb */
-  io.fu_out.valid := fu_valid
+  io.fu_out.valid := fu_valid && !io.ex_flush.valid
   io.fu_out.bits.wb.v := fu_type === FU_BRU && br_info(32)
   io.fu_out.bits.wb.id := instr_id
   io.fu_out.bits.wb.pc := fu_in.pc
@@ -160,9 +163,9 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   io.fu_out.bits.wb.data := fu_in.pc + 8.U
   /* only valid for bru */
 
-  when (!io.fu_in.fire() && io.fu_out.fire()) {
+  when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
     fu_valid := N
-  } .elsewhen(io.fu_in.fire()) {
+  } .elsewhen(!io.ex_flush.valid && io.fu_in.fire()) {
     fu_valid := Y
   }
 

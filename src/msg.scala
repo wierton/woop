@@ -19,8 +19,8 @@ class Instr extends Bundle {
 }
 
 class CP0Exception extends Bundle {
-  val offset = UInt(12.W)
-  val code = UInt(ETW_WIDTH.W)
+  val et = UInt(ET_WIDTH.W)
+  val code = UInt(EC_WIDTH.W)
 }
 
 class RegFileIO extends Bundle {

@@ -29,7 +29,7 @@ compile-$(2): $$($(2)_APP)-$(ARCH).elf \
 run-$(2): $(EMU_BIN) compile-$(2)
 	@cd $$($(2)_OBJDIR) && \
 	  ln -sf $(abspath $(EMU_BIN)) emulator && \
-	  ./emulator -e ./$(2).elf 2> npc.out
+	  ./emulator -b -e ./$(2).elf 2> npc.out
 
 run-nemu-$(2): $(MIPS32_NEMU) compile-$(2)
 	@cd $$($(2)_OBJDIR) && \
