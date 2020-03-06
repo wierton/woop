@@ -51,20 +51,25 @@ class LSMDU extends Module {
   val psu = Module(new LSMDUPipelineStage)
 
   /* LSU IO */
-  val to_lsu = !mdu.io.working && io.fu_in.bits.ops.fu_type === FU_LSU
+  val to_lsu = !mdu.io.working &&
+    io.fu_in.bits.ops.fu_type === FU_LSU &&
+    io.fu_in.bits.ex.et === ET_None
   lsu.io.fu_in.valid := io.fu_in.valid && to_lsu
   lsu.io.fu_in.bits := io.fu_in.bits
   lsu.io.dmem <> io.dmem
 
   /* MDU IO */
-  val to_mdu = !lsu.io.working && io.fu_in.bits.ops.fu_type === FU_MDU
+  val to_mdu = !lsu.io.working &&
+    io.fu_in.bits.ops.fu_type === FU_MDU &&
+    io.fu_in.bits.ex.et === ET_None
   mdu.io.fu_in.valid := io.fu_in.valid && to_mdu
   mdu.io.fu_in.bits := io.fu_in.bits
 
   /* pipeline stage for ALU,BRU,PRU */
-  val to_psu = !lsu.io.working && !mdu.io.working &&
-    io.fu_in.bits.ops.fu_type =/= FU_LSU &&
-    io.fu_in.bits.ops.fu_type =/= FU_MDU
+  val to_psu = !lsu.io.working && !mdu.io.working && (
+    (io.fu_in.bits.ops.fu_type =/= FU_LSU &&
+    io.fu_in.bits.ops.fu_type =/= FU_MDU) ||
+    io.fu_in.bits.ex.et =/= ET_None)
   psu.io.fu_in.valid := io.fu_in.valid && to_psu
   psu.io.fu_in.bits.wb := io.fu_in.bits.wb
   psu.io.fu_in.bits.fu_type := io.fu_in.bits.ops.fu_type

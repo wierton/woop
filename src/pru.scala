@@ -45,7 +45,7 @@ abstract class CPRS extends Module {
   cpr_count := cpr_count + 1.U
 }
 
-class PRU extends CPRS {
+class PRU extends CPRS with LSUConsts {
   val io = IO(new Bundle {
     val iaddr = Flipped(new TLBTransaction)
     val fu_in = Flipped(DecoupledIO(new PRALU_FU_IO))
@@ -77,22 +77,35 @@ class PRU extends CPRS {
     iaddr_valid := Y
   }
 
-  /* pipeline stage for bru data */
+  /* lsu addr translation */
   val fu_valid = RegInit(N)
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
+  val fu_op = fu_in.ops.fu_op
+  val is_lsu = fu_valid && fu_in.ops.fu_type === FU_LSU
   val lsu_vaddr = fu_in.ops.op1
-  when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
+  val lsu_bad_load = ((lsu_vaddr(1, 0) =/= 0.U && (fu_op === LSU_LW || fu_op === LSU_LL)) ||
+    (lsu_vaddr(0) =/= 0.U && (fu_op === LSU_LH || fu_op === LSU_LHU)))
+  val lsu_bad_store = ((lsu_vaddr(1, 0) =/= 0.U && (fu_op === LSU_SW || fu_op === LSU_SC)) ||
+    (lsu_vaddr(0) =/= 0.U && fu_op === LSU_SH))
+  val lsu_has_ex = lsu_bad_load || lsu_bad_store
+  val lsu_et = ET_ADDR_ERR
+  val lsu_ec = Mux1H(Array(
+    lsu_bad_load  -> EC_AdEL,
+    lsu_bad_store -> EC_AdES))
+  when (!io.fu_in.fire() && io.fu_out.fire()) {
     fu_valid := N
-  } .elsewhen(!io.ex_flush.valid && io.fu_in.fire()) {
+  } .elsewhen(io.fu_in.fire()) {
     fu_valid := Y
   }
   io.fu_out.valid := fu_valid
   io.fu_out.bits.ops := fu_in.ops
   io.fu_out.bits.paddr := naive_tlb_translate(lsu_vaddr)
+  io.fu_out.bits.addr := lsu_vaddr
   io.fu_out.bits.is_cached := lsu_vaddr(31, 29) =/= "b101".U
   io.fu_in.ready := io.fu_out.ready || !fu_valid
 
   /* cpr io */
+  val is_pru = fu_valid && fu_in.ops.fu_type === FU_PRU
   val is_mfc0 = fu_valid && fu_in.ops.fu_type === FU_PRU && fu_in.ops.fu_op === PRU_MFC0
   val is_mtc0 = fu_valid && fu_in.ops.fu_type === FU_PRU && fu_in.ops.fu_op === PRU_MTC0
   val cpr_addr = Cat(fu_in.wb.instr.rd_idx, fu_in.wb.instr.sel)
@@ -140,27 +153,30 @@ class PRU extends CPRS {
   }
 
   /* write back */
-  io.fu_out.bits.wb.v := fu_in.wb.v || is_mfc0
+  io.fu_out.bits.wb.v := fu_in.wb.v || is_mfc0 || is_lsu
   io.fu_out.bits.wb.id := fu_in.wb.id
   io.fu_out.bits.wb.pc := fu_in.wb.pc
   io.fu_out.bits.wb.instr := fu_in.wb.instr
   io.fu_out.bits.wb.rd_idx := fu_in.wb.rd_idx
-  io.fu_out.bits.wb.wen := fu_in.wb.wen || is_mfc0
+  io.fu_out.bits.wb.wen := (fu_in.wb.wen || is_mfc0) &&
+    (io.fu_out.bits.ex.et === ET_None)
   io.fu_out.bits.wb.data := Mux(is_mfc0, mf_val, fu_in.wb.data)
   io.fu_out.bits.wb.is_ds := fu_in.wb.is_ds
 
   /* c0 instruction exception */
-  val can_update_ex = fu_in.ops.fu_type === FU_PRU && fu_in.ex.et === ET_None
+  val can_update_ex = (is_pru || is_lsu) && fu_in.ex.et === ET_None
   io.fu_out.bits.ex.et := Mux(can_update_ex,
     Mux1H(Array(
-      (fu_in.ops.fu_op === PRU_SYSCALL)-> ET_Sys,
-      (fu_in.ops.fu_op === PRU_BREAK)  -> ET_Bp,
-      (fu_in.ops.fu_op === PRU_ERET)   -> ET_Eret)),
+      (is_lsu && lsu_has_ex) -> lsu_et,
+      (is_pru && fu_op === PRU_SYSCALL)-> ET_Sys,
+      (is_pru && fu_op === PRU_BREAK)  -> ET_Bp,
+      (is_pru && fu_op === PRU_ERET)   -> ET_Eret)),
     fu_in.ex.et)
   io.fu_out.bits.ex.code := Mux(can_update_ex,
     Mux1H(Array(
-      (fu_in.ops.fu_op === PRU_SYSCALL)-> EC_Sys,
-      (fu_in.ops.fu_op === PRU_BREAK)  -> EC_Bp)),
+      (is_lsu && lsu_has_ex) -> lsu_ec,
+      (is_pru && fu_op === PRU_SYSCALL)-> EC_Sys,
+      (is_pru && fu_op === PRU_BREAK)  -> EC_Bp)),
     fu_in.ex.code)
 
   /* process exception */
@@ -197,6 +213,10 @@ class PRU extends CPRS {
       }
     } .otherwise {
       cpr_status.EXL := 1.U
+    }
+
+    when (io.exinfo.bits.ex.et === ET_ADDR_ERR) {
+      cpr_badvaddr := io.exinfo.bits.addr
     }
   }
   io.ex_flush.bits.br_target := Mux(

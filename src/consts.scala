@@ -311,6 +311,9 @@ trait LSUConsts extends ISUConsts with MemConsts {
   val LSU_LWR  = Cat(N, MX_RD, ML_4, LSU_R)
   val LSU_SWL  = Cat(N, MX_WR, ML_4, LSU_L)
   val LSU_SWR  = Cat(N, MX_WR, ML_4, LSU_R)
+  //
+  val LSU_LL   = Cat(Y, MX_RD, ML_4, LSU_ZE)
+  val LSU_SC   = Cat(Y, MX_WR, ML_4, LSU_ZE)
 }
 
 /* contains temp node `Cat`, should be extended by Module */

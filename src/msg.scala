@@ -30,6 +30,7 @@ class CP0ExInfo extends Bundle {
   val ex = new CP0Exception
   val is_ds = Bool()
   val pc = UInt(conf.xprlen.W)
+  val addr = UInt(conf.xprlen.W)
 }
 
 class RegFileIO extends Bundle {
@@ -146,12 +147,13 @@ class PRALU_FU_IO extends Bundle {
 class PRALU_LSMDU_IO extends Bundle {
   val wb = new WriteBackIO
   val ops = new EXU_OPS
+  val ex = Output(new CP0Exception)
   val paddr = Output(UInt(conf.xprlen.W))
   val is_cached = Output(Bool())
 }
 
 class PRU_OUT_PRALU extends PRALU_LSMDU_IO {
-  val ex = Output(new CP0Exception)
+  val addr = Output(UInt(conf.xprlen.W))
 }
 
 class PRALU_OUT extends Bundle {
