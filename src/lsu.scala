@@ -143,6 +143,7 @@ class LSU extends Module with LSUConsts {
   io.fu_out.bits.wen := s3_in.op.func === MX_RD
   io.fu_out.bits.rd_idx := s3_in.rd_idx
   io.fu_out.bits.instr := s3_in.instr
+  io.fu_out.bits.is_ds := N
   io.fu_out.bits.data := MuxCase(ze_data, Array(
     (s3_in.op.asUInt === LSU_LB) -> io.dmem.resp.bits.data(7, 0).asTypeOf(SInt(32.W)).asUInt,
     (s3_in.op.asUInt === LSU_LH) -> io.dmem.resp.bits.data(15, 0).asTypeOf(SInt(32.W)).asUInt))

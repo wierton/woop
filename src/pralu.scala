@@ -125,10 +125,12 @@ class PRALU extends Module {
 
   /* exception */
   pru.io.exinfo.valid := io.fu_out.valid
-  pru.io.exinfo.bits := Mux1H(Array(
+  pru.io.exinfo.bits.ex := Mux1H(Array(
     alu.io.fu_out.valid -> alu.io.fu_out.bits.ex,
     pru.io.fu_out.valid -> pru.io.fu_out.bits.ex,
     psu.io.fu_out.valid -> psu.io.fu_out.bits.ex))
+  pru.io.exinfo.bits.is_ds := io.fu_out.bits.wb.is_ds
+  pru.io.exinfo.bits.pc := io.fu_out.bits.wb.pc
   io.ex_flush <> pru.io.ex_flush
 
   if (conf.log_PRALU) {

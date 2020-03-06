@@ -44,6 +44,7 @@ trait CP0Consts {
   val ET_C3E        =  18.U(ET_WIDTH.W)
   val ET_WATCH      =  20.U(ET_WIDTH.W)
   val ET_Int        =  21.U(ET_WIDTH.W)
+  val ET_Eret       =  22.U(ET_WIDTH.W)
 
   val EC_WIDTH = 5
   val EC_None =  0.U(EC_WIDTH.W)
@@ -227,6 +228,25 @@ trait PRUConsts extends ISUConsts {
   val PRU_TLTIU   = 21.U(FU_OP_SZ.W)
   val PRU_TEQI    = 22.U(FU_OP_SZ.W)
   val PRU_TNEI    = 23.U(FU_OP_SZ.W)
+
+  val CPR_INDEX     = "b00000_000".U(8.W)
+  val CPR_RANDOM    = "b00001_000".U(8.W)
+  val CPR_ENTRY_LO0 = "b00010_000".U(8.W)
+  val CPR_ENTRY_LO1 = "b00011_000".U(8.W)
+  val CPR_CONTEXT   = "b00100_000".U(8.W)
+  val CPR_PAGEMASK  = "b00101_000".U(8.W)
+  val CPR_WIRED     = "b00110_000".U(8.W)
+  val CPR_BAD_VADDR = "b01000_000".U(8.W)
+  val CPR_COUNT     = "b01001_000".U(8.W)
+  val CPR_ENTRY_HI  = "b01010_000".U(8.W)
+  val CPR_COMPARE   = "b01011_000".U(8.W)
+  val CPR_STATUS    = "b01100_000".U(8.W)
+  val CPR_CAUSE     = "b01101_000".U(8.W)
+  val CPR_EPC       = "b01110_000".U(8.W)
+  val CPR_PRID      = "b01111_000".U(8.W)
+  val CPR_EBASE     = "b01111_001".U(8.W)
+  val CPR_CONFIG    = "b10000_000".U(8.W)
+  val CPR_CONFIG1   = "b10000_001".U(8.W)
 }
 
 // UInt definition cannot occur in Bundle subclass

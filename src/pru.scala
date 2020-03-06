@@ -8,38 +8,38 @@ import woop.configs._
 import woop.dumps._
 
 abstract class CPRS extends Module {
-  val index     = Reg(new CP0Index)
-  def random    = Reg(new CP0Random)
-  val entry_lo0 = Reg(new CP0EntryLO)
-  val entry_lo1 = Reg(new CP0EntryLO)
-  val entry_hi  = Reg(new CP0EntryHI)
-  val context   = Reg(new CP0Context)
-  val pagemask  = Reg(new CP0PageMask)
-  val wired     = Reg(new CP0Wired)
-  val base      = RegInit(0.U(32.W))    // 7, 0
-  val badvaddr  = RegInit(0.U(32.W))    // 8, 0
-  val count0    = RegInit(1.U(32.W))    // 9, 0
-  val count1    = RegInit(0.U(32.W))    // 9, 1
-  val compare   = RegInit(~(0.U(32.W))) // 11, 0
-  val status    = Reg(new CP0Status) // 12, 0
-  val cause     = Reg(new CP0Cause)  // 13, 0
-  val epc       = RegInit(0.U(32.W))       // 14, 0
-  val prid      = Reg(new CP0Prid)
-  val config    = Reg(new CP0Config)
-  val config1   = Reg(new CP0Config1)
+  val cpr_index     = Reg(new CP0Index)
+  def cpr_random    = Reg(new CP0Random)
+  val cpr_entry_lo0 = Reg(new CP0EntryLO)
+  val cpr_entry_lo1 = Reg(new CP0EntryLO)
+  val cpr_context   = Reg(new CP0Context)
+  val cpr_pagemask  = Reg(new CP0PageMask)
+  val cpr_wired     = Reg(new CP0Wired)
+  val cpr_base      = RegInit(0.U(32.W))    // 7, 0
+  val cpr_badvaddr  = RegInit(0.U(32.W))    // 8, 0
+  val cpr_count     = RegInit(1.U(32.W))    // 9, 0
+  val cpr_entry_hi  = Reg(new CP0EntryHI)
+  val cpr_compare   = RegInit(~(0.U(32.W))) // 11, 0
+  val cpr_status    = Reg(new CP0Status) // 12, 0
+  val cpr_cause     = Reg(new CP0Cause)  // 13, 0
+  val cpr_epc       = RegInit(0.U(32.W))       // 14, 0
+  val cpr_prid      = Reg(new CP0Prid)
+  val cpr_ebase     = RegInit(0.U(32.W))
+  val cpr_config    = Reg(new CP0Config)
+  val cpr_config1   = Reg(new CP0Config1)
   when(reset.toBool) {
-    index.init()
-    random.init()
-    entry_lo0.init()
-    entry_lo1.init()
-    context.init()
-    pagemask.init()
-    wired.init()
-    status.init()
-    cause.init()
-    prid.init()
-    config.init()
-    config1.init()
+    cpr_index.init()
+    cpr_random.init()
+    cpr_entry_lo0.init()
+    cpr_entry_lo1.init()
+    cpr_context.init()
+    cpr_pagemask.init()
+    cpr_wired.init()
+    cpr_status.init()
+    cpr_cause.init()
+    cpr_prid.init()
+    cpr_config.init()
+    cpr_config1.init()
   }
 }
 
@@ -48,7 +48,7 @@ class PRU extends CPRS {
     val iaddr = Flipped(new TLBTransaction)
     val fu_in = Flipped(DecoupledIO(new PRALU_FU_IO))
     val fu_out = DecoupledIO(new PRU_OUT_PRALU)
-    val exinfo = Flipped(ValidIO(new CP0Exception))
+    val exinfo = Flipped(ValidIO(new CP0ExInfo))
     val br_flush = Flipped(ValidIO(new FlushIO))
     val ex_flush = ValidIO(new FlushIO)
   })
@@ -85,27 +85,110 @@ class PRU extends CPRS {
     fu_valid := Y
   }
   io.fu_out.valid := fu_valid
-  io.fu_out.bits.wb := fu_in.wb
   io.fu_out.bits.ops := fu_in.ops
   io.fu_out.bits.paddr := naive_tlb_translate(lsu_vaddr)
   io.fu_out.bits.is_cached := lsu_vaddr(31, 29) =/= "b101".U
-  io.fu_out.bits.ex.et := Mux(
-    fu_in.ops.fu_type === FU_PRU && fu_in.ex.et === ET_None,
+  io.fu_in.ready := io.fu_out.ready || !fu_valid
+
+  /* cpr io */
+  val is_mfc0 = fu_valid && fu_in.ops.fu_type === FU_PRU && fu_in.ops.fu_op === PRU_MFC0
+  val is_mtc0 = fu_valid && fu_in.ops.fu_type === FU_PRU && fu_in.ops.fu_op === PRU_MTC0
+  val cpr_addr = Cat(fu_in.wb.instr.rd_idx, fu_in.wb.instr.sel)
+  val mf_val = Mux1H(Array(
+    (cpr_addr === CPR_INDEX)     -> cpr_index.asUInt,
+    (cpr_addr === CPR_RANDOM)    -> cpr_random.asUInt,
+    (cpr_addr === CPR_ENTRY_LO0) -> cpr_entry_lo0.asUInt,
+    (cpr_addr === CPR_ENTRY_LO1) -> cpr_entry_lo1.asUInt,
+    (cpr_addr === CPR_CONTEXT)   -> cpr_context.asUInt,
+    (cpr_addr === CPR_PAGEMASK)  -> cpr_pagemask.asUInt,
+    (cpr_addr === CPR_WIRED)     -> cpr_wired.asUInt,
+    (cpr_addr === CPR_BAD_VADDR) -> cpr_badvaddr.asUInt,
+    (cpr_addr === CPR_COUNT)     -> cpr_count.asUInt,
+    (cpr_addr === CPR_ENTRY_HI)  -> cpr_entry_hi.asUInt,
+    (cpr_addr === CPR_COMPARE)   -> cpr_compare.asUInt,
+    (cpr_addr === CPR_STATUS)    -> cpr_status.asUInt,
+    (cpr_addr === CPR_CAUSE)     -> cpr_cause.asUInt,
+    (cpr_addr === CPR_EPC)       -> cpr_epc.asUInt,
+    (cpr_addr === CPR_PRID)      -> cpr_prid.asUInt,
+    (cpr_addr === CPR_EBASE)     -> cpr_ebase.asUInt,
+    (cpr_addr === CPR_CONFIG)    -> cpr_config.asUInt,
+    (cpr_addr === CPR_CONFIG1)   -> cpr_config1.asUInt,
+  ))
+  when (is_mtc0) {
+    switch (cpr_addr) {
+    is(CPR_INDEX)     { cpr_index.write(fu_in.ops.op1) }
+    is(CPR_RANDOM)    { cpr_random.write(fu_in.ops.op1) }
+    is(CPR_ENTRY_LO0) { cpr_entry_lo0.write(fu_in.ops.op1) }
+    is(CPR_ENTRY_LO1) { cpr_entry_lo1.write(fu_in.ops.op1) }
+    is(CPR_CONTEXT)   { cpr_context.write(fu_in.ops.op1) }
+    is(CPR_PAGEMASK)  { cpr_pagemask.write(fu_in.ops.op1) }
+    is(CPR_WIRED)     { cpr_wired.write(fu_in.ops.op1) }
+    is(CPR_BAD_VADDR) { cpr_badvaddr := fu_in.ops.op1 }
+    is(CPR_COUNT)     { }
+    is(CPR_ENTRY_HI)  { cpr_entry_hi.write(fu_in.ops.op1) }
+    is(CPR_COMPARE)   { cpr_compare := fu_in.ops.op1 }
+    is(CPR_STATUS)    { cpr_status.write(fu_in.ops.op1) }
+    is(CPR_CAUSE)     { cpr_cause.write(fu_in.ops.op1) }
+    is(CPR_EPC)       { cpr_epc := fu_in.ops.op1 }
+    is(CPR_PRID)      { cpr_prid.write(fu_in.ops.op1) }
+    is(CPR_EBASE)     { cpr_ebase := fu_in.ops.op1 }
+    is(CPR_CONFIG)    { cpr_config.write(fu_in.ops.op1) }
+    is(CPR_CONFIG1)   { cpr_config1.write(fu_in.ops.op1) }
+    }
+  }
+
+  /* write back */
+  io.fu_out.bits.wb.v := fu_in.wb.v || is_mfc0
+  io.fu_out.bits.wb.id := fu_in.wb.id
+  io.fu_out.bits.wb.pc := fu_in.wb.pc
+  io.fu_out.bits.wb.instr := fu_in.wb.instr
+  io.fu_out.bits.wb.rd_idx := fu_in.wb.rd_idx
+  io.fu_out.bits.wb.wen := fu_in.wb.wen || is_mfc0
+  io.fu_out.bits.wb.data := Mux(is_mfc0, mf_val, fu_in.wb.data)
+  io.fu_out.bits.wb.is_ds := fu_in.wb.is_ds
+
+  /* c0 instruction exception */
+  val can_update_ex = fu_in.ops.fu_type === FU_PRU && fu_in.ex.et === ET_None
+  io.fu_out.bits.ex.et := Mux(can_update_ex,
     Mux1H(Array(
       (fu_in.ops.fu_op === PRU_SYSCALL)-> ET_Sys,
-      (fu_in.ops.fu_op === PRU_BREAK)  -> ET_Bp)),
+      (fu_in.ops.fu_op === PRU_BREAK)  -> ET_Bp,
+      (fu_in.ops.fu_op === PRU_ERET)   -> ET_Eret)),
     fu_in.ex.et)
-  io.fu_out.bits.ex.code := Mux(
-    fu_in.ops.fu_type === FU_PRU && fu_in.ex.et === EC_None,
+  io.fu_out.bits.ex.code := Mux(can_update_ex,
     Mux1H(Array(
       (fu_in.ops.fu_op === PRU_SYSCALL)-> EC_Sys,
       (fu_in.ops.fu_op === PRU_BREAK)  -> EC_Bp)),
     fu_in.ex.code)
-    
-  /* exception flush */
-  io.ex_flush.valid := io.exinfo.valid && io.exinfo.bits.et =/= ET_None && io.exinfo.bits.code =/= EC_None
-  io.ex_flush.bits.br_target := "hbfc00380".U
 
-  /* PRU IO */
-  io.fu_in.ready := io.fu_out.ready || !fu_valid
+  /* process exception */
+  val offset = WireInit(0.U(12.W))
+  io.ex_flush.valid := io.exinfo.valid &&
+    io.exinfo.bits.ex.et =/= ET_None &&
+    io.exinfo.bits.ex.code =/= EC_None
+  when (io.ex_flush.valid) {
+    when (cpr_status.EXL === 0.U) {
+      when (io.exinfo.bits.is_ds) {
+        cpr_cause.BD := Y
+        cpr_epc := io.exinfo.bits.pc - 4.U
+      } .otherwise {
+        cpr_cause.BD := N
+        cpr_epc := io.exinfo.bits.pc
+      }
+
+      when (io.exinfo.bits.ex.et === ET_TLB_REFILL) {
+        offset := 0x000.U
+      } .elsewhen(io.exinfo.bits.ex.et === ET_Int && cpr_cause.IV.asBool) {
+        offset := 0x200.U
+      } .otherwise {
+        offset := 0x000.U
+      }
+    } .otherwise {
+      offset := 0x180.U
+    }
+    cpr_cause.ExcCode := io.exinfo.bits.ex.code
+    cpr_status.EXL := 1.U
+  }
+  io.ex_flush.bits.br_target := Mux(cpr_status.BEV === 1.U,
+    "hbfc00200".U + offset, "h80000000".U + offset)
 }

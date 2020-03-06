@@ -71,6 +71,7 @@ class MDU extends Module with MDUConsts {
   io.fu_out.bits.rd_idx := fu_in.wb.rd_idx
   io.fu_out.bits.data := result
   io.fu_out.bits.instr := fu_in.wb.instr
+  io.fu_out.bits.is_ds := N
 
   when (!io.fu_in.fire() && io.fu_out.valid) {
     fu_valid := N

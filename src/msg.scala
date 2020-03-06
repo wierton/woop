@@ -15,12 +15,21 @@ class Instr extends Bundle {
   val func   = UInt(6.W)
 
   def imm    = Cat(rd_idx, shamt, func)
+  def simm   = imm.asTypeOf(SInt(32.W))
+  def uimm   = imm.asTypeOf(UInt(32.W))
   def addr   = Cat(rs_idx, rt_idx, imm)
+  def sel    = func(2, 0)
 }
 
 class CP0Exception extends Bundle {
   val et = UInt(ET_WIDTH.W)
   val code = UInt(EC_WIDTH.W)
+}
+
+class CP0ExInfo extends Bundle {
+  val ex = new CP0Exception
+  val is_ds = Bool()
+  val pc = UInt(conf.xprlen.W)
 }
 
 class RegFileIO extends Bundle {
@@ -102,6 +111,7 @@ class WriteBackIO extends Bundle {
   val rd_idx = Output(UInt(REG_SZ.W))
   val wen = Output(Bool())
   val data = Output(UInt(conf.xprlen.W))
+  val is_ds = Output(Bool()) // is_delayslot
 }
 
 class IFU_BRIDU_IO extends Bundle {

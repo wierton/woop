@@ -53,6 +53,7 @@ class ALU extends Module {
   io.fu_out.bits.wb.rd_idx := rd_idx
   io.fu_out.bits.wb.data := result
   io.fu_out.bits.wb.instr := fu_in.wb.instr
+  io.fu_out.bits.wb.is_ds := fu_in.wb.is_ds
   io.fu_out.bits.ex := 0.U.asTypeOf(io.fu_out.bits.ex)
 
   when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
