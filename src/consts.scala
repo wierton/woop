@@ -267,20 +267,22 @@ trait BRUConsts extends ISUConsts {
 
 trait ALUConsts extends ISUConsts {
   // ALU Operation Signal
-  val ALU_ADD   =  0.U(FU_OP_SZ.W)
-  val ALU_SUB   =  1.U(FU_OP_SZ.W)
-  val ALU_SLL   =  2.U(FU_OP_SZ.W)
-  val ALU_SRL   =  3.U(FU_OP_SZ.W)
-  val ALU_SRA   =  4.U(FU_OP_SZ.W)
-  val ALU_AND   =  5.U(FU_OP_SZ.W)
-  val ALU_OR    =  6.U(FU_OP_SZ.W)
-  val ALU_XOR   =  7.U(FU_OP_SZ.W)
-  val ALU_NOR   =  8.U(FU_OP_SZ.W)
-  val ALU_SLT   =  9.U(FU_OP_SZ.W)
-  val ALU_SLTU  = 10.U(FU_OP_SZ.W)
-  val ALU_LUI   = 11.U(FU_OP_SZ.W)
-  val ALU_MOVN  = 12.U(FU_OP_SZ.W)
-  val ALU_MOVZ  = 13.U(FU_OP_SZ.W)
+  val ALU_ADD    =  0.U(FU_OP_SZ.W)
+  val ALU_SUB    =  1.U(FU_OP_SZ.W)
+  val ALU_SLL    =  2.U(FU_OP_SZ.W)
+  val ALU_SRL    =  3.U(FU_OP_SZ.W)
+  val ALU_SRA    =  4.U(FU_OP_SZ.W)
+  val ALU_AND    =  5.U(FU_OP_SZ.W)
+  val ALU_OR     =  6.U(FU_OP_SZ.W)
+  val ALU_XOR    =  7.U(FU_OP_SZ.W)
+  val ALU_NOR    =  8.U(FU_OP_SZ.W)
+  val ALU_SLT    =  9.U(FU_OP_SZ.W)
+  val ALU_SLTU   = 10.U(FU_OP_SZ.W)
+  val ALU_LUI    = 11.U(FU_OP_SZ.W)
+  val ALU_MOVN   = 12.U(FU_OP_SZ.W)
+  val ALU_MOVZ   = 13.U(FU_OP_SZ.W)
+  val ALU_ADD_OV = 14.U(FU_OP_SZ.W)
+  val ALU_SUB_OV = 15.U(FU_OP_SZ.W)
 }
 
 /* contains temp node `Cat`, should be extended by Module */

@@ -26,9 +26,9 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
       /* instr | fu_type  |  fu_op  |  op1_sel  |  op2_sel |  rd_sel */
      // ALU instructions
      LUI     -> List(Y, FU_ALU,  ALU_LUI,    OP1_X,    OP2_IMU, OPD_RT),
-     ADD     -> List(Y, FU_ALU,  ALU_ADD,    OP1_RS,   OP2_RT,  OPD_RD),
+     ADD     -> List(Y, FU_ALU,  ALU_ADD_OV, OP1_RS,   OP2_RT,  OPD_RD),
      ADDU    -> List(Y, FU_ALU,  ALU_ADD,    OP1_RS,   OP2_RT,  OPD_RD),
-     SUB     -> List(Y, FU_ALU,  ALU_SUB,    OP1_RS,   OP2_RT,  OPD_RD),
+     SUB     -> List(Y, FU_ALU,  ALU_SUB_OV, OP1_RS,   OP2_RT,  OPD_RD),
      SUBU    -> List(Y, FU_ALU,  ALU_SUB,    OP1_RS,   OP2_RT,  OPD_RD),
      SLT     -> List(Y, FU_ALU,  ALU_SLT,    OP1_RS,   OP2_RT,  OPD_RD),
      SLTU    -> List(Y, FU_ALU,  ALU_SLTU,   OP1_RS,   OP2_RT,  OPD_RD),
@@ -44,7 +44,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
      SRAV    -> List(Y, FU_ALU,  ALU_SRA,    OP1_RT,   OP2_RS,  OPD_RD),
      SRLV    -> List(Y, FU_ALU,  ALU_SRL,    OP1_RT,   OP2_RS,  OPD_RD),
      SLLV    -> List(Y, FU_ALU,  ALU_SLL,    OP1_RT,   OP2_RS,  OPD_RD),
-     ADDI    -> List(Y, FU_ALU,  ALU_ADD,    OP1_RS,   OP2_IMI, OPD_RT),
+     ADDI    -> List(Y, FU_ALU,  ALU_ADD_OV, OP1_RS,   OP2_IMI, OPD_RT),
      ADDIU   -> List(Y, FU_ALU,  ALU_ADD,    OP1_RS,   OP2_IMI, OPD_RT),
      ANDI    -> List(Y, FU_ALU,  ALU_AND,    OP1_RS,   OP2_IMZ, OPD_RT),
      ORI     -> List(Y, FU_ALU,  ALU_OR,     OP1_RS,   OP2_IMZ, OPD_RT),
