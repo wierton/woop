@@ -1,11 +1,13 @@
-#include "emu_api.h"
 #include "common.h"
+#include "emu_api.h"
 
+/* clang-format off */
 #define GPRS(X) \
   X(0)  X(1)  X(2)  X(3)  X(4)  X(5)  X(6)  X(7)  \
   X(8)  X(9)  X(10) X(11) X(12) X(13) X(14) X(15) \
   X(16) X(17) X(18) X(19) X(20) X(21) X(22) X(23) \
   X(24) X(25) X(26) X(27) X(28) X(29) X(30) X(31)
+/* clang-format on */
 
 void DiffTop::abort_prologue() {
   if (finished) return;
@@ -23,7 +25,7 @@ void DiffTop::check_states() {
   }
 
   check(nemu_ptr->pc() == dut_ptr->io_commit_pc,
-      "cycle %lu: pc: nemu:%08x <> pc:%08x\n", cycles,
+      "cycle %lu: pc: nemu:%08x <> dut:%08x\n", cycles,
       nemu_ptr->pc(), dut_ptr->io_commit_pc);
   check(nemu_ptr->get_instr() == dut_ptr->io_commit_instr,
       "cycle %lu: instr: nemu:%08x <> dut:%08x\n", cycles,
@@ -91,7 +93,7 @@ DiffTop::DiffTop(int argc, const char *argv[])
 }
 
 void DiffTop::reset_ncycles(unsigned n) {
-  for (int i = 0; i < n; i ++) {
+  for (int i = 0; i < n; i++) {
     dut_ptr->reset = 1;
     single_cycle();
     dut_ptr->reset = 0;
@@ -156,7 +158,15 @@ void DiffTop::device_io(unsigned char is_aligned, int addr,
   if (!(0 <= addr && addr < 0x08000000)) {
     /* deal with dev_io */
     if (func == MX_RD) {
-      *resp = paddr_peek(addr, len + 1);
+      device_t *dev = ::find_device(addr);
+      if (!dev) {
+        nemu_ptr->dump();
+        eprintf(
+            "bad addr 0x%08x received from SOC\n", addr);
+        abort();
+      } else {
+        *resp = paddr_peek(addr, len + 1);
+      }
     } else {
       if (addr == GPIO_TRAP) {
         finished = true;
@@ -174,7 +184,7 @@ void DiffTop::device_io(unsigned char is_aligned, int addr,
     // MX_WR
     if (is_aligned) {
       int l2b = addr & 3;
-      assert (l2b + len < 4);
+      assert(l2b + len < 4);
       memcpy(&ddr[addr], &data, len + 1);
     } else {
       addr = addr & ~3;

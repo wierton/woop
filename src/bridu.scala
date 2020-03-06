@@ -96,7 +96,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   ))
 
   val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: rd_sel :: Nil = csignals
-  assert (valid)
+  assert (valid, "%d: invalid instruction", GTimer())
 
   val instr = fu_in.instr.asTypeOf(new Instr)
   val oprd_idx = Mux1H(Array(

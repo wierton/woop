@@ -16,8 +16,39 @@ object GTimer {
 object TraceTrigger {
   def apply(): Bool = {
     val (t, c) = Counter(true.B, 0x7fffffff)
-    t >= (233940 - 40).U
+    t >= (285919 - 40).U
     false.B
+  }
+}
+
+class ROB[T<:Data](gen:T, idw:Int) extends Module {
+  val io = IO(new Bundle {
+    val enq = Flipped(DecoupledIO(new Bundle {
+      val data = gen
+      val id = Output(UInt(idw.W))
+    }))
+    val deq = DecoupledIO(gen)
+    val flush = Input(Bool())
+  })
+
+  val entries = 1 << idw
+  val queue = Mem(entries, ValidIO(gen))
+  val head = RegInit(0.U(log2Ceil(entries).W))
+  val q_head = queue(head)
+
+  io.deq.valid := q_head.valid
+  io.deq.bits := q_head.bits
+  when (io.deq.fire()) { head := head + 1.U }
+
+  io.enq.ready := true.B
+  when (io.enq.fire()) {
+    val q_out = queue(io.enq.bits.id)
+    q_out.valid := true.B
+    q_out.bits := io.enq.bits.data
+  }
+
+  when (io.flush) {
+    for (i <- 0 until entries) { queue(i).valid := false.B }
   }
 }
 

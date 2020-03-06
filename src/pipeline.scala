@@ -14,76 +14,53 @@ import woop.consts._
  *
  * */
 
-class AtLeastNCyclesModule extends Module {
-  val io = IO(new Bundle {
-    val in = Flipped(DecoupledIO(Output(UInt(32.W))))
-    val out = DecoupledIO(Output(UInt(32.W)))
-  })
-
-  val fu_valid = RegNext(next=io.in.valid, init=N)
-  val fu_in = RegEnable(next=io.in.bits, enable=io.in.fire())
-  // io.in.ready := random
-  io.out.valid := fu_valid
-  io.out.bits := fu_in
+class FU_IN extends Bundle {
+  val din = Output(UInt(32.W))
 }
 
-/* at least 1 cycle */
-class PiplineUnitAtLeast1Cycle extends Module {
+class FU_OUT extends Bundle {
+  val dout = Output(UInt(32.W))
+}
+
+object Compute {
+  def apply(din:FU_IN) = din.asTypeOf(new FU_OUT)
+  def apply(d1:FU_IN, d2:FU_OUT) = {
+    (d1.asUInt ^ d2.asUInt).asTypeOf(new FU_OUT)
+  }
+  def apply(d1:FU_OUT, d2:FU_IN) = {
+    (d1.asUInt ^ d2.asUInt).asTypeOf(new FU_OUT)
+  }
+}
+
+object Merge {
+}
+
+class FixedNCyclesModule(n:Int=1) extends Module {
   val io = IO(new Bundle {
-    val in = Flipped(DecoupledIO(Output(UInt(32.W))))
-    val out = DecoupledIO(Output(UInt(32.W)))
+    val in = Flipped(DecoupledIO(new FU_IN))
+    val out = DecoupledIO(new FU_OUT)
     val flush = Input(Bool())
   })
-
-  val m = Module(new AtLeastNCyclesModule)
-  val fu_data = RegEnable(next=0.U, enable=m.io.in.fire())
-
-  io.in.ready := m.io.in.ready
-
-  m.io.in.valid := io.in.valid
-  m.io.in.bits := io.in.bits
-  io.in.ready := m.io.in.ready
-
-  m.io.out.ready := io.out.ready
-  io.out.valid := m.io.out.valid
-  io.out.bits := m.io.out.bits
+  io.in.ready := DontCare
+  io.out.valid := DontCare
+  io.out.bits := DontCare
 }
 
-/* at least N cycle */
-class PiplineUnitAtLeastNCycles extends Module {
+class AtLeastNCyclesModule(n:Int=1) extends Module {
   val io = IO(new Bundle {
-    val in = Flipped(DecoupledIO(Output(UInt(32.W))))
-    val out = DecoupledIO(Output(UInt(32.W)))
-    val flush = Input(Bool())
+    val in = Flipped(DecoupledIO(new FU_IN))
+    val out = DecoupledIO(new FU_OUT)
   })
-
-  val m = Module(new AtLeastNCyclesModule)
-
-  val ncycles = 12
-  val fu_datas = Module(new Queue(UInt(32.W), ncycles))
-  fu_datas.reset := io.flush
-  fu_datas.io.enq.valid := m.io.in.fire()
-  fu_datas.io.enq.bits := Y
-  fu_datas.io.deq.ready := m.io.out.fire()
-  assert (fu_datas.io.enq.fire() === m.io.in.fire())
-
-  io.in.ready := io.out.ready
-
-  m.io.in.valid := io.in.valid
-  m.io.in.bits := io.in.bits
-  io.in.ready := m.io.in.ready
-
-  m.io.out.ready := io.out.ready
-  io.out.valid := m.io.out.valid
-  io.out.bits := m.io.out.bits
-  // ncycles is too large
+  io.in.ready := DontCare
+  io.out.valid := DontCare
+  io.out.bits := DontCare
 }
 
-/* 1 cycle */
-class PiplineUnit1Cycle extends Module {
+/* 1 cycle: ALU, IDU, BRU */
+abstract class PiplineUnit1Cycle extends Module {
   val io = IO(new Bundle {
-    val in = Flipped(DecoupledIO(Output(UInt(32.W))))
-    val out = DecoupledIO(Output(UInt(32.W)))
+    val in = Flipped(DecoupledIO(new FU_IN))
+    val out = DecoupledIO(new FU_OUT)
     val flush = Input(Bool())
   })
 
@@ -93,7 +70,7 @@ class PiplineUnit1Cycle extends Module {
   io.in.ready := io.out.ready || !fu_valid
 
   io.out.valid := fu_valid
-  io.out.bits := fu_in
+  io.out.bits := Compute(fu_in)
 
   when (io.flush || (!io.in.fire() && io.out.fire())) {
     fu_valid := N
@@ -102,11 +79,11 @@ class PiplineUnit1Cycle extends Module {
   }
 }
 
-/* n cycle */
-class PiplineUnitNCycles extends Module {
+/* n cycle: MDU */
+abstract class PiplineUnitNCycles extends Module {
   val io = IO(new Bundle {
-    val in = Flipped(DecoupledIO(Output(UInt(32.W))))
-    val out = DecoupledIO(Output(UInt(32.W)))
+    val in = Flipped(DecoupledIO(new FU_IN))
+    val out = DecoupledIO(new FU_OUT)
     val flush = Input(Bool())
   })
 
@@ -117,7 +94,7 @@ class PiplineUnitNCycles extends Module {
   io.in.ready := io.out.ready || !fu_valids(0)
 
   io.out.valid := fu_valids(0)
-  io.out.bits := Pipe(Y, fu_in, ncycles)
+  io.out.bits := Compute(Pipe(Y, fu_in, ncycles).bits)
 
   when (io.flush) {
     fu_valids := 0.U
@@ -128,3 +105,48 @@ class PiplineUnitNCycles extends Module {
   }
 }
 
+/* n cycle with data: IFU, LSU, MDU with IP core */
+abstract class PiplineUnitNCyclesWithData extends Module {
+  val io = IO(new Bundle {
+    val in = Flipped(DecoupledIO(new FU_IN))
+    val out = DecoupledIO(new FU_OUT)
+    val flush = Input(Bool())
+  })
+
+  val ncycles = 12
+  val m = Module(new FixedNCyclesModule(ncycles))
+  // val m = Module(new AtLeastNCyclesModule(ncycles))
+  m.io.in <> io.in
+  m.io.flush := io.flush
+
+  val fu_datas = Module(new Queue(new FU_IN, ncycles))
+  fu_datas.io.enq.valid := m.io.in.fire()
+  fu_datas.io.enq.bits := io.in.bits
+  fu_datas.io.deq.ready := m.io.out.fire()
+
+  io.in.ready := m.io.in.ready
+  io.out.valid := m.io.out.valid
+  io.out.bits := Compute(m.io.out.bits, fu_datas.io.deq.bits)
+}
+
+/* at least 1 cycle */
+abstract class PiplineUnit1CycleWithData extends Module {
+  val io = IO(new Bundle {
+    val in = Flipped(DecoupledIO(new FU_IN))
+    val out = DecoupledIO(new FU_OUT)
+    val flush = Input(Bool())
+  })
+
+  val m = Module(new AtLeastNCyclesModule(1))
+  val fu_data = RegEnable(next=0.U.asTypeOf(new FU_IN), enable=m.io.in.fire())
+
+  io.in.ready := m.io.in.ready
+
+  m.io.in.valid := io.in.valid
+  m.io.in.bits := io.in.bits
+  io.in.ready := m.io.in.ready
+
+  m.io.out.ready := io.out.ready
+  io.out.valid := m.io.out.valid
+  io.out.bits := m.io.out.bits
+}
