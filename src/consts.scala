@@ -47,21 +47,20 @@ trait CP0Consts {
   val ET_Eret       =  22.U(ET_WIDTH.W)
 
   val EC_WIDTH = 5
-  val EC_None =  0.U(EC_WIDTH.W)
-  val EC_Int  =  1.U(EC_WIDTH.W)  // - Interrupt
-  val EC_Mod  =  2.U(EC_WIDTH.W)  // * TLB modification
-  val EC_TLBL =  3.U(EC_WIDTH.W)  // * TLB load
-  val EC_TLBS =  4.U(EC_WIDTH.W)  // * TLB store
-  val EC_AdEL =  5.U(EC_WIDTH.W)  // * Address Load
-  val EC_AdES =  6.U(EC_WIDTH.W)  // * Address Store
-  val EC_IBE  =  7.U(EC_WIDTH.W)  //   Bus error(IF)
-  val EC_DBE  =  8.U(EC_WIDTH.W)  //   Bus error(data)
-  val EC_Sys  =  9.U(EC_WIDTH.W)  // * Syscall
-  val EC_Bp   = 10.U(EC_WIDTH.W)  //   Break Point
-  val EC_RI   = 11.U(EC_WIDTH.W)  // * Reserved instruction
-  val EC_CpU  = 12.U(EC_WIDTH.W)  // * Coprocessor unusable
-  val EC_Ov   = 13.U(EC_WIDTH.W)  // * Arithmetic overflow
-  val EC_Tr   = 14.U(EC_WIDTH.W)  // * Trap
+  val EC_Int  =  0.U(EC_WIDTH.W)  // - Interrupt
+  val EC_Mod  =  1.U(EC_WIDTH.W)  // * TLB modification
+  val EC_TLBL =  2.U(EC_WIDTH.W)  // * TLB load
+  val EC_TLBS =  3.U(EC_WIDTH.W)  // * TLB store
+  val EC_AdEL =  4.U(EC_WIDTH.W)  // * Address Load
+  val EC_AdES =  5.U(EC_WIDTH.W)  // * Address Store
+  val EC_IBE  =  6.U(EC_WIDTH.W)  //   Bus error(IF)
+  val EC_DBE  =  7.U(EC_WIDTH.W)  //   Bus error(data)
+  val EC_Sys  =  8.U(EC_WIDTH.W)  // * Syscall
+  val EC_Bp   =  9.U(EC_WIDTH.W)  //   Break Point
+  val EC_RI   = 10.U(EC_WIDTH.W)  // * Reserved instruction
+  val EC_CpU  = 11.U(EC_WIDTH.W)  // * Coprocessor unusable
+  val EC_Ov   = 12.U(EC_WIDTH.W)  // * Arithmetic overflow
+  val EC_Tr   = 13.U(EC_WIDTH.W)  // * Trap
 }
 
 trait InstrConsts {

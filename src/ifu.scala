@@ -135,7 +135,7 @@ class IFU extends Module {
   s2_datas.io.deq.ready := io.imem.resp.fire()
   s2_datas.io.br_flush <> io.br_flush
   s2_datas.io.ex_flush <> io.ex_flush
-  io.imem.req.valid := io.iaddr.resp.valid
+  io.imem.req.valid := io.iaddr.resp.valid && !io.ex_flush.valid
   io.imem.req.bits.is_cached := io.iaddr.resp.bits.is_cached
   io.imem.req.bits.is_aligned := Y
   io.imem.req.bits.addr  := io.iaddr.resp.bits.paddr
@@ -146,7 +146,7 @@ class IFU extends Module {
   io.imem.resp.ready := io.fu_out.ready
 
   /* stage 3: blocking */
-  io.fu_out.valid := io.imem.resp.valid && s2_out.valid
+  io.fu_out.valid := io.imem.resp.valid && s2_out.valid && !io.ex_flush.valid
   io.fu_out.bits.pc := s2_out.bits
   io.fu_out.bits.instr := io.imem.resp.bits.data
   io.fu_out.bits.ex := 0.U.asTypeOf(new CP0Exception)

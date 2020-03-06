@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 import woop.consts._
 import woop.configs._
+import woop.utils._
 import woop.dumps._
 
 abstract class CPRS extends Module {
@@ -41,6 +42,7 @@ abstract class CPRS extends Module {
     cpr_config.init()
     cpr_config1.init()
   }
+  cpr_count := cpr_count + 1.U
 }
 
 class PRU extends CPRS {
@@ -164,8 +166,7 @@ class PRU extends CPRS {
   /* process exception */
   val offset = WireInit(0.U(12.W))
   io.ex_flush.valid := io.exinfo.valid &&
-    io.exinfo.bits.ex.et =/= ET_None &&
-    io.exinfo.bits.ex.code =/= EC_None
+    io.exinfo.bits.ex.et =/= ET_None
   when (io.ex_flush.valid) {
     when (cpr_status.EXL === 0.U) {
       when (io.exinfo.bits.is_ds) {
@@ -181,14 +182,39 @@ class PRU extends CPRS {
       } .elsewhen(io.exinfo.bits.ex.et === ET_Int && cpr_cause.IV.asBool) {
         offset := 0x200.U
       } .otherwise {
-        offset := 0x000.U
+        offset := 0x180.U
       }
     } .otherwise {
       offset := 0x180.U
     }
     cpr_cause.ExcCode := io.exinfo.bits.ex.code
-    cpr_status.EXL := 1.U
+
+    when (io.exinfo.bits.ex.et === ET_Eret) {
+      when (cpr_status.ERL === 1.U) {
+        cpr_status.ERL := 0.U
+      } .otherwise {
+        cpr_status.EXL := 0.U
+      }
+    } .otherwise {
+      cpr_status.EXL := 1.U
+    }
   }
-  io.ex_flush.bits.br_target := Mux(cpr_status.BEV === 1.U,
-    "hbfc00200".U + offset, "h80000000".U + offset)
+  io.ex_flush.bits.br_target := Mux(
+    io.exinfo.bits.ex.et === ET_Eret, cpr_epc,
+    Mux(cpr_status.BEV === 1.U, "hbfc00200".U + offset,
+      "h80000000".U + offset))
+
+  if (conf.log_PRU) {
+    when (TraceTrigger()) { dump() }
+  }
+  def dump():Unit = {
+    printf("%d: PRU: fu_valid=%b, is_mfc0=%b, is_mtc0=%b, cpr_addr=%b, mf_val=%x, can_update_ex=%b, offset=%x\n", GTimer(), fu_valid, is_mfc0, is_mtc0, cpr_addr, mf_val, can_update_ex, offset)
+    printf("%d: PRU: entry_lo0=%x, entry_lo1=%x, context=%x, pagemask=%x, wired=%x, badvaddr=%x\n", GTimer(), cpr_entry_lo0.asUInt, cpr_entry_lo1.asUInt, cpr_context.asUInt, cpr_pagemask.asUInt, cpr_wired.asUInt, cpr_badvaddr.asUInt)
+    printf("%d: PRU: count=%x, entry_hi=%x, compare=%x, status=%x, cause=%x, epc=%x, prid=%x\n", GTimer(), cpr_count.asUInt, cpr_entry_hi.asUInt, cpr_compare.asUInt, cpr_status.asUInt, cpr_cause.asUInt, cpr_epc.asUInt, cpr_prid.asUInt)
+    printf("%d: PRU: ebase=%x, config=%x, config1=%x\n", GTimer(), cpr_ebase.asUInt, cpr_config.asUInt, cpr_config1.asUInt)
+    io.fu_in.dump("PRU.fu_in")
+    io.fu_out.dump("PRU.fu_out")
+    io.exinfo.dump("PRU.exinfo")
+    io.ex_flush.dump("PRU.exflush")
+  }
 }

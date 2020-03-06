@@ -94,12 +94,12 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
      // PRU instructions
      SYSCALL -> List(Y, FU_PRU,  PRU_SYSCALL,OP1_X,    OP2_X,   OPD_X),
      BREAK   -> List(Y, FU_PRU,  PRU_BREAK,  OP1_X,    OP2_X,   OPD_X),
-     ERET    -> List(Y, FU_PRU,  PRU_CACHE,  OP1_X,    OP2_X,   OPD_X),
-     MFC0    -> List(Y, FU_PRU,  PRU_MFC0,   OP1_X,    OP2_X,   OPD_X),
-     MTC0    -> List(Y, FU_PRU,  PRU_MTC0,   OP1_X,    OP2_X,   OPD_X),
+     ERET    -> List(Y, FU_PRU,  PRU_ERET,   OP1_X,    OP2_X,   OPD_X),
+     MFC0    -> List(Y, FU_PRU,  PRU_MFC0,   OP1_X,    OP2_X,   OPD_RT),
+     MTC0    -> List(Y, FU_PRU,  PRU_MTC0,   OP1_RT,   OP2_X,   OPD_X),
      CACHE   -> List(Y, FU_PRU,  PRU_CACHE,  OP1_X,    OP2_X,   OPD_X),
-     SYNC    -> List(Y, FU_PRU,  PRU_CACHE,  OP1_X,    OP2_X,   OPD_X),
-     PREF    -> List(Y, FU_PRU,  PRU_CACHE,  OP1_X,    OP2_X,   OPD_X),
+     SYNC    -> List(Y, FU_PRU,  PRU_SYNC,   OP1_X,    OP2_X,   OPD_X),
+     PREF    -> List(Y, FU_PRU,  PRU_PREF,   OP1_X,    OP2_X,   OPD_X),
   ))
 
   val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: rd_sel :: Nil = csignals
