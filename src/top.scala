@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 import woop.configs._
 import woop.utils._
+import woop.consts._
 
 class SimDev extends BlackBox {
   val io = IO(new Bundle {
@@ -24,11 +25,16 @@ class SOC_EMU_TOP extends Module {
   val dmux = Module(new MemMux("dmux"))
   val dev = Module(new SimDev)
   val crossbar = Module(new CrossbarNx1(4))
+  val cistern = Module(new IMemCistern(conf.icache_stages))
 
   dev.io.clock := clock
   dev.io.reset := reset
 
-  imux.io.in <> core.io.imem
+  cistern.io.br_flush := core.io.br_flush
+  cistern.io.ex_flush := core.io.ex_flush
+
+  cistern.io.in <> core.io.imem
+  imux.io.in <> cistern.io.out
   dmux.io.in <> core.io.dmem
 
   imux.io.cached   <> crossbar.io.in(0)
@@ -74,8 +80,8 @@ class AXI4_EMU_TOP extends Module {
   dmux.io.cached <> dcache.io.in
   dcache.io.out <> d2sram.io.in
 
-  icache.io.flush <> core.io.flush
-  dcache.io.flush <> core.io.flush
+  icache.io.flush := core.io.br_flush
+  dcache.io.flush := core.io.br_flush
 
   i2sram.io.out    <> crossbar.io.in(0)
   imux.io.uncached <> crossbar.io.in(1)

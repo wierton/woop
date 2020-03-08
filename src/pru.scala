@@ -153,13 +153,12 @@ class PRU extends CPRS with LSUConsts {
   }
 
   /* write back */
-  io.fu_out.bits.wb.v := fu_in.wb.v || is_mfc0 || is_lsu
+  io.fu_out.bits.wb.v := is_mfc0
   io.fu_out.bits.wb.id := fu_in.wb.id
   io.fu_out.bits.wb.pc := fu_in.wb.pc
   io.fu_out.bits.wb.instr := fu_in.wb.instr
   io.fu_out.bits.wb.rd_idx := fu_in.wb.rd_idx
-  io.fu_out.bits.wb.wen := (fu_in.wb.wen || is_mfc0) &&
-    (io.fu_out.bits.ex.et === ET_None)
+  io.fu_out.bits.wb.wen := is_mfc0 && (io.fu_out.bits.ex.et === ET_None)
   io.fu_out.bits.wb.data := Mux(is_mfc0, mf_val, fu_in.wb.data)
   io.fu_out.bits.wb.is_ds := fu_in.wb.is_ds
 

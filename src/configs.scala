@@ -12,20 +12,20 @@ object conf {
   val axi_data_width = 32
   val axi_id_width = 4
   val mio_cycles = 3
+  val icache_stages = 10
   val INSTR_ID_SZ = 8
 
-  val nICacheSets = 64
+  val nICacheSets = 256
   val nICacheWays = 4
-  val ICacheDataW   = 64
-  val nICacheWordsPerWay = 4
-  val nDCacheSets = 64
+  val nICacheWayBytes = 16
+  val nDCacheSets = 256
   val nDCacheWays = 4
-  val DCacheDataW = 64
-  val nDCacheWordsPerWay = 4
-  val tlbsz = 32
+  val nDCacheWayBytes = 16
+  val tlbsz = 64
 
   val log_Top = true
   val log_MemMux = true
+  val log_IMemCistern = true
   val log_CrossbarNx1 = true
   val log_Cistern = true
   val log_rf = true

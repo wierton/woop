@@ -8,37 +8,6 @@ import woop.configs._
 import woop.dumps._
 import woop.utils._
 
-class IFUCistern(entries:Int) extends Module {
-  val io = IO(new Bundle {
-    val in = Flipped(new MemIO)
-    val out = new MemIO
-  })
-
-  require (entries > 0)
-  val size = RegInit(1.U(log2Ceil(entries + 1).W))
-  val cistern = Module(new Cistern(new MemResp, entries - 1))
-  val queue = Module(new Queue(new MemResp, 1))
-
-  io.out.req.valid := io.in.req.valid && size < entries.U
-  io.out.req.bits := io.in.req.bits
-
-  size := size + io.in.req.fire() - io.in.resp.fire()
-  io.in.req.ready := io.out.req.ready && size < entries.U
-
-  cistern.io.enq <> io.out.resp
-  queue.io.enq <> cistern.io.deq
-  io.in.resp <> queue.io.deq
-
-  if (conf.log_Cistern) {
-    when (TraceTrigger()) { dump() }
-  }
-
-  def dump():Unit = {
-    printf ("%d: IFUCistern: size=%d\n", GTimer(), size)
-    cistern.io.enq.dump("cistern.io.enq")
-    cistern.io.deq.dump("cistern.io.deq")
-  }
-}
 
 /* without cache */
 class IFUPipelineData[T<:Data](gen:T, entries:Int) extends Module {
@@ -128,7 +97,7 @@ class IFU extends Module {
 
   /* stage 2: blocking */
   val s2_in = RegEnable(next=pc, enable=io.iaddr.req.fire())
-  val s2_datas = Module(new IFUPipelineData(UInt(32.W), conf.mio_cycles))
+  val s2_datas = Module(new IFUPipelineData(UInt(32.W), conf.icache_stages))
   val s2_out = s2_datas.io.deq.bits
   s2_datas.io.enq.valid := io.imem.req.fire()
   s2_datas.io.enq.bits := s2_in

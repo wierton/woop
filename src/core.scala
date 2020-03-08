@@ -24,7 +24,8 @@ class Core extends Module {
     val imem = new MemIO
     val dmem = new MemIO
     val commit = new CommitIO
-    val flush = Output(Bool())
+    val br_flush = Output(Bool())
+    val ex_flush = Output(Bool())
   })
 
   val rf = Module(new RegFile)
@@ -42,20 +43,18 @@ class Core extends Module {
   rf.io.rfio <> bridu.io.rfio
   ifu.io.iaddr <> pralu.io.iaddr
 
-  val ifu_cistern = Module(new IFUCistern(conf.mio_cycles + 1))
-  ifu.io.imem <> ifu_cistern.io.in
-  ifu_cistern.io.out <> io.imem
-
+  ifu.io.imem <> io.imem
   lsmdu.io.dmem <> io.dmem
 
   ifu.io.br_flush <> bridu.io.br_flush
   pralu.io.br_flush <> bridu.io.br_flush
   ifu.io.ex_flush <> pralu.io.ex_flush
   bridu.io.ex_flush <> pralu.io.ex_flush
-  io.flush := bridu.io.br_flush.valid || pralu.io.ex_flush.valid
 
   pralu.io.rs_data <> rf.io.rfio.rs_data
   pralu.io.rt_data <> rf.io.rfio.rt_data
 
+  io.br_flush := bridu.io.br_flush.valid
+  io.ex_flush := pralu.io.ex_flush.valid
   io.commit <> rf.io.commit
 }

@@ -36,11 +36,13 @@ class RegFile extends Module {
   io.rfio.rt_data.valid := rf_data_ready(io.rfio.rt_idx)
   io.rfio.rt_data.bits := rf_data_bits(io.rfio.rt_idx)
 
-  when (io.wb.valid && io.wb.bits.v && wbids(io.wb.bits.rd_idx) === io.wb.bits.id) {
+  when (io.wb.valid && io.wb.bits.v) {
     when (io.wb.bits.wen && io.wb.bits.rd_idx =/= 0.U) {
       wb_rf(io.wb.bits.rd_idx) := io.wb.bits.data
     }
-    rf_dirtys(io.wb.bits.rd_idx) := N
+    when (wbids(io.wb.bits.rd_idx) === io.wb.bits.id) {
+      rf_dirtys(io.wb.bits.rd_idx) := N
+    }
   }
 
   when (io.bp.valid && io.bp.bits.v && io.bp.bits.wen &&

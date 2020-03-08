@@ -10,7 +10,7 @@ import woop.utils._
 
 object ICacheParams {
   val setno_bits = log2Ceil(conf.nICacheSets)
-  val off_bits = log2Ceil(conf.nICacheWordsPerWay)
+  val off_bits = log2Ceil(conf.nICacheWayBytes / 4)
   val tag_bits = conf.xprlen - setno_bits - off_bits - 2
 }
 
@@ -35,11 +35,11 @@ class ICacheMemIO extends Module {
 
   require(isPow2(conf.nICacheSets))
   require(isPow2(conf.nICacheWays))
-  require(isPow2(conf.nICacheWordsPerWay))
+  require(isPow2(conf.nICacheWayBytes))
 
   val seqmem_wen = WireInit(N)
   val vntag_array = SyncReadMem(conf.nICacheSets, Vec(conf.nICacheWays, new ICacheWayVnTag))
-  val data_array = SyncReadMem(conf.nICacheSets * conf.nICacheWays, Vec(conf.nICacheWordsPerWay, UInt(32.W)))
+  val data_array = SyncReadMem(conf.nICacheSets * conf.nICacheWays, Vec(conf.nICacheWayBytes / 4, UInt(32.W)))
 
   val s0_in = io.in.req.bits
   val s0_addr = s0_in.asTypeOf(new ICacheAddr)
@@ -110,4 +110,110 @@ class ICache extends Module {
 
   io.in <> DontCare
   io.out <> DontCare
+}
+
+class IMemCistern(entries:Int) extends Module {
+  val io = IO(new Bundle {
+    val in = Flipped(new MemIO)
+    val out = new MemIO
+    val br_flush = Input(Bool())
+    val ex_flush = Input(Bool())
+  })
+
+  val queue = Mem(entries, new Bundle {
+    val req = ValidIO(new MemReq)
+    val resp = ValidIO(new MemResp)
+  })
+
+  val head = RegInit(0.U(log2Ceil(entries).W))
+  val tail = RegInit(0.U(log2Ceil(entries).W))
+  val is_full = RegInit(N)
+  val is_empty = RegInit(Y)
+  val q_head = queue(head)
+  def next(v:UInt) = Mux(v + 1.U === entries.U, 0.U, v + 1.U)
+  val next_head = next(head)
+  val next_tail = next(tail)
+
+  io.in.req.ready := !is_full || io.in.resp.fire()
+  io.in.resp.valid := is_full && q_head.resp.valid
+  io.in.resp.bits := queue(tail).resp.bits
+
+  /* flush signals */
+  when (io.br_flush || io.ex_flush) {
+    val clear_all = io.ex_flush || io.in.resp.fire()
+    for (i <- 0 until entries) {
+      queue(i).req.valid := Mux(clear_all,
+        N, Mux(i.U === tail, queue(i).req.valid, N))
+      queue(i).resp.valid := Mux(clear_all,
+        N, Mux(i.U === tail, queue(i).resp.valid, N))
+    }
+  }
+
+  when (io.in.req.fire()) {
+    when ((!io.br_flush && !io.ex_flush) || is_empty) {
+      q_head.req.valid := Y
+      q_head.resp.valid := N
+    }
+    q_head.req.bits := io.in.req.bits
+    head := next_head
+    is_empty := N
+    when (next_head === tail && !io.in.resp.fire()) {
+      is_full := Y
+    }
+  }
+
+  when (io.in.resp.fire()) {
+    tail := next_tail
+    when (!(is_full && io.in.req.fire())) { is_full := N }
+    when (next_tail === head && !io.in.req.fire()) {
+      is_empty := Y
+    }
+  }
+
+  /* mem req */
+  val mreq_valid = RegInit(N)
+  val mreq_working = RegInit(N)
+  val mreq_idx = RegInit(0.U(log2Ceil(entries).W))
+  when (is_full && !q_head.resp.valid && !mreq_working) {
+    mreq_valid := Y
+    mreq_idx := next_head
+    mreq_working := Y
+  }
+
+  val q_cur = queue(mreq_idx)
+  io.out.req.valid := mreq_valid
+  io.out.req.bits := q_cur.req.bits
+  io.out.resp.ready := Y
+  when (io.out.req.fire()) {
+    mreq_valid := N
+  }
+  when (io.out.resp.fire()) {
+    q_cur.resp.valid := Y
+    q_cur.resp.bits := io.out.resp.bits
+    when (mreq_idx === head) {
+      mreq_valid := N
+      mreq_idx := 0.U
+      mreq_working := N
+    } .otherwise {
+      mreq_valid := Y
+      mreq_idx := next(mreq_idx)
+    }
+  }
+
+  if (conf.log_IMemCistern) {
+    when (TraceTrigger()) { dump() }
+  }
+
+  def dump():Unit = {
+    val p = Seq[Bits](GTimer())
+    val q = (for (i <- 0 until entries) yield Seq(
+      queue(i).req.valid, queue(i).req.bits.addr,
+      queue(i).resp.valid, queue(i).resp.bits.data
+    )).reduce(_++_)
+    val q_fmt_s = List.fill(entries)("(req[%b]=%x,resp[%b]=%x), ").mkString
+    printf("%d: IMemCistern: head=%d, tail=%d, is_full=%b, is_empty=%b, mreq_valid=%b, mreq_idx=%d, working=%b, br=%b, ex=%b\n", GTimer(), head, tail, is_full, is_empty, mreq_valid, mreq_idx, mreq_working, io.br_flush, io.ex_flush)
+    printf("%d: IMemCistern: queue={"+q_fmt_s+"}\n", (p++q):_*)
+    io.in.dump("IMemCistern.in")
+    io.out.dump("IMemCistern.out")
+  }
 }

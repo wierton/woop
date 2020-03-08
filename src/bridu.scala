@@ -103,7 +103,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   ))
 
   val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: rd_sel :: Nil = csignals
-  assert (valid, "%d: invalid instruction", GTimer())
+  assert (valid, "%d: invalid instruction at %x", GTimer(), fu_in.pc)
 
   val instr = fu_in.instr.asTypeOf(new Instr)
   val oprd_idx = Mux1H(Array(
@@ -168,7 +168,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   io.fu_out.bits.wb.instr := instr
   /* only valid for bru */
   io.fu_out.bits.wb.rd_idx := oprd_idx
-  io.fu_out.bits.wb.wen := br_info(32)
+  io.fu_out.bits.wb.wen := io.fu_out.bits.wb.v
   io.fu_out.bits.wb.data := fu_in.pc + 8.U
   io.fu_out.bits.wb.is_ds := is_delayslot
   /* only valid for bru */
