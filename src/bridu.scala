@@ -169,8 +169,9 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   io.br_flush.bits.br_target := br_info(31, 0)
 
   /* wb */
-  val is_delayslot = RegEnable(next=Y, enable=io.br_flush.valid, init=N)
-  when (!io.br_flush.valid && io.fu_out.fire()) { is_delayslot := N }
+  val is_delayslot = RegInit(N)
+  when (io.fu_out.fire() && fu_type === FU_BRU) { is_delayslot := Y }
+  .elsewhen (io.fu_out.fire()) { is_delayslot := N }
   io.fu_out.valid := fu_valid && !io.ex_flush.valid
   io.fu_out.bits.wb.v := fu_type === FU_BRU && br_info(32)
   io.fu_out.bits.wb.id := instr_id
@@ -194,7 +195,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   }
 
   def dump():Unit = {
-    printf("%d: BRIDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, rd_idx=%d, se_imm=%x, Ia=%x, Ja=%x, JRa=%x, br_info=%x, br_ready=%b\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, oprd_idx, se_imm, Ia, Ja, JRa, br_info, br_ready);
+    printf("%d: BRIDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, rd_idx=%d, se_imm=%x, Ia=%x, Ja=%x, JRa=%x, br_info=%x, br_ready=%b, is_ds=%b\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, oprd_idx, se_imm, Ia, Ja, JRa, br_info, br_ready, is_delayslot);
     io.fu_in.dump("BRIDU.io.fu_in")
     io.fu_out.dump("BRIDU.io.fu_out")
     io.rfio.dump("BRIDU.io.rfio")
