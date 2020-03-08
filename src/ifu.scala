@@ -10,7 +10,7 @@ import woop.utils._
 
 
 /* without cache */
-class IFUPipelineData[T<:Data](gen:T, entries:Int) extends Module {
+class IMemPipe[T<:Data](gen:T, entries:Int) extends Module {
   val io = IO(new Bundle {
     val enq = Flipped(DecoupledIO(gen))
     val deq = DecoupledIO(ValidIO(gen))
@@ -59,7 +59,7 @@ class IFUPipelineData[T<:Data](gen:T, entries:Int) extends Module {
       is_empty := Y
     }
   }
-  if (conf.log_IFUPipelineData) {
+  if (conf.log_IMemPipe) {
     when (TraceTrigger()) { dump() }
   }
 
@@ -73,6 +73,12 @@ class IFUPipelineData[T<:Data](gen:T, entries:Int) extends Module {
   assert (!is_full || !is_empty)
 }
 
+class IMemPipeData extends Bundle {
+  val pc = UInt(conf.xprlen.W)
+  val et = UInt(ET_WIDTH.W)
+  val code = UInt(EC_WIDTH.W)
+}
+
 class IFU extends Module {
   val io = IO(new Bundle {
     val imem = new MemIO
@@ -84,6 +90,7 @@ class IFU extends Module {
 
   // init to be valid, the first instruction
   val pc = RegInit(UInt(conf.xprlen.W), init=conf.start_addr)
+  val pc_misaligned = pc(1, 0) =/= 0.U
   pc := MuxCase(pc, Array(
     io.ex_flush.valid -> io.ex_flush.bits.br_target,
     io.br_flush.valid -> io.br_flush.bits.br_target,
@@ -96,8 +103,13 @@ class IFU extends Module {
   io.iaddr.resp.ready := io.imem.req.ready
 
   /* stage 2: blocking */
-  val s2_in = RegEnable(next=pc, enable=io.iaddr.req.fire())
-  val s2_datas = Module(new IFUPipelineData(UInt(32.W), conf.icache_stages))
+  val s2_in = RegInit(0.U.asTypeOf(new IMemPipeData))
+  when (io.iaddr.req.fire()) {
+    s2_in.pc := pc
+    s2_in.et := Mux(pc(1, 0) === 0.U, ET_None, ET_ADDR_ERR)
+    s2_in.code := EC_AdEL
+  }
+  val s2_datas = Module(new IMemPipe(new IMemPipeData, conf.icache_stages))
   val s2_out = s2_datas.io.deq.bits
   s2_datas.io.enq.valid := io.imem.req.fire()
   s2_datas.io.enq.bits := s2_in
@@ -115,17 +127,18 @@ class IFU extends Module {
   io.imem.resp.ready := io.fu_out.ready
 
   /* stage 3: blocking */
-  io.fu_out.valid := io.imem.resp.valid && s2_out.valid && !io.ex_flush.valid
-  io.fu_out.bits.pc := s2_out.bits
+  io.fu_out.valid := (io.imem.resp.valid || s2_out.bits.et =/= ET_None) && s2_out.valid && !io.ex_flush.valid
+  io.fu_out.bits.pc := s2_out.bits.pc
   io.fu_out.bits.instr := io.imem.resp.bits.data
-  io.fu_out.bits.ex := 0.U.asTypeOf(new CP0Exception)
+  io.fu_out.bits.ex.et := s2_out.bits.et
+  io.fu_out.bits.ex.code := s2_out.bits.code
 
   if (conf.log_IFU) {
     when (TraceTrigger()) { dump() }
   }
 
   def dump():Unit = {
-    printf("%d: IFU: pc=%x, s2_datas={enq[%b,%b]:%x, deq[%b,%b]:%b%x}\n", GTimer(), pc, s2_datas.io.enq.valid, s2_datas.io.enq.ready, s2_datas.io.enq.bits, s2_datas.io.deq.valid, s2_datas.io.deq.ready, s2_datas.io.deq.bits.valid, s2_datas.io.deq.bits.bits)
+    printf("%d: IFU: pc=%x, s2_datas={enq[%b,%b]:%x, deq[%b,%b]:%b%x}\n", GTimer(), pc, s2_datas.io.enq.valid, s2_datas.io.enq.ready, s2_datas.io.enq.bits.pc, s2_datas.io.deq.valid, s2_datas.io.deq.ready, s2_datas.io.deq.bits.valid, s2_datas.io.deq.bits.bits.pc)
     io.imem.dump("IFU.imem")
     io.iaddr.dump("IFU.iaddr")
     io.fu_out.dump("IFU.fu_out")

@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 import woop.consts._
 import woop.configs._
+import woop.utils._
 import woop.dumps._
 
 
@@ -43,6 +44,7 @@ class ALU extends Module {
     (fu_op === ALU_MOVZ) -> op1.asUInt,
     (fu_op === ALU_ADD_OV) -> (op1 + op2).asUInt,
     (fu_op === ALU_SUB_OV) -> (op1 - op2).asUInt,
+    (fu_op === ALU_CLZ)  -> CLZ_32(op1),
   ))
   val alu_ov = Mux1H(Array(
     (fu_op === ALU_ADD_OV)  -> ((!op1(31) && !op2(31) && result(31)) || (op1(31) && op2(31) && !result(31))),

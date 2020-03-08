@@ -134,7 +134,7 @@ class BRIDU_PRALU_IO extends Bundle {
   val fu_op = Output(UInt(FU_OP_SZ.W))
   val op1_sel = Output(UInt(OP1_SEL_SZ.W))
   val op2_sel = Output(UInt(OP2_SEL_SZ.W))
-  val rd_sel = Output(UInt(OPD_SEL_SZ.W))
+  val opd_sel = Output(UInt(OPD_SEL_SZ.W))
   val ex = Output(new CP0Exception)
 }
 

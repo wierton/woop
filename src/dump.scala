@@ -34,7 +34,7 @@ object dumps {
 
   implicit class Decoupled_BRIDU_PRALU_IO_Dump(data:DecoupledIO[BRIDU_PRALU_IO]) {
     def dump(msg:String) = {
-      printf("%d: "+msg+": [%b,%b]: fu_type=%d, fu_op=%d, op1_sel=%d, op2_sel=%d, rd_sel=%d\n", GTimer(), data.valid, data.ready, data.bits.fu_type, data.bits.fu_op, data.bits.op1_sel, data.bits.op2_sel, data.bits.rd_sel)
+      printf("%d: "+msg+": [%b,%b]: fu_type=%d, fu_op=%d, op1_sel=%d, op2_sel=%d, opd_sel=%d\n", GTimer(), data.valid, data.ready, data.bits.fu_type, data.bits.fu_op, data.bits.op1_sel, data.bits.op2_sel, data.bits.opd_sel)
       data.bits.wb.dump(msg+".wb")
     }
   }

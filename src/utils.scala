@@ -16,8 +16,7 @@ object GTimer {
 object TraceTrigger {
   def apply(): Bool = {
     val (t, c) = Counter(true.B, 0x7fffffff)
-    t >= (277 - 40).U
-    false.B
+    t >= (616964 - 40).U
   }
 }
 
@@ -110,3 +109,23 @@ object AtMost1H {
   def apply(data:Bool*) = !Cat(data).orR || Only1H(data:_*)
 }
 
+object CLZ_32 {
+  def apply(in: UInt):UInt = {
+    val out = Wire(Vec(5, Bool()))
+
+    out(4) := in(31, 16) === 0.U(16.W)
+
+    val val16 = Mux(out(4), in(15, 0), in(31, 16))
+    out(3) := val16(15, 8) === 0.U(8.W)
+
+    val val8  = Mux(out(3), val16(7, 0), val16(15, 8))
+    out(2) := val8(7, 4) === 0.U(4.W)
+
+    val val4  = Mux(out(2), val8(3, 0), val8(7, 4))
+    out(1) := val4(3, 2) === 0.U(2.W)
+
+    out(0) := Mux(out(1), ~val4(1), ~val4(3))
+
+    Mux(in === 0.U, 32.U, out.asUInt)
+  }
+}

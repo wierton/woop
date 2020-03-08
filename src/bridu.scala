@@ -23,7 +23,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   // instruction decode stage
   val csignals = ListLookup(fu_in.instr,
     List(N, FU_X, FU_OP_X, OP1_X, OP2_X, OPD_X), Array(
-      /* instr | fu_type  |  fu_op  |  op1_sel  |  op2_sel |  rd_sel */
+      /* instr | fu_type  |  fu_op  |  op1_sel  |  op2_sel |  opd_sel */
      // ALU instructions
      LUI     -> List(Y, FU_ALU,  ALU_LUI,    OP1_X,    OP2_IMU, OPD_RT),
      ADD     -> List(Y, FU_ALU,  ALU_ADD_OV, OP1_RS,   OP2_RT,  OPD_RD),
@@ -51,6 +51,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
      XORI    -> List(Y, FU_ALU,  ALU_XOR,    OP1_RS,   OP2_IMZ, OPD_RT),
      MOVN    -> List(Y, FU_ALU,  ALU_MOVN,   OP1_RS,   OP2_RT,  OPD_RD),
      MOVZ    -> List(Y, FU_ALU,  ALU_MOVZ,   OP1_RS,   OP2_RT,  OPD_RD),
+     CLZ     -> List(Y, FU_ALU,  ALU_CLZ,    OP1_RS,   OP2_X,   OPD_RD),
 
      // BRU instructions
      BEQ     -> List(Y, FU_BRU,  BR_EQ,      OP1_RS,   OP2_RT,  OPD_X),
@@ -102,14 +103,22 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
      PREF    -> List(Y, FU_PRU,  PRU_PREF,   OP1_X,    OP2_X,   OPD_X),
   ))
 
-  val (valid: Bool) :: fu_type :: fu_op :: op1_sel :: op2_sel :: rd_sel :: Nil = csignals
+  val (valid: Bool) :: fu_type_ :: fu_op_ :: op1_sel_ :: op2_sel_ :: opd_sel_ :: Nil = csignals
+
+  val has_ex = !valid || fu_in.ex.et =/= ET_None
+  val fu_type = Mux(has_ex, FU_PRU,   fu_type_)
+  val fu_op   = Mux(has_ex, PRU_OP_X, fu_op_)
+  val op1_sel = Mux(has_ex, OP1_X,    op1_sel_)
+  val op2_sel = Mux(has_ex, OP2_X,    op2_sel_)
+  val opd_sel = Mux(has_ex, OPD_X,    opd_sel_)
+
   assert (valid, "%d: invalid instruction at %x", GTimer(), fu_in.pc)
 
   val instr = fu_in.instr.asTypeOf(new Instr)
   val oprd_idx = Mux1H(Array(
-    (rd_sel === OPD_RD) -> instr.rd_idx,
-    (rd_sel === OPD_RT) -> instr.rt_idx,
-    (rd_sel === OPD_31) -> 31.U,
+    (opd_sel === OPD_RD) -> instr.rd_idx,
+    (opd_sel === OPD_RT) -> instr.rt_idx,
+    (opd_sel === OPD_31) -> 31.U,
   ))
 
   /* fu_out IO */
@@ -117,14 +126,14 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   io.fu_out.bits.fu_op := fu_op
   io.fu_out.bits.op1_sel := op1_sel
   io.fu_out.bits.op2_sel := op2_sel
-  io.fu_out.bits.rd_sel := rd_sel
-  io.fu_out.bits.ex := 0.U.asTypeOf(new CP0Exception)
+  io.fu_out.bits.opd_sel := opd_sel
+  io.fu_out.bits.ex := fu_in.ex
 
   /* register RW */
   val (instr_id, c) = Counter(io.fu_out.fire(), 1 << conf.INSTR_ID_SZ)
   io.rfio.rs_idx := instr.rs_idx
   io.rfio.rt_idx := instr.rt_idx
-  io.rfio.wen := io.fu_out.fire() && rd_sel =/= OPD_X
+  io.rfio.wen := io.fu_out.fire() && opd_sel =/= OPD_X
   io.rfio.wid := instr_id
   io.rfio.rd_idx := oprd_idx
 
