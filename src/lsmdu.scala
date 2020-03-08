@@ -70,8 +70,11 @@ class LSMDU extends Module {
     (io.fu_in.bits.ops.fu_type =/= FU_LSU &&
     io.fu_in.bits.ops.fu_type =/= FU_MDU) ||
     io.fu_in.bits.ex.et =/= ET_None)
+  val is_lsu_load = io.fu_in.bits.ops.fu_type === FU_LSU &&
+    io.fu_in.bits.ops.fu_op.asTypeOf(new LSUOp).func === MX_RD
   psu.io.fu_in.valid := io.fu_in.valid && to_psu
   psu.io.fu_in.bits.wb := io.fu_in.bits.wb
+  psu.io.fu_in.bits.wb.v := is_lsu_load || io.fu_in.bits.wb.v
   psu.io.fu_in.bits.fu_type := io.fu_in.bits.ops.fu_type
 
   /* LSMDU IO */

@@ -12,7 +12,7 @@ object conf {
   val axi_data_width = 32
   val axi_id_width = 4
   val mio_cycles = 3
-  val icache_stages = 10
+  val icache_stages = 2
   val INSTR_ID_SZ = 8
 
   val nICacheSets = 256
@@ -28,6 +28,7 @@ object conf {
   val log_IMemCistern = true
   val log_CrossbarNx1 = true
   val log_Cistern = true
+  val log_SimICache = true
   val log_rf = true
   val log_IFU = true
   val log_IMemPipe = true

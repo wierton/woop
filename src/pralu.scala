@@ -128,7 +128,7 @@ class PRALU extends Module {
   io.bp.bits.data :=  io.fu_out.bits.wb.data
 
   /* exception */
-  pru.io.exinfo.valid := io.fu_out.valid
+  pru.io.exinfo.valid := io.fu_out.fire()
   pru.io.exinfo.bits.ex := Mux1H(Array(
     alu.io.fu_out.valid -> alu.io.fu_out.bits.ex,
     pru.io.fu_out.valid -> pru.io.fu_out.bits.ex,

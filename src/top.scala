@@ -25,16 +25,16 @@ class SOC_EMU_TOP extends Module {
   val dmux = Module(new MemMux("dmux"))
   val dev = Module(new SimDev)
   val crossbar = Module(new CrossbarNx1(4))
-  val cistern = Module(new IMemCistern(conf.icache_stages))
+  val icache = Module(new SimICache)
 
   dev.io.clock := clock
   dev.io.reset := reset
 
-  cistern.io.br_flush := core.io.br_flush
-  cistern.io.ex_flush := core.io.ex_flush
+  icache.io.br_flush := core.io.br_flush
+  icache.io.ex_flush := core.io.ex_flush
 
-  cistern.io.in <> core.io.imem
-  imux.io.in <> cistern.io.out
+  icache.io.in <> core.io.imem
+  imux.io.in <> icache.io.out
   dmux.io.in <> core.io.dmem
 
   imux.io.cached   <> crossbar.io.in(0)

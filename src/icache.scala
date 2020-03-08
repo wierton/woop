@@ -112,6 +112,75 @@ class ICache extends Module {
   io.out <> DontCare
 }
 
+class SimICache extends Module {
+  val io = IO(new Bundle {
+    val in = Flipped(new MemIO)
+    val out = new MemIO
+    val br_flush = Input(Bool())
+    val ex_flush = Input(Bool())
+  })
+
+  val entries = 4096
+  def idxOf(addr:UInt) = addr(log2Ceil(entries) - 1, 0)
+  def tagOf(addr:UInt) = addr(31, log2Ceil(entries))
+  val cache = Mem(entries, new Bundle {
+    val v = Bool()
+    val tag = UInt((32 - log2Ceil(entries)).W)
+    val data = UInt(conf.xprlen.W)
+  })
+
+  val flush = io.br_flush || io.ex_flush
+
+  val s0_valid = RegInit(N)
+  val s0_in = RegEnable(next=io.in.req.bits, enable=io.in.req.fire())
+  val s0_out_ready = WireInit(N)
+  val s0_out_fire = s0_valid && s0_out_ready
+  io.in.req.ready := s0_out_ready || !s0_valid
+  when (flush || (!io.in.req.fire() && s0_out_fire)) {
+    s0_valid := N
+  } .elsewhen(!flush && io.in.req.fire()) {
+    s0_valid := Y
+  }
+
+  val s1_in_fire = s0_out_fire
+  val s1_valid = RegInit(N)
+  val s1_in = RegEnable(next=s0_in, enable=s1_in_fire)
+  val s1_tag = tagOf(s1_in.addr)
+  val s1_entry = cache(idxOf(s1_in.addr))
+  val s1_hit = s1_tag === s1_entry.tag && s1_entry.v
+  val s1_req = RegInit(N)
+  s0_out_ready := (io.in.resp.ready && s1_hit) || !s1_valid
+  io.in.resp.valid := s1_valid && s1_hit
+  io.in.resp.bits.data := s1_entry.data
+  when (io.ex_flush || (!s1_in_fire && io.in.resp.fire()) ||
+    (io.br_flush && io.in.resp.fire())) {
+    s1_valid := N
+  } .elsewhen(!io.ex_flush && s1_in_fire) {
+    s1_valid := Y
+  }
+
+  when (s1_valid && !s1_hit) { s1_req := Y }
+  when (s1_req && io.out.resp.fire()) {
+    s1_req := N
+    s1_entry.v := Y
+    s1_entry.tag := s1_tag
+    s1_entry.data := io.out.resp.bits.data
+  }
+  io.out.req.valid := s1_req
+  io.out.req.bits := s1_in
+  io.out.resp.ready := Y
+
+  if (conf.log_SimICache) {
+    when (TraceTrigger()) { dump() }
+  }
+  def dump():Unit = {
+    printf("%d: SimICache: br=%b, ex=%b, s0_valid=%b, s0_in.addr=%x, s0_out_ready=%b, s0_out_fire=%b\n", GTimer(), io.br_flush, io.ex_flush, s0_valid, s0_in.addr, s0_out_ready, s0_out_fire)
+    printf("%d: SimICache: s1_in_fire=%b, s1_valid=%b, s1_in.addr=%x, s1_tag=%b, s1_entry={v:%b, tag:%x, data:%x}, s1_hit=%b, s1_req=%b\n", GTimer(), s1_in_fire, s1_valid, s1_in.addr, s1_tag, s1_entry.v, s1_entry.tag, s1_entry.data, s1_hit, s1_req)
+    io.in.dump("SimICache.in")
+    io.out.dump("SimICache.out")
+  }
+}
+
 class IMemCistern(entries:Int) extends Module {
   val io = IO(new Bundle {
     val in = Flipped(new MemIO)

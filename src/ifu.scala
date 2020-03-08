@@ -26,39 +26,53 @@ class IMemPipe[T<:Data](gen:T, entries:Int) extends Module {
   def next(v:UInt) = Mux(v + 1.U === entries.U, 0.U, v + 1.U)
   val next_head = next(head)
   val next_tail = next(tail)
+  val q_head = queue(head)
+  val clear_all = io.ex_flush.valid || io.deq.fire()
 
   io.enq.ready := !is_full || io.deq.ready
   io.deq.valid := !is_empty
   io.deq.bits := queue(tail)
 
-  when (io.br_flush.valid || io.ex_flush.valid) {
-    val clear_all = io.ex_flush.valid || io.deq.fire()
+  // ?enq ?br  ex ?deq:
+  // ?enq  br !ex  deq:
+  //   clear all
+  // ?enq  br !ex !deq:
+  //   keep tail, set head to next_tail
+  //  enq !br !ex  deq:
+
+  when (io.ex_flush.valid || (io.br_flush.valid && io.deq.fire())) {
+    head := 0.U
+    tail := 0.U
+    is_full := N
+    is_empty := Y
+    for (i <- 0 until entries) { queue(i).valid := N }
+  } .elsewhen(io.br_flush.valid && !io.deq.fire()) {
     for (i <- 0 until entries) {
-      queue(i).valid := Mux(clear_all,
-        N, Mux(i.U === tail, queue(i).valid, N))
+      when (i.U =/= tail) { queue(i).valid := N }
     }
-  }
-
-  when (io.enq.fire()) {
-    val q_head = queue(head)
-    when ((!io.br_flush.valid && !io.ex_flush.valid) || is_empty) {
-      q_head.valid := Y
-    }
-    q_head.bits := io.enq.bits
-    head := next_head
+    head := next_tail
+    is_full := N
     is_empty := N
-    when (next_head === tail && !io.deq.fire()) {
-      is_full := Y
+  } .otherwise {
+    when (io.enq.fire()) {
+      q_head.valid := Y
+      q_head.bits := io.enq.bits
+      head := next_head
+      is_empty := N
+      when (next_head === tail && !io.deq.fire()) {
+        is_full := Y
+      }
+    }
+
+    when (io.deq.fire()) {
+      tail := next_tail
+      when (!(is_full && io.enq.fire())) { is_full := N }
+      when (next_tail === head && !io.enq.fire()) {
+        is_empty := Y
+      }
     }
   }
 
-  when (io.deq.fire()) {
-    tail := next_tail
-    when (!(is_full && io.enq.fire())) { is_full := N }
-    when (next_tail === head && !io.enq.fire()) {
-      is_empty := Y
-    }
-  }
   if (conf.log_IMemPipe) {
     when (TraceTrigger()) { dump() }
   }
@@ -74,9 +88,9 @@ class IMemPipe[T<:Data](gen:T, entries:Int) extends Module {
 }
 
 class IMemPipeData extends Bundle {
-  val pc = UInt(conf.xprlen.W)
   val et = UInt(ET_WIDTH.W)
   val code = UInt(EC_WIDTH.W)
+  val pc = UInt(conf.xprlen.W)
 }
 
 class IFU extends Module {
