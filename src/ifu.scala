@@ -105,32 +105,40 @@ class IFU extends Module {
   // init to be valid, the first instruction
   val pc = RegInit(UInt(conf.xprlen.W), init=conf.start_addr)
   val pc_misaligned = pc(1, 0) =/= 0.U
+  val s0_bad_if = RegInit(N)
   pc := MuxCase(pc, Array(
     io.ex_flush.valid -> io.ex_flush.bits.br_target,
     io.br_flush.valid -> io.br_flush.bits.br_target,
     io.iaddr.req.fire() -> (pc + 4.U)))
+  when (io.ex_flush.valid) {
+    s0_bad_if := N
+  } .elsewhen (io.iaddr.req.valid && pc(1, 0) =/= 0.U) {
+    s0_bad_if := Y
+  }
 
   /* stage 1: synchronize */
-  io.iaddr.req.valid := Y && !io.ex_flush.valid && !io.br_flush.valid
+  io.iaddr.req.valid := Y && !io.ex_flush.valid && !io.br_flush.valid && !s0_bad_if
   io.iaddr.req.bits.func := MX_RD
   io.iaddr.req.bits.vaddr := pc
   io.iaddr.resp.ready := io.imem.req.ready
 
   /* stage 2: blocking */
-  val s2_in = RegInit(0.U.asTypeOf(new IMemPipeData))
+  val s1_in = RegInit(0.U.asTypeOf(new IMemPipeData))
   when (io.iaddr.req.fire()) {
-    s2_in.pc := pc
-    s2_in.et := Mux(pc(1, 0) === 0.U, ET_None, ET_ADDR_ERR)
-    s2_in.code := EC_AdEL
+    s1_in.pc := pc
+    s1_in.et := Mux(pc(1, 0) === 0.U, ET_None, ET_AdEL_IF)
+    s1_in.code := EC_AdEL
   }
-  val s2_datas = Module(new IMemPipe(new IMemPipeData, conf.icache_stages))
-  val s2_out = s2_datas.io.deq.bits
-  s2_datas.io.enq.valid := io.imem.req.fire()
-  s2_datas.io.enq.bits := s2_in
-  s2_datas.io.deq.ready := io.imem.resp.fire()
-  s2_datas.io.br_flush <> io.br_flush
-  s2_datas.io.ex_flush <> io.ex_flush
-  io.imem.req.valid := io.iaddr.resp.valid && !io.ex_flush.valid
+  val s1_datas = Module(new IMemPipe(new IMemPipeData, conf.icache_stages))
+  val s1_out = s1_datas.io.deq.bits
+  val s1_ex_in = io.iaddr.resp.valid && s1_in.et =/= ET_None
+  val s1_out_has_ex = s1_out.bits.et =/= ET_None
+  s1_datas.io.enq.valid := io.imem.req.fire() || s1_ex_in
+  s1_datas.io.enq.bits := s1_in
+  s1_datas.io.deq.ready := io.imem.resp.fire() || s1_out_has_ex
+  s1_datas.io.br_flush <> io.br_flush
+  s1_datas.io.ex_flush <> io.ex_flush
+  io.imem.req.valid := io.iaddr.resp.valid && !io.ex_flush.valid && s1_in.et === ET_None
   io.imem.req.bits.is_cached := io.iaddr.resp.bits.is_cached
   io.imem.req.bits.is_aligned := Y
   io.imem.req.bits.addr  := io.iaddr.resp.bits.paddr
@@ -141,18 +149,18 @@ class IFU extends Module {
   io.imem.resp.ready := io.fu_out.ready
 
   /* stage 3: blocking */
-  io.fu_out.valid := (io.imem.resp.valid || s2_out.bits.et =/= ET_None) && s2_out.valid && !io.ex_flush.valid
-  io.fu_out.bits.pc := s2_out.bits.pc
-  io.fu_out.bits.instr := io.imem.resp.bits.data
-  io.fu_out.bits.ex.et := s2_out.bits.et
-  io.fu_out.bits.ex.code := s2_out.bits.code
+  io.fu_out.valid := (io.imem.resp.valid || s1_out_has_ex) && s1_out.valid && !io.ex_flush.valid
+  io.fu_out.bits.pc := s1_out.bits.pc
+  io.fu_out.bits.instr := Mux(s1_out_has_ex, 0.U, io.imem.resp.bits.data)
+  io.fu_out.bits.ex.et := s1_out.bits.et
+  io.fu_out.bits.ex.code := s1_out.bits.code
 
   if (conf.log_IFU) {
     when (TraceTrigger()) { dump() }
   }
 
   def dump():Unit = {
-    printf("%d: IFU: pc=%x, s2_datas={enq[%b,%b]:%x, deq[%b,%b]:%b%x}\n", GTimer(), pc, s2_datas.io.enq.valid, s2_datas.io.enq.ready, s2_datas.io.enq.bits.pc, s2_datas.io.deq.valid, s2_datas.io.deq.ready, s2_datas.io.deq.bits.valid, s2_datas.io.deq.bits.bits.pc)
+    printf("%d: IFU: pc=%x, s1_datas={enq[%b,%b]:%x, deq[%b,%b]:%b%x}, bad_if=%b\n", GTimer(), pc, s1_datas.io.enq.valid, s1_datas.io.enq.ready, s1_datas.io.enq.bits.pc, s1_datas.io.deq.valid, s1_datas.io.deq.ready, s1_datas.io.deq.bits.valid, s1_datas.io.deq.bits.bits.pc, s0_bad_if)
     io.imem.dump("IFU.imem")
     io.iaddr.dump("IFU.iaddr")
     io.fu_out.dump("IFU.fu_out")

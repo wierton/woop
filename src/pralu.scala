@@ -107,18 +107,21 @@ class PRALU extends Module {
   /* PRALU IO */
   io.fu_in.ready := reg_ready && pru.io.fu_in.ready &&
     alu.io.fu_in.ready && psu.io.fu_in.ready
-  io.fu_out.valid := alu.io.fu_out.valid || pru.io.fu_out.valid || psu.io.fu_out.valid
-  io.fu_out.bits.wb := Mux1H(Array(
+
+  pru.io.ehu_in.valid := alu.io.fu_out.valid || pru.io.fu_out.valid || psu.io.fu_out.valid
+  pru.io.ehu_in.bits.wb := Mux1H(Array(
     alu.io.fu_out.valid -> alu.io.fu_out.bits.wb,
     pru.io.fu_out.valid -> pru.io.fu_out.bits.wb,
     psu.io.fu_out.valid -> psu.io.fu_out.bits.wb))
-  io.fu_out.bits.ops := psu.io.fu_out.bits.ops
-  io.fu_out.bits.ex := Mux1H(Array(
+  pru.io.ehu_in.bits.ops := psu.io.fu_out.bits.ops
+  pru.io.ehu_in.bits.ex := Mux1H(Array(
     alu.io.fu_out.valid -> alu.io.fu_out.bits.ex,
     pru.io.fu_out.valid -> pru.io.fu_out.bits.ex,
     psu.io.fu_out.valid -> psu.io.fu_out.bits.ex))
-  io.fu_out.bits.is_cached := pru.io.fu_out.bits.is_cached
-  io.fu_out.bits.paddr := pru.io.fu_out.bits.paddr
+  pru.io.ehu_in.bits.is_cached := pru.io.fu_out.bits.is_cached
+  pru.io.ehu_in.bits.vaddr := pru.io.fu_out.bits.vaddr
+  pru.io.ehu_in.bits.paddr := pru.io.fu_out.bits.paddr
+  io.fu_out <> pru.io.ehu_out
 
   /* bypass */
   io.bp.valid := alu.io.fu_out.valid || pru.io.fu_out.valid
@@ -128,14 +131,6 @@ class PRALU extends Module {
   io.bp.bits.data :=  io.fu_out.bits.wb.data
 
   /* exception */
-  pru.io.exinfo.valid := io.fu_out.fire()
-  pru.io.exinfo.bits.ex := Mux1H(Array(
-    alu.io.fu_out.valid -> alu.io.fu_out.bits.ex,
-    pru.io.fu_out.valid -> pru.io.fu_out.bits.ex,
-    psu.io.fu_out.valid -> psu.io.fu_out.bits.ex))
-  pru.io.exinfo.bits.is_ds := io.fu_out.bits.wb.is_ds
-  pru.io.exinfo.bits.pc := io.fu_out.bits.wb.pc
-  pru.io.exinfo.bits.addr := pru.io.fu_out.bits.addr
   io.ex_flush <> pru.io.ex_flush
 
   if (conf.log_PRALU) {

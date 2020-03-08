@@ -116,11 +116,5 @@ object dumps {
       printf("%d: "+msg+": [%b,%b]={op:%b, instr:%x, rd:%d, pc:%x, data:%x, addr:%x, cache:%b}\n", GTimer(), data.valid, data.ready, data.bits.op.asUInt, data.bits.instr.asUInt, data.bits.rd_idx, data.bits.pc, data.bits.data, data.bits.addr, data.bits.is_cached)
     }
   }
-
-  implicit class Valid_CP0ExInfo_Dump(data:ValidIO[CP0ExInfo]) {
-    def dump(msg:String) = {
-      printf("%d: "+msg+": [%b]={et=%d, code=%d, is_ds=%d, pc=%x}\n", GTimer(), data.valid, data.bits.ex.et, data.bits.ex.code, data.bits.is_ds, data.bits.pc)
-    }
-  }
 }
 

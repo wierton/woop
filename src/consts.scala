@@ -44,7 +44,8 @@ trait CP0Consts {
   val ET_C3E        =  18.U(ET_WIDTH.W)
   val ET_WATCH      =  20.U(ET_WIDTH.W)
   val ET_Int        =  21.U(ET_WIDTH.W)
-  val ET_Eret       =  22.U(ET_WIDTH.W)
+  val ET_AdEL_IF    =  22.U(ET_WIDTH.W)
+  val ET_Eret       =  23.U(ET_WIDTH.W)
 
   val EC_WIDTH = 5
   val EC_Int  =  0.U(EC_WIDTH.W)  // - Interrupt

@@ -112,7 +112,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   val op2_sel = Mux(has_ex, OP2_X,    op2_sel_)
   val opd_sel = Mux(has_ex, OPD_X,    opd_sel_)
 
-  assert (valid, "%d: invalid instruction at %x", GTimer(), fu_in.pc)
+  // assert (valid, "%d: invalid instruction at %x", GTimer(), fu_in.pc)
 
   val instr = fu_in.instr.asTypeOf(new Instr)
   val oprd_idx = Mux1H(Array(
@@ -127,7 +127,8 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   io.fu_out.bits.op1_sel := op1_sel
   io.fu_out.bits.op2_sel := op2_sel
   io.fu_out.bits.opd_sel := opd_sel
-  io.fu_out.bits.ex := fu_in.ex
+  io.fu_out.bits.ex.et := Mux(valid, fu_in.ex.et, ET_RI)
+  io.fu_out.bits.ex.code := Mux(valid, fu_in.ex.code, EC_RI)
 
   /* register RW */
   val (instr_id, c) = Counter(io.fu_out.fire(), 1 << conf.INSTR_ID_SZ)

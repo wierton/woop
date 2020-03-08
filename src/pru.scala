@@ -50,7 +50,8 @@ class PRU extends CPRS with LSUConsts {
     val iaddr = Flipped(new TLBTransaction)
     val fu_in = Flipped(DecoupledIO(new PRALU_FU_IO))
     val fu_out = DecoupledIO(new PRU_OUT_PRALU)
-    val exinfo = Flipped(ValidIO(new CP0ExInfo))
+    val ehu_in = Flipped(DecoupledIO(new PRALU_LSMDU_IO))
+    val ehu_out = DecoupledIO(new PRALU_LSMDU_IO)
     val br_flush = Flipped(ValidIO(new FlushIO))
     val ex_flush = ValidIO(new FlushIO)
   })
@@ -100,7 +101,7 @@ class PRU extends CPRS with LSUConsts {
   io.fu_out.valid := fu_valid
   io.fu_out.bits.ops := fu_in.ops
   io.fu_out.bits.paddr := naive_tlb_translate(lsu_vaddr)
-  io.fu_out.bits.addr := lsu_vaddr
+  io.fu_out.bits.vaddr := lsu_vaddr
   io.fu_out.bits.is_cached := lsu_vaddr(31, 29) =/= "b101".U
   io.fu_in.ready := io.fu_out.ready || !fu_valid
 
@@ -180,21 +181,26 @@ class PRU extends CPRS with LSUConsts {
 
   /* process exception */
   val offset = WireInit(0.U(12.W))
-  io.ex_flush.valid := io.exinfo.valid &&
-    io.exinfo.bits.ex.et =/= ET_None
+  val intr_enable = !cpr_status.ERL && !cpr_status.EXL && cpr_status.IE
+  val intr_valid = (cpr_cause.IP & cpr_status.IM).orR && intr_enable
+  io.ehu_out.bits := io.ehu_in.bits
+  io.ehu_out.valid := io.ehu_in.valid && !intr_valid
+  io.ehu_in.ready := io.ehu_out.ready && !intr_valid
+  io.ex_flush.valid := io.ehu_in.valid && io.ehu_out.ready &&
+    (io.ehu_in.bits.ex.et =/= ET_None || intr_valid)
   when (io.ex_flush.valid) {
     when (cpr_status.EXL === 0.U) {
-      when (io.exinfo.bits.is_ds) {
+      when (io.ehu_in.bits.wb.is_ds) {
         cpr_cause.BD := Y
-        cpr_epc := io.exinfo.bits.pc - 4.U
+        cpr_epc := io.ehu_in.bits.wb.pc - 4.U
       } .otherwise {
         cpr_cause.BD := N
-        cpr_epc := io.exinfo.bits.pc
+        cpr_epc := io.ehu_in.bits.wb.pc
       }
 
-      when (io.exinfo.bits.ex.et === ET_TLB_REFILL) {
+      when (io.ehu_in.bits.ex.et === ET_TLB_REFILL) {
         offset := 0x000.U
-      } .elsewhen(io.exinfo.bits.ex.et === ET_Int && cpr_cause.IV.asBool) {
+      } .elsewhen(intr_valid && cpr_cause.IV.asBool) {
         offset := 0x200.U
       } .otherwise {
         offset := 0x180.U
@@ -202,9 +208,11 @@ class PRU extends CPRS with LSUConsts {
     } .otherwise {
       offset := 0x180.U
     }
-    cpr_cause.ExcCode := io.exinfo.bits.ex.code
+    cpr_cause.ExcCode := MuxCase(0.U, Array(
+      (io.ehu_in.bits.ex.et =/= ET_None) -> io.ehu_in.bits.ex.code,
+      intr_valid -> EC_Int))
 
-    when (io.exinfo.bits.ex.et === ET_Eret) {
+    when (io.ehu_in.bits.ex.et === ET_Eret) {
       when (cpr_status.ERL === 1.U) {
         cpr_status.ERL := 0.U
       } .otherwise {
@@ -214,12 +222,14 @@ class PRU extends CPRS with LSUConsts {
       cpr_status.EXL := 1.U
     }
 
-    when (io.exinfo.bits.ex.et === ET_ADDR_ERR) {
-      cpr_badvaddr := io.exinfo.bits.addr
+    when (io.ehu_in.bits.ex.et === ET_ADDR_ERR) {
+      cpr_badvaddr := io.ehu_in.bits.vaddr
+    } .elsewhen(io.ehu_in.bits.ex.et === ET_AdEL_IF) {
+      cpr_badvaddr := io.ehu_in.bits.wb.pc
     }
   }
   io.ex_flush.bits.br_target := Mux(
-    io.exinfo.bits.ex.et === ET_Eret, cpr_epc,
+    io.ehu_in.bits.ex.et === ET_Eret, cpr_epc,
     Mux(cpr_status.BEV === 1.U, "hbfc00200".U + offset,
       "h80000000".U + offset))
 
@@ -227,13 +237,14 @@ class PRU extends CPRS with LSUConsts {
     when (TraceTrigger()) { dump() }
   }
   def dump():Unit = {
-    printf("%d: PRU: fu_valid=%b, is_mfc0=%b, is_mtc0=%b, cpr_addr=%b, mf_val=%x, can_update_ex=%b, offset=%x\n", GTimer(), fu_valid, is_mfc0, is_mtc0, cpr_addr, mf_val, can_update_ex, offset)
+    printf("%d: PRU: fu_valid=%b, is_mfc0=%b, is_mtc0=%b, cpr_addr=%b, mf_val=%x, can_update_ex=%b, offset=%x, intr_valid=%b\n", GTimer(), fu_valid, is_mfc0, is_mtc0, cpr_addr, mf_val, can_update_ex, offset, intr_valid)
     printf("%d: PRU: entry_lo0=%x, entry_lo1=%x, context=%x, pagemask=%x, wired=%x, badvaddr=%x\n", GTimer(), cpr_entry_lo0.asUInt, cpr_entry_lo1.asUInt, cpr_context.asUInt, cpr_pagemask.asUInt, cpr_wired.asUInt, cpr_badvaddr.asUInt)
     printf("%d: PRU: count=%x, entry_hi=%x, compare=%x, status=%x, cause=%x, epc=%x, prid=%x\n", GTimer(), cpr_count.asUInt, cpr_entry_hi.asUInt, cpr_compare.asUInt, cpr_status.asUInt, cpr_cause.asUInt, cpr_epc.asUInt, cpr_prid.asUInt)
     printf("%d: PRU: ebase=%x, config=%x, config1=%x\n", GTimer(), cpr_ebase.asUInt, cpr_config.asUInt, cpr_config1.asUInt)
     io.fu_in.dump("PRU.fu_in")
     io.fu_out.dump("PRU.fu_out")
-    io.exinfo.dump("PRU.exinfo")
+    io.ehu_in.dump("PRU.ehu_in")
+    io.ehu_out.dump("PRU.ehu_out")
     io.ex_flush.dump("PRU.exflush")
   }
 }
