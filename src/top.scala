@@ -25,7 +25,8 @@ class SOC_EMU_TOP extends Module {
   val dmux = Module(new MemMux("dmux"))
   val dev = Module(new SimDev)
   val crossbar = Module(new CrossbarNx1(4))
-  val icache = Module(new SimICache)
+  // val icache = Module(new SimICache)
+  val icache = Module(new IMemCistern(conf.icache_stages))
 
   dev.io.clock := clock
   dev.io.reset := reset

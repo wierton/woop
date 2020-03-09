@@ -12,7 +12,7 @@ object conf {
   val axi_data_width = 32
   val axi_id_width = 4
   val mio_cycles = 3
-  val icache_stages = 2
+  val icache_stages = 10
   val INSTR_ID_SZ = 8
 
   val nICacheSets = 256

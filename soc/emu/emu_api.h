@@ -52,10 +52,10 @@ class DiffTop {
   std::unique_ptr<NEMU_MIPS32> nemu_ptr;
 
   uint32_t seed;
-  uint64_t cycles, silent_cycles;
+  uint64_t cycles = 0, silent_cycles = 0;
 
-  bool finished;
-  int ret_code;
+  bool finished = false;
+  int ret_code = -1;
   static constexpr uint32_t ddr_size = 128 * 1024 * 1024;
   uint8_t ddr[ddr_size];
 

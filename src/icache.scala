@@ -199,43 +199,53 @@ class IMemCistern(entries:Int) extends Module {
   val is_full = RegInit(N)
   val is_empty = RegInit(Y)
   val q_head = queue(head)
+  val q_tail = queue(tail)
   def next(v:UInt) = Mux(v + 1.U === entries.U, 0.U, v + 1.U)
   val next_head = next(head)
   val next_tail = next(tail)
 
   io.in.req.ready := !is_full || io.in.resp.fire()
   io.in.resp.valid := is_full && q_head.resp.valid
-  io.in.resp.bits := queue(tail).resp.bits
+  io.in.resp.bits := q_tail.resp.bits
 
   /* flush signals */
-  when (io.br_flush || io.ex_flush) {
-    val clear_all = io.ex_flush || io.in.resp.fire()
+  when (io.ex_flush || (io.br_flush && io.in.resp.fire())) {
+    head := 0.U
+    tail := 0.U
+    is_full := N
+    is_empty := Y
     for (i <- 0 until entries) {
-      queue(i).req.valid := Mux(clear_all,
-        N, Mux(i.U === tail, queue(i).req.valid, N))
-      queue(i).resp.valid := Mux(clear_all,
-        N, Mux(i.U === tail, queue(i).resp.valid, N))
+      queue(i).req.valid := N
+      queue(i).resp.valid := N
     }
-  }
-
-  when (io.in.req.fire()) {
-    when ((!io.br_flush && !io.ex_flush) || is_empty) {
-      q_head.req.valid := Y
-      q_head.resp.valid := N
+  } .elsewhen(io.br_flush && !io.in.resp.fire()) {
+    for (i <- 0 until entries) {
+      when (i.U =/= tail) {
+        queue(i).req.valid := N
+        queue(i).resp.valid := N
+      }
     }
-    q_head.req.bits := io.in.req.bits
-    head := next_head
+    head := next_tail
+    is_full := N
     is_empty := N
-    when (next_head === tail && !io.in.resp.fire()) {
-      is_full := Y
+  } .otherwise {
+    when (io.in.req.fire()) {
+      q_head.req.valid := Y
+      q_head.req.bits := io.in.req.bits
+      q_head.resp.valid := N
+      head := next_head
+      is_empty := N
+      when (next_head === tail && !io.in.resp.fire()) {
+        is_full := Y
+      }
     }
-  }
 
-  when (io.in.resp.fire()) {
-    tail := next_tail
-    when (!(is_full && io.in.req.fire())) { is_full := N }
-    when (next_tail === head && !io.in.req.fire()) {
-      is_empty := Y
+    when (io.in.resp.fire()) {
+      tail := next_tail
+      when (!(is_full && io.in.req.fire())) { is_full := N }
+      when (next_tail === head && !io.in.req.fire()) {
+        is_empty := Y
+      }
     }
   }
 

@@ -66,8 +66,7 @@ device_t *DiffTop::find_device(const char *name) {
 }
 
 // argv decay to the secondary pointer
-DiffTop::DiffTop(int argc, const char *argv[])
-    : cycles(0), finished(false) {
+DiffTop::DiffTop(int argc, const char *argv[]) {
   /* `emu' must be created before srand */
   dut_ptr.reset(new emu);
 
@@ -176,6 +175,7 @@ void DiffTop::device_io(unsigned char is_aligned, int addr,
     return;
   }
 
+  assert(0 <= addr && addr < 0x08000000);
   /* ddr io */
   if (func == MX_RD) {
     // MX_RD
