@@ -206,7 +206,7 @@ class IMemCistern(entries:Int) extends Module {
   val mreq_working = RegInit(N)
 
   io.in.req.ready := (!is_full || io.in.resp.fire()) && !mreq_working
-  io.in.resp.valid := is_full && q_head.resp.valid
+  io.in.resp.valid := q_tail.req.valid && q_tail.resp.valid && !mreq_working
   io.in.resp.bits := q_tail.resp.bits
 
   /* flush signals */
@@ -253,9 +253,9 @@ class IMemCistern(entries:Int) extends Module {
   /* mem req */
   val mreq_valid = RegInit(N)
   val mreq_idx = RegInit(0.U(log2Ceil(entries).W))
-  when (is_full && !q_head.resp.valid && !mreq_working) {
+  when (is_full && !q_tail.resp.valid && !mreq_working) {
     mreq_valid := Y
-    mreq_idx := next_head
+    mreq_idx := next_tail
     mreq_working := Y
   }
 
@@ -269,7 +269,7 @@ class IMemCistern(entries:Int) extends Module {
   when (io.out.resp.fire()) {
     q_cur.resp.valid := Y
     q_cur.resp.bits := io.out.resp.bits
-    when (mreq_idx === head) {
+    when (mreq_idx === tail) {
       mreq_valid := N
       mreq_idx := 0.U
       mreq_working := N
