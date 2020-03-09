@@ -95,7 +95,7 @@ class PRU extends CPRS with LSUConsts {
       res.paddr := 0.U
     } .otherwise {
       val highbits = (phyn.pfn & ~mask) << 12
-      val lowbits = ((vaddr & (mask + 1.U) << 12) - 1.U)
+      val lowbits = vaddr & (((mask + 1.U) << 12) - 1.U)
       res.paddr := highbits | lowbits
       res.ex.et := ET_None
       res.ex.code := excode
