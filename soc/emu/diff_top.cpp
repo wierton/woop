@@ -103,7 +103,7 @@ void DiffTop::cycle_epilogue() {
   cycles++;
   silent_cycles++;
 
-  if (silent_cycles >= 1000) {
+  if (silent_cycles >= 200) {
     printf("cycle %lu: no commits in %ld cycles\n", cycles,
         silent_cycles);
     abort();
@@ -123,6 +123,11 @@ void DiffTop::cycle_epilogue() {
   /* nemu executes one cycle */
   nemu_ptr->exec_one_instr();
 
+  /* launch timer interrupt */
+  if (dut_ptr->io_intr_time_intr) {
+    launch_exception(EXC_INTR);
+  }
+
   /* don't check eret and syscall instr */
   if (!instr.is_syscall() && !instr.is_eret())
     check_states();
@@ -141,7 +146,7 @@ void DiffTop::single_cycle() {
 int DiffTop::execute(uint64_t n) {
   while (!finished && n > 0) {
     single_cycle();
-    cycle_epilogue();
+    if (!finished) cycle_epilogue();
     n--;
   }
 

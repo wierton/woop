@@ -35,6 +35,7 @@ class PRALU extends Module {
     val bp = ValidIO(new BypassIO)
     val ex_flush = ValidIO(new FlushIO)
     val br_flush = Flipped(ValidIO(new FlushIO))
+    val intr = new IntrIO
     val iaddr = Flipped(new TLBTransaction)
   })
 
@@ -131,6 +132,7 @@ class PRALU extends Module {
 
   /* exception */
   io.ex_flush <> pru.io.ex_flush
+  io.intr <> pru.io.intr
 
   if (conf.log_PRALU) {
     when (TraceTrigger()) { dump() }

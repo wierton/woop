@@ -17,6 +17,7 @@ class SimDev extends BlackBox {
 
 class SOC_EMU_TOP extends Module {
   val io = IO(new Bundle {
+    val intr = new IntrIO
     val commit = new CommitIO
   })
 
@@ -45,6 +46,7 @@ class SOC_EMU_TOP extends Module {
 
   crossbar.io.out <> dev.io.in
 
+  core.io.intr <> io.intr
   core.io.commit <> io.commit
 
   if (conf.log_Top) {

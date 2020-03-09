@@ -17,7 +17,7 @@ object TraceTrigger {
   def apply(): Bool = {
     val (t, c) = Counter(true.B, 0x7fffffff)
     t >= (620093 - 80).U
-    true.B
+    false.B
   }
 }
 

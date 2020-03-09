@@ -8,22 +8,12 @@ import woop.dumps._
 import woop.configs._
 import woop.utils._
 
-class BrFlushCtrler extends Module {
-  val io = IO(new Bundle {
-    val flush_in = Flipped(ValidIO(new FlushIO))
-    val flush_out = ValidIO(new FlushIO)
-    val inst_valid = Input(Bool())
-  })
-  val flush = RegEnable(next=io.flush_in, enable=io.flush_in.valid)
-  io.flush_out.valid := flush.valid && RegNext(io.inst_valid)
-  io.flush_out.bits := flush.bits
-}
-
 class Core extends Module {
   val io = IO(new Bundle {
     val imem = new MemIO
     val dmem = new MemIO
     val commit = new CommitIO
+    val intr = new IntrIO
     val br_flush = Output(Bool())
     val ex_flush = Output(Bool())
   })
@@ -33,6 +23,8 @@ class Core extends Module {
   val bridu = Module(new BRIDU)
   val pralu = Module(new PRALU)
   val lsmdu = Module(new LSMDU)
+
+  pralu.io.intr <> io.intr
 
   ifu.io.fu_out <> bridu.io.fu_in
   bridu.io.fu_out <> pralu.io.fu_in

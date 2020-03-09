@@ -22,7 +22,7 @@ class CP0Status extends Bundle {
   val _0   = UInt(1.W)
   val Impl = UInt(2.W)
   
-  val IM   = UInt(8.W)
+  val IM   = Vec(8, Bool())
   
   val KX   = UInt(1.W)
   val SX   = UInt(1.W)
@@ -91,7 +91,7 @@ class CP0Cause extends Bundle {
   val WP = UInt(1.W)
   val _3 = UInt(6.W)
   
-  val IP = UInt(8.W)
+  val IP = Vec(8, Bool())
   val _4 = UInt(1.W)
   val ExcCode = UInt(5.W)
   val _5 = UInt(2.W)
@@ -105,7 +105,8 @@ class CP0Cause extends Bundle {
     val newVal = value.asTypeOf(this)
     this.IV := newVal.IV
     this.WP := newVal.WP
-    this.IP := (newVal.IP & "b11".U) | (this.IP & "b11111100".U)
+    this.IP(0) := newVal.IP(0)
+    this.IP(1) := newVal.IP(1)
   }
 }
 

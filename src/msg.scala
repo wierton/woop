@@ -88,6 +88,11 @@ class CommitIO extends Bundle {
   val gpr = Output(Vec(32, UInt(conf.xprlen.W)))
 }
 
+class IntrIO extends Bundle {
+  val time_intr = Output(Bool())
+  val ip = Input(Vec(5, Bool()))
+}
+
 class FlushIO extends Bundle {
   val br_target = Output(UInt(conf.xprlen.W))
 }

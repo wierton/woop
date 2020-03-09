@@ -70,6 +70,7 @@ class PRU extends CPRS with LSUConsts {
     val ehu_out = DecoupledIO(new PRALU_LSMDU_IO)
     val br_flush = Flipped(ValidIO(new FlushIO))
     val ex_flush = ValidIO(new FlushIO)
+    val intr = new IntrIO
   })
 
   /* TLB */
@@ -281,7 +282,10 @@ class PRU extends CPRS with LSUConsts {
     is(CPR_BAD_VADDR) { cpr_badvaddr := fu_in.ops.op1 }
     is(CPR_COUNT)     { }
     is(CPR_ENTRY_HI)  { cpr_entry_hi.write(fu_in.ops.op1) }
-    is(CPR_COMPARE)   { cpr_compare := fu_in.ops.op1 }
+    is(CPR_COMPARE)   {
+      cpr_compare := fu_in.ops.op1
+      cpr_cause.IP(7) := N
+    }
     is(CPR_STATUS)    { cpr_status.write(fu_in.ops.op1) }
     is(CPR_CAUSE)     { cpr_cause.write(fu_in.ops.op1) }
     is(CPR_EPC)       { cpr_epc := fu_in.ops.op1 }
@@ -323,7 +327,10 @@ class PRU extends CPRS with LSUConsts {
   /* process exception */
   val offset = WireInit(0.U(12.W))
   val intr_enable = !cpr_status.ERL && !cpr_status.EXL && cpr_status.IE
-  val intr_valid = (cpr_cause.IP & cpr_status.IM).orR && intr_enable
+  val intr_valid = (cpr_cause.IP.asUInt & cpr_status.IM.asUInt).orR && intr_enable
+  for (i <- 2 until 6) cpr_cause.IP(i) := io.intr.ip(i - 2)
+  when (cpr_compare === cpr_count) { cpr_cause.IP(7) := Y }
+  io.intr.time_intr := cpr_cause.IP(7) && cpr_status.IM(7) && intr_enable && (io.ehu_in.bits.ex.et === ET_None)
   io.ehu_out.bits := io.ehu_in.bits
   io.ehu_out.valid := io.ehu_in.valid && !intr_valid
   io.ehu_in.ready := io.ehu_out.ready && !intr_valid
