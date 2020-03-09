@@ -30,7 +30,7 @@ class CP0Status extends Bundle {
   val UM   = UInt(1.W) // --\
                        //   +--> KSU
   val R0   = UInt(1.W) // --/
-  val ERL  = UInt(1.W)
+  val ERL  = Bool()
   val EXL  = Bool()  // 0 for user, 1 for kernel
   val IE   = Bool()  // 0 for disable, 1 for enable
 

@@ -124,10 +124,11 @@ class IFU extends Module {
 
   /* stage 2: blocking */
   val s1_in = RegInit(0.U.asTypeOf(new IMemPipeData))
+  val s1_bad_if = pc(1, 0) =/= 0.U
   when (io.iaddr.req.fire()) {
     s1_in.pc := pc
-    s1_in.et := Mux(pc(1, 0) === 0.U, ET_None, ET_AdEL_IF)
-    s1_in.code := EC_AdEL
+    s1_in.et := Mux(s1_bad_if, ET_AdEL_IF, io.iaddr.resp.bits.ex.et)
+    s1_in.code := Mux(s1_bad_if, EC_AdEL, io.iaddr.resp.bits.ex.code)
   }
   val s1_datas = Module(new IMemPipe(new IMemPipeData, conf.icache_stages))
   val s1_out = s1_datas.io.deq.bits

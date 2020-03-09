@@ -101,6 +101,10 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
      CACHE   -> List(Y, FU_PRU,  PRU_CACHE,  OP1_X,    OP2_X,   OPD_X),
      SYNC    -> List(Y, FU_PRU,  PRU_SYNC,   OP1_X,    OP2_X,   OPD_X),
      PREF    -> List(Y, FU_PRU,  PRU_PREF,   OP1_X,    OP2_X,   OPD_X),
+     TLBP    -> List(Y, FU_PRU,  PRU_TLBP,   OP1_X,    OP2_X,   OPD_X),
+     TLBR    -> List(Y, FU_PRU,  PRU_TLBR,   OP1_X,    OP2_X,   OPD_X),
+     TLBWI   -> List(Y, FU_PRU,  PRU_TLBWI,  OP1_X,    OP2_X,   OPD_X),
+     TLBWR   -> List(Y, FU_PRU,  PRU_TLBWR,  OP1_X,    OP2_X,   OPD_X),
   ))
 
   val (valid: Bool) :: fu_type_ :: fu_op_ :: op1_sel_ :: op2_sel_ :: opd_sel_ :: Nil = csignals

@@ -8,6 +8,22 @@ import woop.configs._
 import woop.utils._
 import woop.dumps._
 
+class TLBPhyn extends Bundle {
+  val pfn = UInt(24.W)
+  val c   = UInt(3.W)
+  val d   = Bool()
+  val v   = Bool()
+}
+
+class TLBEntry extends Bundle {
+  val pagemask = UInt(16.W)
+  val vpn  = UInt(19.W)
+  val g    = Bool()
+  val asid = UInt(8.W)
+  val p0 = new TLBPhyn
+  val p1 = new TLBPhyn
+}
+
 abstract class CPRS extends Module {
   val cpr_index     = Reg(new CP0Index)
   def cpr_random    = Reg(new CP0Random)
@@ -56,22 +72,78 @@ class PRU extends CPRS with LSUConsts {
     val ex_flush = ValidIO(new FlushIO)
   })
 
-  def is_cached(vaddr:UInt) = vaddr(31, 29) =/= "b101".U
+  /* TLB */
+  val tlb_entry = Mem(conf.tlbsz, new TLBEntry)
+  def tlb_entry_match(vaddr:UInt, tlb_port:TLBEntry) = {
+    val va_31_13 = vaddr(31, 13)
+    val mask = tlb_port.pagemask
+    (tlb_port.vpn & ~mask) === (va_31_13 & ~mask) &&
+    (tlb_port.g || tlb_port.asid === cpr_entry_hi.asid)
+  }
+  def tlb_entry_translate(vaddr:UInt, rwbit:UInt, tlb_port:TLBEntry) = {
+    val mask = tlb_port.pagemask
+    val eobit = (vaddr & ((mask + 1.U) << 12)).orR
+    val phyn = Mux(eobit, tlb_port.p1, tlb_port.p0)
+    val et = WireInit(ET_None)
+    val code = WireInit(Mux(rwbit === MX_RD, EC_TLBL, EC_TLBS))
+    val paddr = WireInit(0.U(conf.xprlen.W))
+    when (phyn.v === 0.U) {
+      et := ET_TLB_Inv
+    } .elsewhen (phyn.d === 0.U && rwbit === MX_WR) {
+      et := ET_TLB_Mod
+    } .otherwise {
+      val highbits = (phyn.pfn & ~mask) << 12
+      val lowbits = ((vaddr & (mask + 1.U) << 12) - 1.U)
+      paddr := highbits | lowbits
+    }
+    Cat(et, code, paddr)
+  }
+  class MMURes extends Bundle {
+    val ex = new CP0Exception
+    val paddr = UInt(conf.xprlen.W)
+  }
+  def tlb_translate(vaddr:UInt, rwbit:UInt) = {
+    val tlb_ports = for (i <- 0 until conf.tlbsz) yield tlb_entry(i)
+    val matches = Cat(for (i <- 0 until conf.tlbsz) yield
+      tlb_entry_match(vaddr, tlb_ports(i)))
+    val miss = !matches.orR
+    val translate_res = Mux1H(for (i <- 0 until conf.tlbsz) yield
+      matches(i) -> tlb_entry_translate(vaddr, rwbit, tlb_ports(i)))
+    val hit_res = translate_res.asTypeOf(new MMURes)
+    val miss_res = WireInit(0.U.asTypeOf(new MMURes))
+    miss_res.ex.et := ET_TLB_REFILL
+    miss_res.ex.code := Mux(rwbit === MX_RD, EC_TLBL, EC_TLBS)
+    miss_res.paddr := 0.U
+    Mux(miss, miss_res, hit_res)
+  }
 
-  def naive_tlb_translate(addr:UInt) = Mux1H(Array(
-    ("h00000000".U <= addr && addr < "h80000000".U) -> addr,
-    ("h80000000".U <= addr && addr < "hA0000000".U) -> (addr - "h80000000".U),
-    ("hA0000000".U <= addr && addr < "hC0000000".U) -> (addr - "hA0000000".U)))
+  def is_cached(vaddr:UInt) = vaddr(31, 29) =/= "b101".U
+  def ioremap(addr:UInt) = Cat("b000".U, addr(28, 0))
+  def vaddr2paddr(vaddr:UInt, rwbit:UInt) = {
+    val mmu_res = tlb_translate(vaddr, rwbit)
+    val vid = vaddr(31, 29)
+    Mux1H(Array(
+      (vid === 4.U || vid === 5.U) -> ioremap(vaddr),
+      (vid === 6.U) -> ioremap(mmu_res.paddr),
+      (vid(2) === 0.U) -> Mux(cpr_status.ERL,
+        vaddr, ioremap(mmu_res.paddr)),
+    ))
+    val res = WireInit(0.U.asTypeOf(new MMURes))
+    res.ex := mmu_res.ex
+    res.paddr := mmu_res.paddr
+    res
+  }
 
   /* handle memory translate request, a pipeline stage */
   val iaddr_in = RegEnable(io.iaddr.req.bits, enable=io.iaddr.req.fire())
   val iaddr_valid = RegInit(N)
+  val iaddr_res = vaddr2paddr(io.iaddr.req.bits.vaddr, MX_RD)
   val flush_valid = io.br_flush.valid || io.ex_flush.valid
   io.iaddr.req.ready := io.iaddr.resp.ready || !iaddr_valid
   io.iaddr.resp.valid := iaddr_valid
-  io.iaddr.resp.bits.paddr := naive_tlb_translate(iaddr_in.vaddr)
+  io.iaddr.resp.bits.paddr := iaddr_res.paddr
   io.iaddr.resp.bits.is_cached := is_cached(iaddr_in.vaddr)
-  io.iaddr.resp.bits.ex := 0.U.asTypeOf(new CP0Exception)
+  io.iaddr.resp.bits.ex := iaddr_res.ex
   when (flush_valid || (!io.iaddr.req.fire() && io.iaddr.resp.fire())) {
     iaddr_valid := N
   } .elsewhen (!flush_valid && io.iaddr.req.fire()) {
@@ -83,13 +155,16 @@ class PRU extends CPRS with LSUConsts {
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
   val fu_op = fu_in.ops.fu_op
   val is_lsu = fu_valid && fu_in.ops.fu_type === FU_LSU
+  val lsu_op = fu_op.asTypeOf(new LSUOp)
   val lsu_vaddr = fu_in.ops.op1
   val lsu_bad_load = ((lsu_vaddr(1, 0) =/= 0.U && (fu_op === LSU_LW || fu_op === LSU_LL)) ||
     (lsu_vaddr(0) =/= 0.U && (fu_op === LSU_LH || fu_op === LSU_LHU)))
   val lsu_bad_store = ((lsu_vaddr(1, 0) =/= 0.U && (fu_op === LSU_SW || fu_op === LSU_SC)) ||
     (lsu_vaddr(0) =/= 0.U && fu_op === LSU_SH))
-  val lsu_has_ex = lsu_bad_load || lsu_bad_store
-  val lsu_et = ET_ADDR_ERR
+  val lsu_bad_addr = lsu_bad_load || lsu_bad_store
+  val lsu_res = vaddr2paddr(lsu_vaddr, lsu_op.func)
+  val lsu_has_ex = lsu_bad_addr || lsu_res.ex.et =/= ET_None
+  val lsu_et = Mux(lsu_bad_addr, ET_ADDR_ERR, lsu_res.ex.et)
   val lsu_ec = Mux1H(Array(
     lsu_bad_load  -> EC_AdEL,
     lsu_bad_store -> EC_AdES))
@@ -100,7 +175,7 @@ class PRU extends CPRS with LSUConsts {
   }
   io.fu_out.valid := fu_valid
   io.fu_out.bits.ops := fu_in.ops
-  io.fu_out.bits.paddr := naive_tlb_translate(lsu_vaddr)
+  io.fu_out.bits.paddr := lsu_res.paddr
   io.fu_out.bits.vaddr := lsu_vaddr
   io.fu_out.bits.is_cached := lsu_vaddr(31, 29) =/= "b101".U
   io.fu_in.ready := io.fu_out.ready || !fu_valid
@@ -110,6 +185,8 @@ class PRU extends CPRS with LSUConsts {
   val is_mfc0 = fu_valid && fu_in.ops.fu_type === FU_PRU && fu_in.ops.fu_op === PRU_MFC0
   val is_mtc0 = fu_valid && fu_in.ops.fu_type === FU_PRU && fu_in.ops.fu_op === PRU_MTC0
   val cpr_addr = Cat(fu_in.wb.instr.rd_idx, fu_in.wb.instr.sel)
+  val tlbio_idx = Mux(fu_in.ops.fu_type === PRU_TLBWR, cpr_random.index, cpr_index.index)
+  val tlb_cp0_port = tlb_entry(tlbio_idx)
   val mf_val = Mux1H(Array(
     (cpr_addr === CPR_INDEX)     -> cpr_index.asUInt,
     (cpr_addr === CPR_RANDOM)    -> cpr_random.asUInt,
@@ -130,6 +207,45 @@ class PRU extends CPRS with LSUConsts {
     (cpr_addr === CPR_CONFIG)    -> cpr_config.asUInt,
     (cpr_addr === CPR_CONFIG1)   -> cpr_config1.asUInt,
   ))
+  when (is_pru) {
+    when (fu_in.ops.fu_op === PRU_TLBR) {
+      cpr_pagemask.mask := tlb_cp0_port.pagemask
+      cpr_entry_hi.vpn := tlb_cp0_port.vpn & ~tlb_cp0_port.pagemask
+      cpr_entry_hi.asid := tlb_cp0_port.asid
+
+      cpr_entry_lo0.pfn := tlb_cp0_port.p0.pfn & ~tlb_cp0_port.pagemask
+      cpr_entry_lo0.c := tlb_cp0_port.p0.c
+      cpr_entry_lo0.d := tlb_cp0_port.p0.d
+      cpr_entry_lo0.v := tlb_cp0_port.p0.v
+      cpr_entry_lo0.g := tlb_cp0_port.g
+
+      cpr_entry_lo1.pfn := tlb_cp0_port.p1.pfn & ~tlb_cp0_port.pagemask
+      cpr_entry_lo1.c := tlb_cp0_port.p1.c
+      cpr_entry_lo1.d := tlb_cp0_port.p1.d
+      cpr_entry_lo1.v := tlb_cp0_port.p1.v
+      cpr_entry_lo1.g := tlb_cp0_port.g
+    } .elsewhen(fu_in.ops.fu_op === PRU_TLBWI || fu_in.ops.fu_op === PRU_TLBWR) {
+      tlb_cp0_port.pagemask := cpr_pagemask.mask
+      tlb_cp0_port.vpn := cpr_entry_hi.vpn & ~cpr_pagemask.mask
+      tlb_cp0_port.asid := cpr_entry_hi.asid
+
+      tlb_cp0_port.g := cpr_entry_lo0.g & cpr_entry_lo1.g
+
+      tlb_cp0_port.p0.pfn := cpr_entry_lo0.pfn & ~cpr_pagemask.mask
+      tlb_cp0_port.p0.c := cpr_entry_lo0.c
+      tlb_cp0_port.p0.d := cpr_entry_lo0.d
+      tlb_cp0_port.p0.v := cpr_entry_lo0.v
+
+      tlb_cp0_port.p1.pfn := cpr_entry_lo1.pfn & ~cpr_pagemask.mask
+      tlb_cp0_port.p1.c := cpr_entry_lo1.c
+      tlb_cp0_port.p1.d := cpr_entry_lo1.d
+      tlb_cp0_port.p1.v := cpr_entry_lo1.v
+    }
+
+    when (fu_in.ops.fu_op === PRU_TLBWR) {
+      cpr_random.index := cpr_random.index + 1.U
+    }
+  }
   when (is_mtc0) {
     switch (cpr_addr) {
     is(CPR_INDEX)     { cpr_index.write(fu_in.ops.op1) }
