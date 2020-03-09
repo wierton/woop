@@ -330,7 +330,8 @@ class PRU extends CPRS with LSUConsts {
   val intr_valid = (cpr_cause.IP.asUInt & cpr_status.IM.asUInt).orR && intr_enable
   for (i <- 2 until 6) cpr_cause.IP(i) := io.intr.ip(i - 2)
   when (cpr_compare === cpr_count) { cpr_cause.IP(7) := Y }
-  io.intr.time_intr := cpr_cause.IP(7) && cpr_status.IM(7) && intr_enable && (io.ehu_in.bits.ex.et === ET_None)
+  io.intr.ip7 := cpr_cause.IP(7)
+  io.intr.time_intr := cpr_cause.IP(7) && cpr_status.IM(7) && intr_enable && io.ex_flush.valid && (io.ehu_in.bits.ex.et === ET_None)
   io.ehu_out.bits := io.ehu_in.bits
   io.ehu_out.valid := io.ehu_in.valid && !intr_valid
   io.ehu_in.ready := io.ehu_out.ready && !intr_valid

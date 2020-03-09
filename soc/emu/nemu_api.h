@@ -27,6 +27,7 @@ extern uint32_t get_current_pc();
 extern uint32_t get_current_instr();
 extern void launch_exception(uint32_t exception);
 extern device_t *get_device_list_head();
+extern void nemu_set_irq(int irqno, bool val);
 /* APIs exported by nemu-mips32 */
 
 /* ddr_dev, bram_dev */

@@ -124,6 +124,7 @@ void DiffTop::cycle_epilogue() {
   nemu_ptr->exec_one_instr();
 
   /* launch timer interrupt */
+  if (dut_ptr->io_intr_ip7) { nemu_set_irq(7, 1); }
   if (dut_ptr->io_intr_time_intr) {
     launch_exception(EXC_INTR);
   }

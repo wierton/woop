@@ -90,6 +90,7 @@ class CommitIO extends Bundle {
 
 class IntrIO extends Bundle {
   val time_intr = Output(Bool())
+  val ip7 = Output(Bool())
   val ip = Input(Vec(5, Bool()))
 }
 
