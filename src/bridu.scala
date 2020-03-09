@@ -133,6 +133,8 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   io.fu_out.bits.opd_sel := opd_sel
   io.fu_out.bits.ex.et := Mux(valid, fu_in.ex.et, ET_RI)
   io.fu_out.bits.ex.code := Mux(valid, fu_in.ex.code, EC_RI)
+  io.fu_out.bits.ex.addr := fu_in.ex.addr
+  io.fu_out.bits.ex.asid := 0.U
 
   /* register RW */
   val (instr_id, c) = Counter(io.fu_out.fire(), 1 << conf.INSTR_ID_SZ)

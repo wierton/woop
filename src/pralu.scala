@@ -119,7 +119,6 @@ class PRALU extends Module {
     pru.io.fu_out.valid -> pru.io.fu_out.bits.ex,
     psu.io.fu_out.valid -> psu.io.fu_out.bits.ex))
   pru.io.ehu_in.bits.is_cached := pru.io.fu_out.bits.is_cached
-  pru.io.ehu_in.bits.vaddr := pru.io.fu_out.bits.vaddr
   pru.io.ehu_in.bits.paddr := pru.io.fu_out.bits.paddr
   io.fu_out <> pru.io.ehu_out
 

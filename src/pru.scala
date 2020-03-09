@@ -73,46 +73,53 @@ class PRU extends CPRS with LSUConsts {
   })
 
   /* TLB */
-  val tlb_entry = Mem(conf.tlbsz, new TLBEntry)
-  def tlb_entry_match(vaddr:UInt, tlb_port:TLBEntry) = {
-    val va_31_13 = vaddr(31, 13)
-    val mask = tlb_port.pagemask
-    (tlb_port.vpn & ~mask) === (va_31_13 & ~mask) &&
+  val tlb_entries = Mem(conf.tlbsz, new TLBEntry)
+  def tlb_entry_match(vpn:UInt, tlb_port:TLBEntry) = {
+    val mask = tlb_port.pagemask.asTypeOf(UInt(32.W))
+    (tlb_port.vpn & ~mask) === (vpn & ~mask) &&
     (tlb_port.g || tlb_port.asid === cpr_entry_hi.asid)
   }
   def tlb_entry_translate(vaddr:UInt, rwbit:UInt, tlb_port:TLBEntry) = {
-    val mask = tlb_port.pagemask
+    val mask = tlb_port.pagemask.asTypeOf(UInt(32.W))
     val eobit = (vaddr & ((mask + 1.U) << 12)).orR
     val phyn = Mux(eobit, tlb_port.p1, tlb_port.p0)
-    val et = WireInit(ET_None)
-    val code = WireInit(Mux(rwbit === MX_RD, EC_TLBL, EC_TLBS))
-    val paddr = WireInit(0.U(conf.xprlen.W))
+    val excode = Mux(rwbit === MX_RD, EC_TLBL, EC_TLBS)
+    val res = WireInit(0.U.asTypeOf(new MMURes))
     when (phyn.v === 0.U) {
-      et := ET_TLB_Inv
+      res.ex.et := ET_TLB_Inv
+      res.ex.code := excode
+      res.paddr := 0.U
     } .elsewhen (phyn.d === 0.U && rwbit === MX_WR) {
-      et := ET_TLB_Mod
+      res.ex.et := ET_TLB_Mod
+      res.ex.code := EC_Mod
+      res.paddr := 0.U
     } .otherwise {
       val highbits = (phyn.pfn & ~mask) << 12
       val lowbits = ((vaddr & (mask + 1.U) << 12) - 1.U)
-      paddr := highbits | lowbits
+      res.paddr := highbits | lowbits
+      res.ex.et := ET_None
+      res.ex.code := excode
     }
-    Cat(et, code, paddr)
+    res.ex.addr := vaddr
+    res.ex.asid := tlb_port.asid
+    res
   }
   class MMURes extends Bundle {
     val ex = new CP0Exception
     val paddr = UInt(conf.xprlen.W)
   }
   def tlb_translate(vaddr:UInt, rwbit:UInt) = {
-    val tlb_ports = for (i <- 0 until conf.tlbsz) yield tlb_entry(i)
-    val matches = Cat(for (i <- 0 until conf.tlbsz) yield
-      tlb_entry_match(vaddr, tlb_ports(i)))
+    val tlb_rports = for (i <- 0 until conf.tlbsz) yield tlb_entries(i)
+    val matches = Reverse(Cat(for (i <- 0 until conf.tlbsz) yield
+      tlb_entry_match(vaddr(31, 13), tlb_rports(i))))
     val miss = !matches.orR
-    val translate_res = Mux1H(for (i <- 0 until conf.tlbsz) yield
-      matches(i) -> tlb_entry_translate(vaddr, rwbit, tlb_ports(i)))
-    val hit_res = translate_res.asTypeOf(new MMURes)
+    val hit_res = Mux1H(for (i <- 0 until conf.tlbsz) yield
+      matches(i) -> tlb_entry_translate(vaddr, rwbit, tlb_rports(i)))
     val miss_res = WireInit(0.U.asTypeOf(new MMURes))
     miss_res.ex.et := ET_TLB_REFILL
     miss_res.ex.code := Mux(rwbit === MX_RD, EC_TLBL, EC_TLBS)
+    miss_res.ex.addr := vaddr
+    miss_res.ex.asid := cpr_entry_hi.asid
     miss_res.paddr := 0.U
     Mux(miss, miss_res, hit_res)
   }
@@ -122,22 +129,29 @@ class PRU extends CPRS with LSUConsts {
   def vaddr2paddr(vaddr:UInt, rwbit:UInt) = {
     val mmu_res = tlb_translate(vaddr, rwbit)
     val vid = vaddr(31, 29)
-    Mux1H(Array(
+    val paddr = Mux1H(Array(
       (vid === 4.U || vid === 5.U) -> ioremap(vaddr),
       (vid === 6.U) -> ioremap(mmu_res.paddr),
       (vid(2) === 0.U) -> Mux(cpr_status.ERL,
         vaddr, ioremap(mmu_res.paddr)),
     ))
+    val et = Mux1H(Array(
+      (vid === 4.U || vid === 5.U) -> ET_None,
+      (vid === 6.U) -> mmu_res.ex.et,
+      (vid(2) === 0.U) -> Mux(cpr_status.ERL, ET_None, mmu_res.ex.et),
+    ))
     val res = WireInit(0.U.asTypeOf(new MMURes))
-    res.ex := mmu_res.ex
-    res.paddr := mmu_res.paddr
+    res.ex.et := et
+    res.ex.code := mmu_res.ex.code
+    res.ex.addr := vaddr
+    res.paddr := paddr
     res
   }
 
   /* handle memory translate request, a pipeline stage */
   val iaddr_in = RegEnable(io.iaddr.req.bits, enable=io.iaddr.req.fire())
   val iaddr_valid = RegInit(N)
-  val iaddr_res = vaddr2paddr(io.iaddr.req.bits.vaddr, MX_RD)
+  val iaddr_res = vaddr2paddr(iaddr_in.vaddr, MX_RD)
   val flush_valid = io.br_flush.valid || io.ex_flush.valid
   io.iaddr.req.ready := io.iaddr.resp.ready || !iaddr_valid
   io.iaddr.resp.valid := iaddr_valid
@@ -165,7 +179,7 @@ class PRU extends CPRS with LSUConsts {
   val lsu_res = vaddr2paddr(lsu_vaddr, lsu_op.func)
   val lsu_has_ex = lsu_bad_addr || lsu_res.ex.et =/= ET_None
   val lsu_et = Mux(lsu_bad_addr, ET_ADDR_ERR, lsu_res.ex.et)
-  val lsu_ec = Mux1H(Array(
+  val lsu_ec = MuxCase(lsu_res.ex.code, Array(
     lsu_bad_load  -> EC_AdEL,
     lsu_bad_store -> EC_AdES))
   when (!io.fu_in.fire() && io.fu_out.fire()) {
@@ -176,7 +190,6 @@ class PRU extends CPRS with LSUConsts {
   io.fu_out.valid := fu_valid
   io.fu_out.bits.ops := fu_in.ops
   io.fu_out.bits.paddr := lsu_res.paddr
-  io.fu_out.bits.vaddr := lsu_vaddr
   io.fu_out.bits.is_cached := lsu_vaddr(31, 29) =/= "b101".U
   io.fu_in.ready := io.fu_out.ready || !fu_valid
 
@@ -186,7 +199,7 @@ class PRU extends CPRS with LSUConsts {
   val is_mtc0 = fu_valid && fu_in.ops.fu_type === FU_PRU && fu_in.ops.fu_op === PRU_MTC0
   val cpr_addr = Cat(fu_in.wb.instr.rd_idx, fu_in.wb.instr.sel)
   val tlbio_idx = Mux(fu_in.ops.fu_type === PRU_TLBWR, cpr_random.index, cpr_index.index)
-  val tlb_cp0_port = tlb_entry(tlbio_idx)
+  val tlb_cp0_port = tlb_entries(tlbio_idx)
   val mf_val = Mux1H(Array(
     (cpr_addr === CPR_INDEX)     -> cpr_index.asUInt,
     (cpr_addr === CPR_RANDOM)    -> cpr_random.asUInt,
@@ -209,37 +222,47 @@ class PRU extends CPRS with LSUConsts {
   ))
   when (is_pru) {
     when (fu_in.ops.fu_op === PRU_TLBR) {
+      val bnot_tlb_pagemask = ~tlb_cp0_port.pagemask.asTypeOf(UInt(32.W))
       cpr_pagemask.mask := tlb_cp0_port.pagemask
-      cpr_entry_hi.vpn := tlb_cp0_port.vpn & ~tlb_cp0_port.pagemask
+      cpr_entry_hi.vpn := tlb_cp0_port.vpn & bnot_tlb_pagemask
       cpr_entry_hi.asid := tlb_cp0_port.asid
 
-      cpr_entry_lo0.pfn := tlb_cp0_port.p0.pfn & ~tlb_cp0_port.pagemask
+      cpr_entry_lo0.pfn := tlb_cp0_port.p0.pfn & bnot_tlb_pagemask
       cpr_entry_lo0.c := tlb_cp0_port.p0.c
       cpr_entry_lo0.d := tlb_cp0_port.p0.d
       cpr_entry_lo0.v := tlb_cp0_port.p0.v
       cpr_entry_lo0.g := tlb_cp0_port.g
 
-      cpr_entry_lo1.pfn := tlb_cp0_port.p1.pfn & ~tlb_cp0_port.pagemask
+      cpr_entry_lo1.pfn := tlb_cp0_port.p1.pfn & bnot_tlb_pagemask
       cpr_entry_lo1.c := tlb_cp0_port.p1.c
       cpr_entry_lo1.d := tlb_cp0_port.p1.d
       cpr_entry_lo1.v := tlb_cp0_port.p1.v
       cpr_entry_lo1.g := tlb_cp0_port.g
     } .elsewhen(fu_in.ops.fu_op === PRU_TLBWI || fu_in.ops.fu_op === PRU_TLBWR) {
+      val bnot_cpr_pagemask = ~cpr_pagemask.mask.asTypeOf(UInt(32.W))
       tlb_cp0_port.pagemask := cpr_pagemask.mask
-      tlb_cp0_port.vpn := cpr_entry_hi.vpn & ~cpr_pagemask.mask
+      tlb_cp0_port.vpn := cpr_entry_hi.vpn & bnot_cpr_pagemask
       tlb_cp0_port.asid := cpr_entry_hi.asid
 
       tlb_cp0_port.g := cpr_entry_lo0.g & cpr_entry_lo1.g
 
-      tlb_cp0_port.p0.pfn := cpr_entry_lo0.pfn & ~cpr_pagemask.mask
+      tlb_cp0_port.p0.pfn := cpr_entry_lo0.pfn & bnot_cpr_pagemask
       tlb_cp0_port.p0.c := cpr_entry_lo0.c
       tlb_cp0_port.p0.d := cpr_entry_lo0.d
       tlb_cp0_port.p0.v := cpr_entry_lo0.v
 
-      tlb_cp0_port.p1.pfn := cpr_entry_lo1.pfn & ~cpr_pagemask.mask
+      tlb_cp0_port.p1.pfn := cpr_entry_lo1.pfn & bnot_cpr_pagemask
       tlb_cp0_port.p1.c := cpr_entry_lo1.c
       tlb_cp0_port.p1.d := cpr_entry_lo1.d
       tlb_cp0_port.p1.v := cpr_entry_lo1.v
+    } .elsewhen (fu_in.ops.fu_op === PRU_TLBP) {
+      val matches = Reverse(Cat(for (i <- 0 until conf.tlbsz) yield
+        tlb_entry_match(cpr_entry_hi.vpn, tlb_entries(i))))
+      val miss = !matches.orR
+      cpr_index.p := miss
+      when (!miss) {
+        cpr_index.index := Mux1H(for (i <- 0 until conf.tlbsz) yield matches(i) -> i.U)
+      }
     }
 
     when (fu_in.ops.fu_op === PRU_TLBWR) {
@@ -294,6 +317,8 @@ class PRU extends CPRS with LSUConsts {
       (is_pru && fu_op === PRU_SYSCALL)-> EC_Sys,
       (is_pru && fu_op === PRU_BREAK)  -> EC_Bp)),
     fu_in.ex.code)
+  io.fu_out.bits.ex.addr := Mux(is_lsu, lsu_vaddr, fu_in.ex.addr)
+  io.fu_out.bits.ex.asid := lsu_res.ex.asid
 
   /* process exception */
   val offset = WireInit(0.U(12.W))
@@ -339,9 +364,15 @@ class PRU extends CPRS with LSUConsts {
     }
 
     when (io.ehu_in.bits.ex.et === ET_ADDR_ERR) {
-      cpr_badvaddr := io.ehu_in.bits.vaddr
-    } .elsewhen(io.ehu_in.bits.ex.et === ET_AdEL_IF) {
-      cpr_badvaddr := io.ehu_in.bits.wb.pc
+      cpr_badvaddr := io.ehu_in.bits.ex.addr
+    } .elsewhen(io.ehu_in.bits.ex.et === ET_TLB_Inv ||
+      io.ehu_in.bits.ex.et === ET_TLB_Mod ||
+      io.ehu_in.bits.ex.et === ET_TLB_REFILL) {
+      val vaddr = io.ehu_in.bits.ex.addr
+      cpr_badvaddr := vaddr
+      cpr_context.badvpn2 := vaddr >> 13
+      cpr_entry_hi.vpn := vaddr >> 13
+      cpr_entry_hi.asid := io.ehu_in.bits.ex.asid
     }
   }
   io.ex_flush.bits.br_target := Mux(

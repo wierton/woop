@@ -21,7 +21,10 @@ object conf {
   val nDCacheSets = 256
   val nDCacheWays = 4
   val nDCacheWayBytes = 16
-  val tlbsz = 64
+
+  val TLB_BITS = 5
+  val tlbsz = (1 << TLB_BITS)
+  val PABITS = 32
 
   val log_Top = true
   val log_MemMux = true

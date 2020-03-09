@@ -24,6 +24,8 @@ class Instr extends Bundle {
 class CP0Exception extends Bundle {
   val et = UInt(ET_WIDTH.W)
   val code = UInt(EC_WIDTH.W)
+  val addr = UInt(conf.xprlen.W)
+  val asid = UInt(8.W)
 }
 
 class RegFileIO extends Bundle {
@@ -141,7 +143,6 @@ class PRALU_LSMDU_IO extends Bundle {
   val wb = new WriteBackIO
   val ops = new EXU_OPS
   val ex = Output(new CP0Exception)
-  val vaddr = Output(UInt(conf.xprlen.W))
   val paddr = Output(UInt(conf.xprlen.W))
   val is_cached = Output(Bool())
 }

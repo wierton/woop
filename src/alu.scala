@@ -63,6 +63,8 @@ class ALU extends Module {
   io.fu_out.bits.wb.is_ds := fu_in.wb.is_ds
   io.fu_out.bits.ex.et := Mux(alu_ov, ET_Ov, ET_None)
   io.fu_out.bits.ex.code := EC_Ov
+  io.fu_out.bits.ex.addr := fu_in.wb.pc
+  io.fu_out.bits.ex.asid := 0.U
 
   when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
     fu_valid := N

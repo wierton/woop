@@ -127,7 +127,7 @@ class IFU extends Module {
   val s1_bad_if = pc(1, 0) =/= 0.U
   when (io.iaddr.req.fire()) {
     s1_in.pc := pc
-    s1_in.et := Mux(s1_bad_if, ET_AdEL_IF, io.iaddr.resp.bits.ex.et)
+    s1_in.et := Mux(s1_bad_if, ET_ADDR_ERR, io.iaddr.resp.bits.ex.et)
     s1_in.code := Mux(s1_bad_if, EC_AdEL, io.iaddr.resp.bits.ex.code)
   }
   val s1_datas = Module(new IMemPipe(new IMemPipeData, conf.icache_stages))
@@ -155,6 +155,8 @@ class IFU extends Module {
   io.fu_out.bits.instr := Mux(s1_out_has_ex, 0.U, io.imem.resp.bits.data)
   io.fu_out.bits.ex.et := s1_out.bits.et
   io.fu_out.bits.ex.code := s1_out.bits.code
+  io.fu_out.bits.ex.addr := s1_out.bits.pc
+  io.fu_out.bits.ex.asid := 0.U
 
   if (conf.log_IFU) {
     when (TraceTrigger()) { dump() }

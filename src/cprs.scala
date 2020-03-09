@@ -262,11 +262,12 @@ class CP0Config1 extends Bundle {
 
 class CP0EntryLO extends Bundle {
   val _0  = UInt(2.W)
-  val pfn = UInt(24.W)
+  val _1  = UInt((36 - conf.PABITS).W)
+  val pfn = UInt((conf.PABITS - 12).W)
   val c   = UInt(3.W)
-  val d   = UInt(1.W)
-  val v   = UInt(1.W)
-  val g   = UInt(1.W)
+  val d   = Bool()
+  val v   = Bool()
+  val g   = Bool()
 
   def init(): Unit = {
     require(this.getWidth == 32)
