@@ -9,8 +9,7 @@
 #include <string.h>
 
 #include "common.h"
-#include "emu_api.h"
-#include "nemu_api.h"
+#include "diff_top.h"
 
 static std::unique_ptr<DiffTop> diff_top;
 

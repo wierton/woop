@@ -1,5 +1,5 @@
 #include "common.h"
-#include "emu_api.h"
+#include "diff_top.h"
 
 /* clang-format off */
 #define GPRS(X) \
@@ -67,8 +67,8 @@ device_t *DiffTop::find_device(const char *name) {
 
 // argv decay to the secondary pointer
 DiffTop::DiffTop(int argc, const char *argv[]) {
-  /* `emu' must be created before srand */
-  dut_ptr.reset(new emu);
+  /* `soc_emu_top' must be created before srand */
+  dut_ptr.reset(new SOC_EMU_TOP);
 
   /* srand */
   seed = (unsigned)time(NULL) ^ (unsigned)getpid();

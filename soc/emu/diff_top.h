@@ -10,8 +10,8 @@
 #include <utility>
 #include <vector>
 
-#include "emu.h"
-#include "emu__Dpi.h"
+#include "SOC_EMU_TOP.h"
+#include "SOC_EMU_TOP__Dpi.h"
 #include "nemu_api.h"
 
 #define MX_RD 0
@@ -48,7 +48,7 @@ public:
 };
 
 class DiffTop {
-  std::unique_ptr<emu> dut_ptr;
+  std::unique_ptr<SOC_EMU_TOP> dut_ptr;
   std::unique_ptr<NEMU_MIPS32> nemu_ptr;
 
   uint32_t seed;

@@ -1,11 +1,12 @@
 SCALA_DIR := src
 SCALA_FILES != find $(SCALA_DIR) -name "*.scala"
 
-EMU_OBJ_DIR := $(OBJ_DIR)/emu
+EMU_OBJ_DIR := $(OBJ_DIR)/soc_emu
 EMU_SRC_DIR := $(abspath ./soc/emu)
 EMU_TOP_MODULE ?= SOC_EMU_TOP
-EMU_TOP_V := $(EMU_OBJ_DIR)/emu_top.v
-EMU_MK := $(EMU_OBJ_DIR)/emu.mk
+EMU_PREFIX := SOC_EMU_TOP
+EMU_TOP_V := $(EMU_OBJ_DIR)/$(EMU_PREFIX).v
+EMU_MK := $(EMU_OBJ_DIR)/$(EMU_PREFIX).mk
 EMU_BIN := $(EMU_OBJ_DIR)/emulator
 EMU_LIB_V != find $(EMU_SRC_DIR) -name "*.v"
 EMU_CXXFILES != find $(EMU_SRC_DIR) -name "*.cpp"
@@ -15,6 +16,14 @@ MIPS32_NEMU_LIB := $(MIPS32_NEMU_HOME)/build/nemu.so
 
 nemu: $(MIPS32_NEMU) $(MIPS32_NEMU_LIB)
 emu: $(EMU_BIN)
+
+ifeq ($(ASAN),1)
+ASAN_CFLAGS := -fsanitize=address,undefined -Wformat -Werror=format-security -Werror=array-bounds
+ASAN_LDFLAGS := -fsanitize=address,undefined
+endif
+
+EMU_CFLAGS := -I $(MIPS32_NEMU_HOME)/include $(ASAN_CFLAGS)
+EMU_LDFLAGS := $(MIPS32_NEMU_LIB) -lpthread -lreadline -lSDL $(ASAN_LDFLAGS)
 
 $(EMU_TOP_V): $(SCALA_FILES)
 	@mkdir -p $(@D)
@@ -26,9 +35,8 @@ $(EMU_MK): $(EMU_TOP_V) $(EMU_CXXFILES) $(EMU_LIB_V)
 	@verilator -Wno-lint --cc --exe \
 	  --top-module $(EMU_TOP_MODULE) \
 	  -o $(notdir $(EMU_BIN)) -Mdir $(@D) \
-	  -CFLAGS "-I $(MIPS32_NEMU_HOME)/include" \
-	  -LDFLAGS "$(MIPS32_NEMU_LIB) -lpthread -lreadline -lSDL" \
-	  --prefix $(basename $(notdir $(EMU_MK))) $^ 
+	  -CFLAGS "$(EMU_CFLAGS)" -LDFLAGS "$(EMU_LDFLAGS)" \
+	  --prefix $(EMU_PREFIX) $^ 
 
 update-emu: $(EMU_MK)
 	@rm -rf $(EMU_BIN)
