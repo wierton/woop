@@ -203,8 +203,9 @@ class IMemCistern(entries:Int) extends Module {
   def next(v:UInt) = Mux(v + 1.U === entries.U, 0.U, v + 1.U)
   val next_head = next(head)
   val next_tail = next(tail)
+  val mreq_working = RegInit(N)
 
-  io.in.req.ready := !is_full || io.in.resp.fire()
+  io.in.req.ready := (!is_full || io.in.resp.fire()) && !mreq_working
   io.in.resp.valid := is_full && q_head.resp.valid
   io.in.resp.bits := q_tail.resp.bits
 
@@ -251,7 +252,6 @@ class IMemCistern(entries:Int) extends Module {
 
   /* mem req */
   val mreq_valid = RegInit(N)
-  val mreq_working = RegInit(N)
   val mreq_idx = RegInit(0.U(log2Ceil(entries).W))
   when (is_full && !q_head.resp.valid && !mreq_working) {
     mreq_valid := Y
