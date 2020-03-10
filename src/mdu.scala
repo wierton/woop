@@ -19,6 +19,7 @@ class MDU extends Module with MDUConsts {
     val fu_in = Flipped(DecoupledIO(new PRALU_LSMDU_IO))
     val fu_out = ValidIO(new WriteBackIO)
     val working = Output(Bool())
+    val can_log_now = Input(Bool())
   })
 
   val hi = RegInit(0.U(conf.xprlen.W))
@@ -72,6 +73,9 @@ class MDU extends Module with MDUConsts {
   io.fu_out.bits.data := result
   io.fu_out.bits.instr := fu_in.wb.instr
   io.fu_out.bits.is_ds := N
+  io.fu_out.bits.is_br := fu_in.wb.is_br
+  io.fu_out.bits.npc := fu_in.wb.npc
+  io.fu_out.bits.ip7 := fu_in.wb.ip7
 
   when (!io.fu_in.fire() && io.fu_out.valid) {
     fu_valid := N
@@ -80,7 +84,7 @@ class MDU extends Module with MDUConsts {
   }
 
   if (conf.log_MDU) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {

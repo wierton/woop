@@ -15,6 +15,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
     val rfio = new RegFileIO
     val br_flush = ValidIO(new FlushIO)
     val ex_flush = Flipped(ValidIO(new FlushIO))
+    val can_log_now = Input(Bool())
   })
 
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
@@ -188,6 +189,10 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   io.fu_out.bits.wb.wen := io.fu_out.bits.wb.v
   io.fu_out.bits.wb.data := fu_in.pc + 8.U
   io.fu_out.bits.wb.is_ds := is_delayslot
+  io.fu_out.bits.wb.is_br := fu_type === FU_BRU
+  io.fu_out.bits.wb.npc := Mux(io.br_flush.valid,
+    io.br_flush.bits.br_target, fu_in.pc + 4.U)
+  io.fu_out.bits.wb.ip7 := N
   /* only valid for bru */
 
   when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
@@ -197,7 +202,7 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
   }
 
   if (conf.log_BRIDU) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {

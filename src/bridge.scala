@@ -25,6 +25,7 @@ class MemMux(name:String) extends Module {
     val in = Flipped(new MemIO)
     val cached = new MemIO
     val uncached = new MemIO
+    val can_log_now = Input(Bool())
   })
 
   io.in.req.ready := Mux(io.in.req.bits.is_cached, io.cached.req.ready, io.uncached.req.ready)
@@ -43,7 +44,7 @@ class MemMux(name:String) extends Module {
   io.uncached.resp.ready := io.in.resp.ready
 
   if (conf.log_MemMux) {
-    when (TraceTrigger()) {
+    when (io.can_log_now) {
       io.in.dump(name+".in")
       io.cached.dump(name+".cached")
       io.uncached.dump(name+".uncached")
@@ -56,6 +57,7 @@ class CrossbarNx1(m:Int) extends Module {
   val io = IO(new Bundle {
     val in = Vec(m, Flipped(new MemIO))
     val out = new MemIO
+    val can_log_now = Input(Bool())
   })
 
   val in_valids = Reverse(Cat(for (i <- 0 until m) yield io.in(i).req.valid))
@@ -89,7 +91,7 @@ class CrossbarNx1(m:Int) extends Module {
   io.out.req.bits := in_req
 
   if (conf.log_CrossbarNx1) {
-    when (TraceTrigger()) { dump("crossbar") }
+    when (io.can_log_now) { dump("crossbar") }
   }
   assert ((~q_data_sz).orR =/= 0.U || !io.out.resp.valid)
 

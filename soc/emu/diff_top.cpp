@@ -1,6 +1,16 @@
 #include "common.h"
 #include "diff_top.h"
 
+#if 1
+extern "C" {
+#  include "cpu.h"
+}
+#endif
+
+#ifndef eprintf
+#  define eprintf(...) fprintf(stderr, __VA_ARGS__)
+#endif
+
 /* clang-format off */
 #define GPRS(X) \
   X(0)  X(1)  X(2)  X(3)  X(4)  X(5)  X(6)  X(7)  \
@@ -16,32 +26,41 @@ void DiffTop::abort_prologue() {
 }
 
 void DiffTop::check_states() {
-#define check(cond, ...)  \
-  if (!(cond)) {          \
-    nemu_ptr->dump();     \
-    eprintf(__VA_ARGS__); \
-    abort_prologue();     \
-    abort();              \
+#if 0
+  cpu.pc = dut_ptr->io_commit_pc;
+#  define GPR_SET(i) \
+    cpu.gpr[i] = dut_ptr->io_commit_gpr_##i;
+  GPRS(GPR_SET);
+#  undef GPR_SET
+  return;
+#endif
+
+#define check_eq(a, b, ...) \
+  if ((a) != (b)) {         \
+    nemu_ptr->dump();       \
+    eprintf(__VA_ARGS__);   \
+    abort_prologue();       \
+    abort();                \
   }
 
-  check(nemu_ptr->pc() == dut_ptr->io_commit_pc,
+  check_eq(nemu_ptr->pc(), dut_ptr->io_commit_pc,
       "cycle %lu: pc: nemu:%08x <> dut:%08x\n", cycles,
       nemu_ptr->pc(), dut_ptr->io_commit_pc);
-  check(nemu_ptr->get_instr() == dut_ptr->io_commit_instr,
+  check_eq(nemu_ptr->get_instr(), dut_ptr->io_commit_instr,
       "cycle %lu: instr: nemu:%08x <> dut:%08x\n", cycles,
       nemu_ptr->get_instr(), dut_ptr->io_commit_instr);
 
   if (last_instr_is_store) {
-    uint32_t nemu_mc = paddr_peek(ls_addr, 4);
-    check(nemu_mc == ls_data,
+    uint32_t nemu_mc = nemu_ptr->paddr_peek(ls_addr, 4);
+    check_eq(nemu_mc, ls_data,
         "cycle %lu: M[%08x]: nemu:%08x <> dut:%08x\n",
         cycles, ls_addr, nemu_mc, ls_data);
   }
 
-#define GPR_TEST(i)                                     \
-  check(nemu_ptr->gpr(i) == dut_ptr->io_commit_gpr_##i, \
-      "cycle %lu: gpr[%d]: nemu:%08x <> dut:%08x\n",    \
-      cycles, i, nemu_ptr->gpr(i),                      \
+#define GPR_TEST(i)                                      \
+  check_eq(nemu_ptr->gpr(i), dut_ptr->io_commit_gpr_##i, \
+      "cycle %lu: gpr[%d]: nemu:%08x <> dut:%08x\n",     \
+      cycles, i, nemu_ptr->gpr(i),                       \
       dut_ptr->io_commit_gpr_##i);
   GPRS(GPR_TEST);
 #undef GPR_TEST
@@ -55,14 +74,6 @@ uint32_t DiffTop::get_dut_gpr(uint32_t r) {
 #undef GET_GPR
   }
   return 0;
-}
-
-device_t *DiffTop::find_device(const char *name) {
-  for (device_t *head = get_device_list_head(); head;
-       head = head->next) {
-    if (strcmp(head->name, name) == 0) return head;
-  }
-  return nullptr;
 }
 
 // argv decay to the secondary pointer
@@ -80,8 +91,7 @@ DiffTop::DiffTop(int argc, const char *argv[]) {
   nemu_ptr.reset(new NEMU_MIPS32(argc, argv));
 
   /* init ddr */
-  device_t *ddr_dev = find_device("ddr");
-  void *nemu_ddr_map = ddr_dev->map(0, ddr_size);
+  void *nemu_ddr_map = nemu_ptr->map("ddr", 0, ddr_size);
   memcpy(ddr, nemu_ddr_map, ddr_size);
 
   /* reset n cycles */
@@ -99,6 +109,8 @@ void DiffTop::reset_ncycles(unsigned n) {
   }
 }
 
+extern bool nemu_can_log_now;
+
 void DiffTop::cycle_epilogue() {
   cycles++;
   silent_cycles++;
@@ -109,24 +121,43 @@ void DiffTop::cycle_epilogue() {
     abort();
   }
 
+  if (can_log_now()) {
+    nemu_can_log_now = true;
+    eprintf(
+        "NEMU: %ld: ip7=%d, commit_valid=%d, cause=%08x, "
+        "status=%08x, ERL=%d, EXL=%d, IE=%d, IM=%x, IP=%x, "
+        "BEV=%d, EC=%d, has_exception=%d, pc=%08x\n",
+        cycles, dut_ptr->io_commit_ip7,
+        dut_ptr->io_commit_valid, cpu.cp0.cpr[CP0_CAUSE][0],
+        cpu.cp0.cpr[CP0_STATUS][0], cpu.cp0.status.ERL,
+        cpu.cp0.status.EXL, cpu.cp0.status.IE,
+        cpu.cp0.status.IM, cpu.cp0.cause.IP,
+        cpu.cp0.status.BEV, cpu.cp0.cause.ExcCode,
+        cpu.has_exception, cpu.pc);
+  }
+
   if (!dut_ptr->io_commit_valid) { return; }
 
   silent_cycles = 0;
 
-  /* keep consistency when execute mfc0 */
-  mips_instr_t instr = dut_ptr->io_commit_instr;
-  if (instr.is_mfc0_count()) {
-    uint32_t count0 = get_dut_gpr(instr.get_rt());
-    nemu_ptr->set_c0_count(count0);
-  }
+  /* launch timer interrupt */
+  if (dut_ptr->io_commit_ip7) { nemu_ptr->set_irq(7, 1); }
 
   /* nemu executes one cycle */
-  nemu_ptr->exec_one_instr();
+  if (can_log_now()) {
+    eprintf("NEMU: before exec, pc=%08x\n", cpu.pc);
+  }
+  nemu_ptr->exec(1);
+  if (can_log_now()) {
+    eprintf("NEMU: after exec, pc=%08x\n", cpu.pc);
+  }
 
-  /* launch timer interrupt */
-  if (dut_ptr->io_intr_ip7) { nemu_set_irq(7, 1); }
-  if (dut_ptr->io_intr_time_intr) {
-    launch_exception(EXC_INTR);
+  /* keep consistency when execute mfc0 count */
+  mips_instr_t instr = dut_ptr->io_commit_instr;
+  if (instr.is_mfc0_count()) {
+    uint32_t r = instr.get_rt();
+    uint32_t count0 = get_dut_gpr(r);
+    nemu_ptr->gpr(r) = count0;
   }
 
   /* don't check eret and syscall instr */
@@ -146,6 +177,7 @@ void DiffTop::single_cycle() {
 
 int DiffTop::execute(uint64_t n) {
   while (!finished && n > 0) {
+    dut_ptr->io_can_log_now = can_log_now();
     single_cycle();
     if (!finished) cycle_epilogue();
     n--;
@@ -163,14 +195,13 @@ void DiffTop::device_io(unsigned char is_aligned, int addr,
   if (!(0 <= addr && addr < 0x08000000)) {
     /* deal with dev_io */
     if (func == MX_RD) {
-      device_t *dev = ::find_device(addr);
-      if (!dev) {
+      if (nemu_ptr->is_mapped(addr)) {
+        *resp = nemu_ptr->paddr_peek(addr, len + 1);
+      } else {
         nemu_ptr->dump();
         eprintf(
             "bad addr 0x%08x received from SOC\n", addr);
         abort();
-      } else {
-        *resp = paddr_peek(addr, len + 1);
       }
     } else {
       if (addr == GPIO_TRAP) {

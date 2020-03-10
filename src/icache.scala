@@ -31,6 +31,7 @@ class ICacheMemIO extends Module {
     val in = Flipped(new MemIO)
     val out = new MemIO
     val flush = Input(Bool())
+    val can_log_now = Input(Bool())
   })
 
   require(isPow2(conf.nICacheSets))
@@ -118,6 +119,7 @@ class SimICache extends Module {
     val out = new MemIO
     val br_flush = Input(Bool())
     val ex_flush = Input(Bool())
+    val can_log_now = Input(Bool())
   })
 
   val entries = 4096
@@ -171,7 +173,7 @@ class SimICache extends Module {
   io.out.resp.ready := Y
 
   if (conf.log_SimICache) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
   def dump():Unit = {
     printf("%d: SimICache: br=%b, ex=%b, s0_valid=%b, s0_in.addr=%x, s0_out_ready=%b, s0_out_fire=%b\n", GTimer(), io.br_flush, io.ex_flush, s0_valid, s0_in.addr, s0_out_ready, s0_out_fire)
@@ -187,6 +189,7 @@ class IMemCistern(entries:Int) extends Module {
     val out = new MemIO
     val br_flush = Input(Bool())
     val ex_flush = Input(Bool())
+    val can_log_now = Input(Bool())
   })
 
   val queue = Mem(entries, new Bundle {
@@ -280,7 +283,7 @@ class IMemCistern(entries:Int) extends Module {
   }
 
   if (conf.log_IMemCistern) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {

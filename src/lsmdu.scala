@@ -16,6 +16,7 @@ class LSMDUPipelineStage extends Module {
       val fu_type = Output(UInt(FU_TYPE_SZ.W))
     }))
     val fu_out = ValidIO(new WriteBackIO)
+    val can_log_now = Input(Bool())
   })
 
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
@@ -30,7 +31,7 @@ class LSMDUPipelineStage extends Module {
   }
 
   if (conf.log_LSMDU) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {
@@ -44,6 +45,7 @@ class LSMDU extends Module {
     val fu_in = Flipped(DecoupledIO(new PRALU_LSMDU_IO))
     val fu_out = ValidIO(new WriteBackIO)
     val dmem = new MemIO
+    val can_log_now = Input(Bool())
   })
 
   val lsu = Module(new LSU)
@@ -57,6 +59,7 @@ class LSMDU extends Module {
   lsu.io.fu_in.valid := io.fu_in.valid && to_lsu
   lsu.io.fu_in.bits := io.fu_in.bits
   lsu.io.dmem <> io.dmem
+  lsu.io.can_log_now := io.can_log_now
 
   /* MDU IO */
   val to_mdu = !lsu.io.working &&
@@ -64,6 +67,7 @@ class LSMDU extends Module {
     io.fu_in.bits.ex.et === ET_None
   mdu.io.fu_in.valid := io.fu_in.valid && to_mdu
   mdu.io.fu_in.bits := io.fu_in.bits
+  mdu.io.can_log_now := io.can_log_now
 
   /* pipeline stage for ALU,BRU,PRU */
   val to_psu = !lsu.io.working && !mdu.io.working && (
@@ -76,6 +80,7 @@ class LSMDU extends Module {
   psu.io.fu_in.bits.wb := io.fu_in.bits.wb
   psu.io.fu_in.bits.wb.v := is_lsu_load || io.fu_in.bits.wb.v
   psu.io.fu_in.bits.fu_type := io.fu_in.bits.ops.fu_type
+  psu.io.can_log_now := io.can_log_now
 
   /* LSMDU IO */
   io.fu_in.ready := (to_lsu && lsu.io.fu_in.ready) ||
@@ -88,7 +93,7 @@ class LSMDU extends Module {
     psu.io.fu_out.valid -> psu.io.fu_out.bits))
 
   if (conf.log_LSMDU) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {

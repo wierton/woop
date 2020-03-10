@@ -13,14 +13,6 @@ object GTimer {
   }
 }
 
-object TraceTrigger {
-  def apply(): Bool = {
-    val (t, c) = Counter(true.B, 0x7fffffff)
-    t >= (620093 - 80).U
-    false.B
-  }
-}
-
 class ROB[T<:Data](gen:T, idw:Int) extends Module {
   val io = IO(new Bundle {
     val enq = Flipped(DecoupledIO(new Bundle {
@@ -56,6 +48,7 @@ class Cistern[T<:Data](gen:T, entries:Int) extends Module {
   val io = IO(new Bundle {
     val enq = Flipped(DecoupledIO(gen))
     val deq = DecoupledIO(gen)
+    val can_log_now = Input(Bool())
   })
 
   val onoff = RegInit(true.B)
@@ -74,7 +67,7 @@ class Cistern[T<:Data](gen:T, entries:Int) extends Module {
   }
 
   if (conf.log_Cistern) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {

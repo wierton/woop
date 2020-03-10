@@ -14,6 +14,7 @@ class ALU extends Module {
     val fu_in = Flipped(DecoupledIO(new PRALU_FU_IO))
     val fu_out = DecoupledIO(new PRALU_OUT)
     val ex_flush = Flipped(ValidIO(new FlushIO))
+    val can_log_now = Input(Bool())
   })
 
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
@@ -61,6 +62,9 @@ class ALU extends Module {
   io.fu_out.bits.wb.data := result
   io.fu_out.bits.wb.instr := fu_in.wb.instr
   io.fu_out.bits.wb.is_ds := fu_in.wb.is_ds
+  io.fu_out.bits.wb.is_br := fu_in.wb.is_br
+  io.fu_out.bits.wb.npc := fu_in.wb.npc
+  io.fu_out.bits.wb.ip7 := N
   io.fu_out.bits.ex.et := Mux(alu_ov, ET_Ov, ET_None)
   io.fu_out.bits.ex.code := EC_Ov
   io.fu_out.bits.ex.addr := fu_in.wb.pc

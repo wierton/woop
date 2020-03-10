@@ -19,7 +19,7 @@ run-linux: $(EMU_BIN) compile-u-boot compile-linux
 	@mkdir -p $(LINUX_OBJDIR)
 	@cd $(LINUX_OBJDIR) && \
 	  ln -sf $(abspath $(EMU_BIN)) emulator && \
-	  ./emulator -e u-boot \
+	  ./emulator -b -e u-boot \
 	  --block-data ddr:0x4000000:vmlinux 2>npc.out
 
 run-nemu-linux: $(MIPS32_NEMU) compile-u-boot compile-linux

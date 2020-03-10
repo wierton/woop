@@ -13,9 +13,9 @@ class Core extends Module {
     val imem = new MemIO
     val dmem = new MemIO
     val commit = new CommitIO
-    val intr = new IntrIO
     val br_flush = Output(Bool())
     val ex_flush = Output(Bool())
+    val can_log_now = Input(Bool())
   })
 
   val rf = Module(new RegFile)
@@ -24,7 +24,11 @@ class Core extends Module {
   val pralu = Module(new PRALU)
   val lsmdu = Module(new LSMDU)
 
-  pralu.io.intr <> io.intr
+  rf.io.can_log_now := io.can_log_now
+  ifu.io.can_log_now := io.can_log_now
+  bridu.io.can_log_now := io.can_log_now
+  pralu.io.can_log_now := io.can_log_now
+  lsmdu.io.can_log_now := io.can_log_now
 
   ifu.io.fu_out <> bridu.io.fu_in
   bridu.io.fu_out <> pralu.io.fu_in

@@ -65,11 +65,16 @@ class DiffTop {
 
   void check_states();
   uint32_t get_dut_gpr(uint32_t r);
-  static device_t *find_device(const char *name);
   void single_cycle();
   void abort_prologue();
   void cycle_epilogue();
   void reset_ncycles(unsigned n);
+
+  bool can_log_now() const {
+    // return cycles >= (78333774 - 1000 - 80);
+    // return cycles >= 505514 - 80;
+    return true;
+  }
 
 public:
   // argv decay to the secondary pointer

@@ -22,7 +22,7 @@ ASAN_CFLAGS := -fsanitize=address,undefined -Wformat -Werror=format-security -We
 ASAN_LDFLAGS := -fsanitize=address,undefined
 endif
 
-EMU_CFLAGS := -I $(MIPS32_NEMU_HOME)/include $(ASAN_CFLAGS)
+EMU_CFLAGS := -I. -I $(MIPS32_NEMU_HOME)/include $(ASAN_CFLAGS)
 EMU_LDFLAGS := $(MIPS32_NEMU_LIB) -lpthread -lreadline -lSDL $(ASAN_LDFLAGS)
 
 $(EMU_TOP_V): $(SCALA_FILES)

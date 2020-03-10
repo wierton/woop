@@ -51,9 +51,6 @@ class LSUOp extends Bundle {
     val mask = maskOf(addr)
     val rdata = Mux(align, data, Mux(ext === LSUConsts.LSU_L, data << ((~l2b) << 3), data >> (l2b << 3)))
     val rmask = Mux(align, mask, Mux(ext === LSUConsts.LSU_L, mask << ((~l2b) << 3), mask >> (l2b << 3)))
-    if (conf.log_LSU) {
-      when (TraceTrigger()) { dump() }
-    }
 
     def dump():Unit = {
         printf("%d: LSU.c: addr=%x, data=%x, mdata=%x, mask=%x, rdata=%x, rmask=%x\n", GTimer(), addr, data, mask_data, mask, rdata, rmask)
@@ -87,6 +84,9 @@ class LSUStage2Data extends Bundle {
   val data = UInt(conf.xprlen.W)
   val addr = UInt(conf.xprlen.W)
   val is_cached = Bool()
+  val ip7 = Bool()
+  val is_br = Bool()
+  val npc = UInt(conf.xprlen.W)
 
   def load(ind:PRALU_LSMDU_IO) = {
     this := Cat(
@@ -97,7 +97,10 @@ class LSUStage2Data extends Bundle {
       ind.wb.id,
       ind.ops.op2,
       ind.paddr,
-      ind.is_cached
+      ind.is_cached,
+      ind.wb.ip7,
+      ind.wb.is_br,
+      ind.wb.npc
     ).asTypeOf(this)
   }
 }
@@ -108,6 +111,7 @@ class LSU extends Module with LSUConsts {
     val fu_in = Flipped(DecoupledIO(new PRALU_LSMDU_IO))
     val fu_out = ValidIO(new WriteBackIO)
     val working = Output(Bool())
+    val can_log_now = Input(Bool())
   })
 
   io.fu_in.ready := !io.fu_in.valid || io.dmem.req.ready
@@ -144,12 +148,15 @@ class LSU extends Module with LSUConsts {
   io.fu_out.bits.rd_idx := s3_in.rd_idx
   io.fu_out.bits.instr := s3_in.instr
   io.fu_out.bits.is_ds := N
+  io.fu_out.bits.ip7 := s3_in.ip7
+  io.fu_out.bits.is_br := s3_in.is_br
+  io.fu_out.bits.npc := s3_in.npc
   io.fu_out.bits.data := MuxCase(ze_data, Array(
     (s3_in.op.asUInt === LSU_LB) -> io.dmem.resp.bits.data(7, 0).asTypeOf(SInt(32.W)).asUInt,
     (s3_in.op.asUInt === LSU_LH) -> io.dmem.resp.bits.data(15, 0).asTypeOf(SInt(32.W)).asUInt))
 
   if (conf.log_LSU) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {

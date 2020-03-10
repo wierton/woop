@@ -85,13 +85,8 @@ class CommitIO extends Bundle {
   val valid = Output(Bool())
   val pc = Output(UInt(conf.xprlen.W))
   val instr = Output(UInt(conf.xprlen.W))
-  val gpr = Output(Vec(32, UInt(conf.xprlen.W)))
-}
-
-class IntrIO extends Bundle {
-  val time_intr = Output(Bool())
   val ip7 = Output(Bool())
-  val ip = Input(Vec(5, Bool()))
+  val gpr = Output(Vec(32, UInt(conf.xprlen.W)))
 }
 
 class FlushIO extends Bundle {
@@ -113,7 +108,10 @@ class WriteBackIO extends Bundle {
   val rd_idx = Output(UInt(REG_SZ.W))
   val wen = Output(Bool())
   val data = Output(UInt(conf.xprlen.W))
+  val ip7 = Output(Bool())
   val is_ds = Output(Bool()) // is_delayslot
+  val is_br = Output(Bool())
+  val npc = Output(UInt(conf.xprlen.W))
 }
 
 class IFU_BRIDU_IO extends Bundle {

@@ -12,6 +12,7 @@ class PRALUPipelineStage extends Module {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new PRALU_FU_IO))
     val fu_out = DecoupledIO(new PRALU_FU_IO)
+    val can_log_now = Input(Bool())
   })
 
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
@@ -35,8 +36,8 @@ class PRALU extends Module {
     val bp = ValidIO(new BypassIO)
     val ex_flush = ValidIO(new FlushIO)
     val br_flush = Flipped(ValidIO(new FlushIO))
-    val intr = new IntrIO
     val iaddr = Flipped(new TLBTransaction)
+    val can_log_now = Input(Bool())
   })
 
   val rs_ready = Mux((io.fu_in.bits.op1_sel === OP1_RS) ||
@@ -79,8 +80,9 @@ class PRALU extends Module {
   pru.io.fu_in.bits.ops.op1 := op1_data
   pru.io.fu_in.bits.ops.op2 := op2_data
   pru.io.fu_in.bits.ex := io.fu_in.bits.ex
-  pru.io.fu_out.ready := io.fu_out.ready
+  pru.io.fu_out.ready := pru.io.ehu_in.ready
   pru.io.br_flush <> io.br_flush
+  pru.io.can_log_now := io.can_log_now
 
   /* ALU IO */
   val alu = Module(new ALU)
@@ -92,7 +94,8 @@ class PRALU extends Module {
   alu.io.fu_in.bits.ops.op1 := op1_data
   alu.io.fu_in.bits.ops.op2 := op2_data
   alu.io.fu_in.bits.ex := io.fu_in.bits.ex
-  alu.io.fu_out.ready := io.fu_out.ready
+  alu.io.fu_out.ready := pru.io.ehu_in.ready
+  alu.io.can_log_now := io.can_log_now
 
   /* PipelineStage */
   val psu = Module(new PRALUPipelineStage)
@@ -103,13 +106,14 @@ class PRALU extends Module {
   psu.io.fu_in.bits.ops.op1 := op1_data
   psu.io.fu_in.bits.ops.op2 := op2_data
   psu.io.fu_in.bits.ex := io.fu_in.bits.ex
-  psu.io.fu_out.ready := io.fu_out.ready
+  psu.io.fu_out.ready := pru.io.ehu_in.ready
+  psu.io.can_log_now := io.can_log_now
 
   /* PRALU IO */
   io.fu_in.ready := reg_ready && pru.io.fu_in.ready &&
     alu.io.fu_in.ready && psu.io.fu_in.ready
 
-  pru.io.ehu_in.valid := alu.io.fu_out.valid || pru.io.fu_out.valid || psu.io.fu_out.valid
+  pru.io.ehu_in.valid := (alu.io.fu_out.valid || pru.io.fu_out.valid || psu.io.fu_out.valid) && !io.ex_flush.valid
   pru.io.ehu_in.bits.wb := Mux1H(Array(
     alu.io.fu_out.valid -> alu.io.fu_out.bits.wb,
     pru.io.fu_out.valid -> pru.io.fu_out.bits.wb,
@@ -125,17 +129,16 @@ class PRALU extends Module {
 
   /* bypass */
   io.bp.valid := alu.io.fu_out.valid || pru.io.fu_out.valid
-  io.bp.bits.v := io.fu_out.bits.wb.v
-  io.bp.bits.wen := io.fu_out.bits.wb.wen
-  io.bp.bits.rd_idx := io.fu_out.bits.wb.rd_idx
-  io.bp.bits.data :=  io.fu_out.bits.wb.data
+  io.bp.bits.v := pru.io.ehu_in.bits.wb.v
+  io.bp.bits.wen := pru.io.ehu_in.bits.wb.wen
+  io.bp.bits.rd_idx := pru.io.ehu_in.bits.wb.rd_idx
+  io.bp.bits.data :=  pru.io.ehu_in.bits.wb.data
 
   /* exception */
   io.ex_flush <> pru.io.ex_flush
-  io.intr <> pru.io.intr
 
   if (conf.log_PRALU) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {

@@ -14,6 +14,7 @@ class RegFile extends Module {
     val wb = Flipped(ValidIO(new WriteBackIO))
     val rfio = Flipped(new RegFileIO)
     val commit = Output(new CommitIO)
+    val can_log_now = Input(Bool())
   })
 
   val wbids = Mem(32, UInt(conf.INSTR_ID_SZ.W))
@@ -61,12 +62,13 @@ class RegFile extends Module {
   io.commit.valid := io.wb.valid
   io.commit.pc := io.wb.bits.pc
   io.commit.instr := io.wb.bits.instr.asUInt
+  io.commit.ip7 := io.wb.bits.ip7
   for (i <- 0 until 32) {
     io.commit.gpr(i) := Mux(io.wb.valid && io.wb.bits.wen && io.wb.bits.rd_idx === i.U, io.wb.bits.data, wb_rf(i))
   }
 
   if (conf.log_rf) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {

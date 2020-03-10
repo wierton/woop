@@ -17,8 +17,8 @@ class SimDev extends BlackBox {
 
 class SOC_EMU_TOP extends Module {
   val io = IO(new Bundle {
-    val intr = new IntrIO
     val commit = new CommitIO
+    val can_log_now = Input(Bool())
   })
 
   val core = Module(new Core)
@@ -28,6 +28,12 @@ class SOC_EMU_TOP extends Module {
   val crossbar = Module(new CrossbarNx1(4))
   // val icache = Module(new SimICache)
   val icache = Module(new IMemCistern(conf.icache_stages))
+
+  core.io.can_log_now := io.can_log_now
+  imux.io.can_log_now := io.can_log_now
+  dmux.io.can_log_now := io.can_log_now
+  crossbar.io.can_log_now := io.can_log_now
+  icache.io.can_log_now := io.can_log_now
 
   dev.io.clock := clock
   dev.io.reset := reset
@@ -46,11 +52,10 @@ class SOC_EMU_TOP extends Module {
 
   crossbar.io.out <> dev.io.in
 
-  core.io.intr <> io.intr
   core.io.commit <> io.commit
 
   if (conf.log_Top) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {

@@ -16,6 +16,7 @@ class IMemPipe[T<:Data](gen:T, entries:Int) extends Module {
     val deq = DecoupledIO(ValidIO(gen))
     val br_flush = Flipped(ValidIO(new FlushIO))
     val ex_flush = Flipped(ValidIO(new FlushIO))
+    val can_log_now = Input(Bool())
   })
 
   val head = RegInit(0.U(log2Ceil(entries).W))
@@ -74,7 +75,7 @@ class IMemPipe[T<:Data](gen:T, entries:Int) extends Module {
   }
 
   if (conf.log_IMemPipe) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {
@@ -100,6 +101,7 @@ class IFU extends Module {
     val fu_out = DecoupledIO(new IFU_BRIDU_IO)
     val br_flush = Flipped(ValidIO(new FlushIO))
     val ex_flush = Flipped(ValidIO(new FlushIO))
+    val can_log_now = Input(Bool())
   })
 
   // init to be valid, the first instruction
@@ -143,6 +145,7 @@ class IFU extends Module {
   s1_datas.io.deq.ready := io.imem.resp.fire() || s1_out_has_ex
   s1_datas.io.br_flush <> io.br_flush
   s1_datas.io.ex_flush <> io.ex_flush
+  s1_datas.io.can_log_now := io.can_log_now
   io.imem.req.valid := io.iaddr.resp.valid && !io.ex_flush.valid && s1_in.et === ET_None
   io.imem.req.bits.is_cached := io.iaddr.resp.bits.is_cached
   io.imem.req.bits.is_aligned := Y
@@ -163,7 +166,7 @@ class IFU extends Module {
   io.fu_out.bits.ex.asid := 0.U
 
   if (conf.log_IFU) {
-    when (TraceTrigger()) { dump() }
+    when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {
