@@ -109,8 +109,6 @@ void DiffTop::reset_ncycles(unsigned n) {
   }
 }
 
-extern bool nemu_can_log_now;
-
 void DiffTop::cycle_epilogue() {
   cycles++;
   silent_cycles++;
@@ -121,21 +119,6 @@ void DiffTop::cycle_epilogue() {
     abort();
   }
 
-  if (can_log_now()) {
-    nemu_can_log_now = true;
-    eprintf(
-        "NEMU: %ld: ip7=%d, commit_valid=%d, cause=%08x, "
-        "status=%08x, ERL=%d, EXL=%d, IE=%d, IM=%x, IP=%x, "
-        "BEV=%d, EC=%d, has_exception=%d, pc=%08x\n",
-        cycles, dut_ptr->io_commit_ip7,
-        dut_ptr->io_commit_valid, cpu.cp0.cpr[CP0_CAUSE][0],
-        cpu.cp0.cpr[CP0_STATUS][0], cpu.cp0.status.ERL,
-        cpu.cp0.status.EXL, cpu.cp0.status.IE,
-        cpu.cp0.status.IM, cpu.cp0.cause.IP,
-        cpu.cp0.status.BEV, cpu.cp0.cause.ExcCode,
-        cpu.has_exception, cpu.pc);
-  }
-
   if (!dut_ptr->io_commit_valid) { return; }
 
   silent_cycles = 0;
@@ -144,13 +127,7 @@ void DiffTop::cycle_epilogue() {
   if (dut_ptr->io_commit_ip7) { nemu_ptr->set_irq(7, 1); }
 
   /* nemu executes one cycle */
-  if (can_log_now()) {
-    eprintf("NEMU: before exec, pc=%08x\n", cpu.pc);
-  }
   nemu_ptr->exec(1);
-  if (can_log_now()) {
-    eprintf("NEMU: after exec, pc=%08x\n", cpu.pc);
-  }
 
   /* keep consistency when execute mfc0 count */
   mips_instr_t instr = dut_ptr->io_commit_instr;

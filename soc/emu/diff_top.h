@@ -73,7 +73,7 @@ class DiffTop {
   bool can_log_now() const {
     // return cycles >= (78333774 - 1000 - 80);
     // return cycles >= 505514 - 80;
-    return true;
+    return false;
   }
 
 public:
