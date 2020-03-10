@@ -13,4 +13,8 @@
 #define ESC_CYAN "\x1b[36m"
 #define ESC_RST "\x1b[0m"
 
+#ifndef eprintf
+#define eprintf(...) fprintf(stderr, __VA_ARGS__)
+#endif
+
 #endif

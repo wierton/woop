@@ -26,15 +26,6 @@ void DiffTop::abort_prologue() {
 }
 
 void DiffTop::check_states() {
-#if 0
-  cpu.pc = dut_ptr->io_commit_pc;
-#  define GPR_SET(i) \
-    cpu.gpr[i] = dut_ptr->io_commit_gpr_##i;
-  GPRS(GPR_SET);
-#  undef GPR_SET
-  return;
-#endif
-
 #define check_eq(a, b, ...) \
   if ((a) != (b)) {         \
     nemu_ptr->dump();       \
@@ -130,7 +121,7 @@ void DiffTop::cycle_epilogue() {
   nemu_ptr->exec(1);
 
   /* keep consistency when execute mfc0 count */
-  mips_instr_t instr = dut_ptr->io_commit_instr;
+  mips_instr_t instr = nemu_ptr->get_instr();
   if (instr.is_mfc0_count()) {
     uint32_t r = instr.get_rt();
     uint32_t count0 = get_dut_gpr(r);

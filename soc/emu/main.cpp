@@ -8,6 +8,7 @@
 #include <memory>
 #include <string.h>
 #include <syscalls.h>
+#include <sys/syscall.h>
 
 #include "common.h"
 #include "diff_top.h"
@@ -37,7 +38,6 @@ int main(int argc, const char **argv) {
     eprintf(ESC_RED "HIT BAD TRAP (%d)\n" ESC_RST, ret);
   }
 
-  // asm volatile("int $0x80": :"a"(__NR_exit), "b"(ret));
-  asm volatile("int $0x80": :"a"(__NR_exit), "D"(ret));
+  syscall(__NR_exit, ret);
   return ret;
 }
