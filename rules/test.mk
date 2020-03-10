@@ -4,6 +4,7 @@ INPUT ?= REF # for microbench, another mode is TEST
 
 AM_TESTS := $(filter-out cputests,$(shell ls $(AM_HOME)/tests))
 AM_APPS != ls $(AM_HOME)/apps
+MIPS_TESTS != ls $(MIPS_TEST_HOME)
 
 # AM apps
 $(foreach app,$(AM_APPS),$(eval $(call test_template,$(AM_HOME)/apps/$(app),$(app),)))
@@ -11,14 +12,11 @@ $(foreach app,$(AM_APPS),$(eval $(call test_template,$(AM_HOME)/apps/$(app),$(ap
 # AM tests
 $(foreach app,$(AM_TESTS),$(eval $(call test_template,$(AM_HOME)/tests/$(app),$(app),)))
 
-# insttest
-$(eval $(call test_template,$(INSTTEST_HOME),insttest,))
-
-# tlbtest
-$(eval $(call test_template,$(TLBTEST_HOME),tlbtest,))
+# mipstest
+$(foreach app,$(MIPS_TESTS),$(eval $(call test_template,$(MIPS_TEST_HOME)/$(app),$(app),)))
 
 # nanos
-$(eval $(call test_template,$(NANOS_HOME),nanos,))
+# $(eval $(call test_template,$(NANOS_HOME),nanos,))
 
 # cputests
 .PHONY: clean-cputests compile-cputests run-cputests run-nemu-cputests
