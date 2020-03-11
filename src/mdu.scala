@@ -65,17 +65,10 @@ class MDU extends Module with MDUConsts {
   io.working := fu_valid
 
   io.fu_out.valid := fu_valid
-  io.fu_out.bits.pc := fu_in.wb.pc
-  io.fu_out.bits.id := fu_in.wb.id
+  io.fu_out.bits := fu_in.wb
   io.fu_out.bits.v  := wb_rd
   io.fu_out.bits.wen := wb_rd
-  io.fu_out.bits.rd_idx := fu_in.wb.rd_idx
   io.fu_out.bits.data := result
-  io.fu_out.bits.instr := fu_in.wb.instr
-  io.fu_out.bits.is_ds := N
-  io.fu_out.bits.is_br := fu_in.wb.is_br
-  io.fu_out.bits.npc := fu_in.wb.npc
-  io.fu_out.bits.ip7 := fu_in.wb.ip7
 
   when (!io.fu_in.fire() && io.fu_out.valid) {
     fu_valid := N

@@ -14,6 +14,7 @@ class RegFile extends Module {
     val wb = Flipped(ValidIO(new WriteBackIO))
     val rfio = Flipped(new RegFileIO)
     val commit = Output(new CommitIO)
+    val ex_flush = Flipped(ValidIO(new FlushIO))
     val can_log_now = Input(Bool())
   })
 
@@ -57,6 +58,13 @@ class RegFile extends Module {
     rf_dirtys(io.rfio.rd_idx) := Y
     bp_readys(io.rfio.rd_idx) := N
     wbids(io.rfio.rd_idx) := io.rfio.wid
+  }
+
+  when (io.ex_flush.valid) {
+    for (i <- 0 until 32) {
+      rf_dirtys(i) := N
+      bp_readys(i) := Y
+    }
   }
 
   io.commit.valid := io.wb.valid

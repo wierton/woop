@@ -70,6 +70,7 @@ class PRU extends CPRS with LSUConsts {
     val ehu_out = DecoupledIO(new PRALU_LSMDU_IO)
     val br_flush = Flipped(ValidIO(new FlushIO))
     val ex_flush = ValidIO(new FlushIO)
+    val wb = Flipped(ValidIO(new WriteBackIO))
     val can_log_now = Input(Bool())
   })
 
@@ -183,9 +184,9 @@ class PRU extends CPRS with LSUConsts {
   val lsu_ec = MuxCase(lsu_res.ex.code, Array(
     lsu_bad_load  -> EC_AdEL,
     lsu_bad_store -> EC_AdES))
-  when (!io.fu_in.fire() && io.fu_out.fire()) {
+  when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
     fu_valid := N
-  } .elsewhen(io.fu_in.fire()) {
+  } .elsewhen(!io.ex_flush.valid && io.fu_in.fire()) {
     fu_valid := Y
   }
   io.fu_out.valid := fu_valid
@@ -297,17 +298,10 @@ class PRU extends CPRS with LSUConsts {
   }
 
   /* write back */
+  io.fu_out.bits.wb := fu_in.wb
   io.fu_out.bits.wb.v := is_mfc0
-  io.fu_out.bits.wb.id := fu_in.wb.id
-  io.fu_out.bits.wb.pc := fu_in.wb.pc
-  io.fu_out.bits.wb.instr := fu_in.wb.instr
-  io.fu_out.bits.wb.rd_idx := fu_in.wb.rd_idx
   io.fu_out.bits.wb.wen := is_mfc0 && (io.fu_out.bits.ex.et === ET_None)
   io.fu_out.bits.wb.data := Mux(is_mfc0, mf_val, fu_in.wb.data)
-  io.fu_out.bits.wb.is_ds := fu_in.wb.is_ds
-  io.fu_out.bits.wb.is_br := fu_in.wb.is_br
-  io.fu_out.bits.wb.npc := fu_in.wb.npc
-  io.fu_out.bits.wb.ip7 := N
 
   /* c0 instruction exception */
   val can_update_ex = (is_pru || is_lsu) && fu_in.ex.et === ET_None
@@ -329,12 +323,23 @@ class PRU extends CPRS with LSUConsts {
 
   /* process exception */
   val offset = WireInit(0.U(12.W))
-  val intr_enable = !cpr_status.ERL && !cpr_status.EXL && cpr_status.IE
-  val intr_valid = (cpr_cause.IP.asUInt & cpr_status.IM.asUInt).orR && intr_enable
-  val hard_intr_valid = Cat(for (i <- 2 until 8) yield cpr_cause.IP(i) && cpr_status.IM(i)).orR && intr_enable
   val ehu_valid = RegInit(N)
   val ehu_in = RegEnable(next=io.ehu_in.bits, enable=io.ehu_in.fire())
-  io.ehu_in.ready := io.ehu_out.ready || !ehu_valid
+  val intr_enable = !cpr_status.ERL && !cpr_status.EXL && cpr_status.IE
+  val intr_valid = (cpr_cause.IP.asUInt & cpr_status.IM.asUInt).orR && intr_enable
+  val ex_detected = ehu_valid && (ehu_in.ex.et =/= ET_None || intr_valid)
+  val ex_wb = RegNext(io.wb, init=0.U.asTypeOf(ValidIO(new WriteBackIO)))
+  val ex_waiting_wb = RegInit(N)
+  val ex_waiting_id = RegInit(0.U(conf.xprlen.W))
+  val ex_wb_come = ex_wb.valid && ex_wb.bits.id === ex_waiting_id
+  when (ex_detected) {
+    ex_waiting_wb := Y
+    ex_waiting_id := ehu_in.wb.id
+  }
+  when (ex_wb_come) { ex_waiting_wb := N }
+  io.ex_flush.valid := ex_waiting_wb && ex_wb_come
+  io.ehu_in.ready := (io.ehu_out.ready || !ehu_valid) &&
+    !ex_detected && !ex_waiting_wb
   io.ehu_out.valid := ehu_valid
   io.ehu_out.bits := ehu_in
   io.ehu_out.bits.wb.ip7 := cpr_cause.IP(7)
@@ -344,15 +349,24 @@ class PRU extends CPRS with LSUConsts {
     ehu_valid := Y
   }
   when (cpr_compare === cpr_count) { cpr_cause.IP(7) := Y }
-  io.ex_flush.valid := ehu_valid && (ehu_in.ex.et =/= ET_None || intr_valid)
-  when (io.ex_flush.valid) {
+  when (io.ex_flush.valid && ehu_in.ex.et =/= ET_Eret) {
     when (cpr_status.EXL === 0.U) {
-      when (ehu_in.wb.is_ds) {
-        cpr_cause.BD := Y
-        cpr_epc := ehu_in.wb.pc - 4.U
+      when (ehu_in.ex.et === ET_None) {
+        when (ehu_in.wb.is_br) {
+          cpr_cause.BD := Y
+          cpr_epc := ehu_in.wb.pc
+        } .otherwise {
+          cpr_cause.BD := N
+          cpr_epc := ehu_in.wb.npc
+        }
       } .otherwise {
-        cpr_cause.BD := N
-        cpr_epc := ehu_in.wb.pc
+        when (ehu_in.wb.is_ds) {
+          cpr_cause.BD := Y
+          cpr_epc := ehu_in.wb.pc - 4.U
+        } .otherwise {
+          cpr_cause.BD := N
+          cpr_epc := ehu_in.wb.pc
+        }
       }
 
       when (ehu_in.ex.et === ET_TLB_REFILL) {
@@ -391,6 +405,13 @@ class PRU extends CPRS with LSUConsts {
       cpr_entry_hi.asid := ehu_in.ex.asid
     }
   }
+  when (io.ex_flush.valid && ehu_in.ex.et === ET_Eret) {
+    when (cpr_status.ERL) {
+      cpr_status.ERL := N
+    } .otherwise {
+      cpr_status.EXL := N
+    }
+  }
   io.ex_flush.bits.br_target := Mux(
     ehu_in.ex.et === ET_Eret, cpr_epc,
     Mux(cpr_status.BEV === 1.U, "hbfc00200".U + offset,
@@ -401,6 +422,8 @@ class PRU extends CPRS with LSUConsts {
   }
   def dump():Unit = {
     printf("%d: PRU: fu_valid=%b, is_mfc0=%b, is_mtc0=%b, cpr_addr=%b, mf_val=%x, can_update_ex=%b, offset=%x, intr_enable=%b, intr_valid=%b\n", GTimer(), fu_valid, is_mfc0, is_mtc0, cpr_addr, mf_val, can_update_ex, offset, intr_enable, intr_valid)
+    printf("%d: PRU: is_pru=%b, ex_detected=%b, ex_wait_wb=%b, ex_wait_id=%x, ex_wb_come=%b\n", GTimer(), is_pru, ex_detected, ex_waiting_wb, ex_waiting_id, ex_wb_come)
+    printf("%d: PRU: is_lsu=%b, lsu_vaddr=%x, lsu_bad_load=%b, lsu_bad_store=%b, lsu_bad_addr=%x, lsu_res={%x, et:%d, code:%d}, lsu_has_ex=%b, lsu_et=%d, lsu_ec=%d\n", GTimer(), is_lsu, lsu_vaddr, lsu_bad_load, lsu_bad_store, lsu_bad_addr, lsu_res.paddr, lsu_res.ex.et, lsu_res.ex.code, lsu_has_ex, lsu_et, lsu_ec)
     printf("%d: PRU: entry_lo0=%x, entry_lo1=%x, context=%x, pagemask=%x, wired=%x, badvaddr=%x\n", GTimer(), cpr_entry_lo0.asUInt, cpr_entry_lo1.asUInt, cpr_context.asUInt, cpr_pagemask.asUInt, cpr_wired.asUInt, cpr_badvaddr.asUInt)
     printf("%d: PRU: count=%x, entry_hi=%x, compare=%x, status=%x, cause=%x, epc=%x, prid=%x\n", GTimer(), cpr_count.asUInt, cpr_entry_hi.asUInt, cpr_compare.asUInt, cpr_status.asUInt, cpr_cause.asUInt, cpr_epc.asUInt, cpr_prid.asUInt)
     printf("%d: PRU: ebase=%x, config=%x, config1=%x\n", GTimer(), cpr_ebase.asUInt, cpr_config.asUInt, cpr_config1.asUInt)

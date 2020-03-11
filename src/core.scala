@@ -34,6 +34,7 @@ class Core extends Module {
   bridu.io.fu_out <> pralu.io.fu_in
   pralu.io.fu_out <> lsmdu.io.fu_in
   lsmdu.io.fu_out <> rf.io.wb
+  lsmdu.io.fu_out <> pralu.io.wb
 
   rf.io.bp <> pralu.io.bp
   rf.io.rfio <> bridu.io.rfio
@@ -46,6 +47,7 @@ class Core extends Module {
   pralu.io.br_flush <> bridu.io.br_flush
   ifu.io.ex_flush <> pralu.io.ex_flush
   bridu.io.ex_flush <> pralu.io.ex_flush
+  rf.io.ex_flush <> pralu.io.ex_flush
 
   pralu.io.rs_data <> rf.io.rfio.rs_data
   pralu.io.rt_data <> rf.io.rfio.rt_data

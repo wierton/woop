@@ -3,12 +3,9 @@
 
 #if 1
 extern "C" {
+#  undef eprintf
 #  include "cpu.h"
 }
-#endif
-
-#ifndef eprintf
-#  define eprintf(...) fprintf(stderr, __VA_ARGS__)
 #endif
 
 /* clang-format off */

@@ -52,23 +52,16 @@ class ALU extends Module {
     (fu_op === ALU_SUB_OV)  -> ((!op1(31) && op2(31) && result(31)) || (op1(31) && !op2(31) && !result(31)))))
 
   io.fu_out.valid := fu_valid
-  io.fu_out.bits.wb.pc := fu_in.wb.pc
-  io.fu_out.bits.wb.id := fu_in.wb.id
+  io.fu_out.bits.wb := fu_in.wb
   io.fu_out.bits.wb.v  := Y
   io.fu_out.bits.wb.wen := MuxCase(!alu_ov, Array(
     (fu_op === ALU_MOVN) -> (op2 =/= 0.U),
     (fu_op === ALU_MOVZ) -> (op2 === 0.U)))
   io.fu_out.bits.wb.rd_idx := rd_idx
   io.fu_out.bits.wb.data := result
-  io.fu_out.bits.wb.instr := fu_in.wb.instr
-  io.fu_out.bits.wb.is_ds := fu_in.wb.is_ds
-  io.fu_out.bits.wb.is_br := fu_in.wb.is_br
-  io.fu_out.bits.wb.npc := fu_in.wb.npc
-  io.fu_out.bits.wb.ip7 := N
+  io.fu_out.bits.ex := fu_in.ex
   io.fu_out.bits.ex.et := Mux(alu_ov, ET_Ov, ET_None)
   io.fu_out.bits.ex.code := EC_Ov
-  io.fu_out.bits.ex.addr := fu_in.wb.pc
-  io.fu_out.bits.ex.asid := 0.U
 
   when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
     fu_valid := N

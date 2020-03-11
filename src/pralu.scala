@@ -12,6 +12,7 @@ class PRALUPipelineStage extends Module {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new PRALU_FU_IO))
     val fu_out = DecoupledIO(new PRALU_FU_IO)
+    val ex_flush = Flipped(ValidIO(new FlushIO))
     val can_log_now = Input(Bool())
   })
 
@@ -20,9 +21,9 @@ class PRALUPipelineStage extends Module {
   io.fu_in.ready := io.fu_out.ready || !fu_valid
   io.fu_out.valid := fu_valid && (fu_in.ops.fu_type === FU_BRU || fu_in.ops.fu_type === FU_MDU)
   io.fu_out.bits := fu_in
-  when (!io.fu_in.fire() && io.fu_out.fire()) {
+  when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
     fu_valid := N
-  } .elsewhen(io.fu_in.fire()) {
+  } .elsewhen(!io.ex_flush.valid && io.fu_in.fire()) {
     fu_valid := Y
   }
 }
@@ -37,6 +38,7 @@ class PRALU extends Module {
     val ex_flush = ValidIO(new FlushIO)
     val br_flush = Flipped(ValidIO(new FlushIO))
     val iaddr = Flipped(new TLBTransaction)
+    val wb = Flipped(ValidIO(new WriteBackIO))
     val can_log_now = Input(Bool())
   })
 
@@ -99,6 +101,7 @@ class PRALU extends Module {
 
   /* PipelineStage */
   val psu = Module(new PRALUPipelineStage)
+  psu.io.ex_flush <> pru.io.ex_flush
   psu.io.fu_in.valid := io.fu_in.fire()
   psu.io.fu_in.bits.wb := io.fu_in.bits.wb
   psu.io.fu_in.bits.ops.fu_type := io.fu_in.bits.fu_type
@@ -125,6 +128,7 @@ class PRALU extends Module {
     psu.io.fu_out.valid -> psu.io.fu_out.bits.ex))
   pru.io.ehu_in.bits.is_cached := pru.io.fu_out.bits.is_cached
   pru.io.ehu_in.bits.paddr := pru.io.fu_out.bits.paddr
+  pru.io.wb <> io.wb
   io.fu_out <> pru.io.ehu_out
 
   /* bypass */
