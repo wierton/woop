@@ -71,9 +71,9 @@ class DiffTop {
   void reset_ncycles(unsigned n);
 
   bool can_log_now() const {
-    return cycles >= (80588549 - 1000 - 80);
+    // return cycles >= (80588549 - 1000 - 80);
     // return cycles >= 537535 - 1000 - 80;
-    // return false;
+    return false;
   }
 
 public:

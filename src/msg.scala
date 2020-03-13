@@ -42,6 +42,8 @@ class RegFileIO extends Bundle {
 class TLBReq extends Bundle {
   val func = Output(Bool()) // 1: load, 0:store
   val vaddr = Output(UInt(conf.xprlen.W))
+  val len = Output(UInt(ML_SZ.W))
+  val is_aligned = Output(Bool())
 }
 
 class TLBResp extends Bundle {
@@ -178,3 +180,7 @@ class BRINFO_IO extends Bundle {
   val br_target = Output(UInt(conf.xprlen.W))
 }
 
+class TLB_CP0_PORT extends Bundle {
+  val index = Output(UInt(log2Ceil(conf.tlbsz).W))
+  val entry = Input(new TLBEntry)
+}

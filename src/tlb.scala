@@ -1,0 +1,156 @@
+package woop
+package core
+
+import chisel3._
+import chisel3.util._
+import woop.consts._
+import woop.configs._
+import woop.utils._
+import woop.dumps._
+
+class TLBPhyn extends Bundle {
+  val pfn = UInt(24.W)
+  val c   = UInt(3.W)
+  val d   = Bool()
+  val v   = Bool()
+}
+
+class TLBEntry extends Bundle {
+  val pagemask = UInt(16.W)
+  val vpn  = UInt(19.W)
+  val g    = Bool()
+  val asid = UInt(8.W)
+  val p0   = new TLBPhyn
+  val p1   = new TLBPhyn
+}
+
+
+class TLB extends Module {
+  val io = IO(new Bundle {
+    val iaddr = Flipped(new TLBTransaction)
+    val daddr = Flipped(new TLBTransaction)
+    val tlb_cp0_rport = Flipped(new TLB_CP0_PORT)
+    val tlb_cp0_wport = Flipped(ValidIO(new TLB_CP0_PORT))
+    val br_flush = Flipped(ValidIO(new FlushIO))
+    val ex_flush = Flipped(ValidIO(new FlushIO))
+  })
+
+  /* TLB rw io */
+  val tlb_entries = Mem(conf.tlbsz, new TLBEntry)
+  val tlb_entry_ports = for (i <- 0 until conf.tlbsz) yield tlb_entries(i)
+  io.tlb_cp0_rport.entry := Mux1H(
+    for (i <- 0 until conf.tlbsz) yield
+    (i.U === io.tlb_cp0_rport.index) -> io.tlb_cp0_rport.entry)
+  when (io.tlb_cp0_wport.valid) {
+    for (i <- 0 until conf.tlbsz) {
+      when (i.U === io.tlb_cp0_wport.index) {
+        tlb_entry_ports(i) := io.tlb_cp0_wport.entry
+      }
+    }
+  }
+
+  def tlb_entry_match(vpn:UInt, tlb_port:TLBEntry) = {
+    val mask = tlb_port.pagemask.asTypeOf(UInt(32.W))
+    (tlb_port.vpn & ~mask) === (vpn & ~mask) &&
+    (tlb_port.g || tlb_port.asid === cpr_entry_hi.asid)
+  }
+  def tlb_entry_translate(vaddr:UInt, rwbit:UInt, tlb_port:TLBEntry) = {
+    val mask = tlb_port.pagemask.asTypeOf(UInt(32.W))
+    val eobit = (vaddr & ((mask + 1.U) << 12)).orR
+    val phyn = Mux(eobit, tlb_port.p1, tlb_port.p0)
+    val excode = Mux(rwbit === MX_RD, EC_TLBL, EC_TLBS)
+    val res = WireInit(0.U.asTypeOf(new MMURes))
+    when (phyn.v === 0.U) {
+      res.ex.et := ET_TLB_Inv
+      res.ex.code := excode
+      res.paddr := 0.U
+    } .elsewhen (phyn.d === 0.U && rwbit === MX_WR) {
+      res.ex.et := ET_TLB_Mod
+      res.ex.code := EC_Mod
+      res.paddr := 0.U
+    } .otherwise {
+      val highbits = (phyn.pfn & ~mask) << 12
+      val lowbits = vaddr & (((mask + 1.U) << 12) - 1.U)
+      res.paddr := highbits | lowbits
+      res.ex.et := ET_None
+      res.ex.code := excode
+    }
+    res.ex.addr := vaddr
+    res.ex.asid := tlb_port.asid
+    res
+  }
+  class MMURes extends Bundle {
+    val ex = new CP0Exception
+    val paddr = UInt(conf.xprlen.W)
+  }
+  def tlb_translate(vaddr:UInt, rwbit:UInt) = {
+    val tlb_rports = for (i <- 0 until conf.tlbsz) yield tlb_entries(i)
+    val matches = Reverse(Cat(for (i <- 0 until conf.tlbsz) yield
+      tlb_entry_match(vaddr(31, 13), tlb_rports(i))))
+    val miss = !matches.orR
+    val hit_res = Mux1H(for (i <- 0 until conf.tlbsz) yield
+      matches(i) -> tlb_entry_translate(vaddr, rwbit, tlb_rports(i)))
+    val miss_res = WireInit(0.U.asTypeOf(new MMURes))
+    miss_res.ex.et := ET_TLB_REFILL
+    miss_res.ex.code := Mux(rwbit === MX_RD, EC_TLBL, EC_TLBS)
+    miss_res.ex.addr := vaddr
+    miss_res.ex.asid := cpr_entry_hi.asid
+    miss_res.paddr := 0.U
+    Mux(miss, miss_res, hit_res)
+  }
+
+  def is_cached(vaddr:UInt) = vaddr(31, 29) =/= "b101".U
+  def ioremap(addr:UInt) = Cat("b000".U, addr(28, 0))
+  def vaddr2paddr(vaddr:UInt, rwbit:UInt) = {
+    val mmu_res = tlb_translate(vaddr, rwbit)
+    val vid = vaddr(31, 29)
+    val paddr = Mux1H(Array(
+      (vid === 4.U || vid === 5.U) -> ioremap(vaddr),
+      (vid === 6.U) -> ioremap(mmu_res.paddr),
+      (vid(2) === 0.U) -> Mux(cpr_status.ERL,
+        vaddr, ioremap(mmu_res.paddr)),
+    ))
+    val et = Mux1H(Array(
+      (vid === 4.U || vid === 5.U) -> ET_None,
+      (vid === 6.U) -> mmu_res.ex.et,
+      (vid(2) === 0.U) -> Mux(cpr_status.ERL, ET_None, mmu_res.ex.et),
+    ))
+    val res = WireInit(0.U.asTypeOf(new MMURes))
+    res.ex.et := et
+    res.ex.code := mmu_res.ex.code
+    res.ex.addr := vaddr
+    res.paddr := paddr
+    res
+  }
+
+  def process_request(tlbreq:TLBTransaction, flush:Bool) = {
+    /* handle memory translate request, a pipeline stage */
+    val tlbreq_in = RegEnable(tlbreq.bits, enable=tlbreq.fire()))
+    val tlbreq_valid = RegInit(N)
+    val tlbreq_res = vaddr2paddr(tlbreq_in.vaddr, tlbreq_in.func)
+    val addr_l2b = Mux(tlbreq_in.is_aligned,
+      tlbreq_in.vaddr(1, 0), "b00".U(2.W))
+    val addr_has_ex = Mux1H(Array(
+      (tlbreq_in.len === ML_1) -> N,
+      (tlbreq_in.len === ML_2) -> (addr_l2b(0)),
+      (tlbreq_in.len === ML_4) -> (addr_l2b =/= 0.U),
+    ))
+    val addr_ex = WireInit(0.U.asTypeOf(new CP0Exception))
+    addr_ex.et := ET_ADDR_ERR
+    addr_ex.code := Mux(tlbreq_in.func === MX_RD, EC_AdEL, EC_AdES)
+
+    io.iaddr.req.ready := io.iaddr.resp.ready || !tlbreq_valid
+    io.iaddr.resp.valid := tlbreq_valid
+    io.iaddr.resp.bits.paddr := tlbreq_res.paddr
+    io.iaddr.resp.bits.is_cached := is_cached(tlbreq_in.vaddr)
+    io.iaddr.resp.bits.ex := Mux(addr_has_ex, addr_ex, tlbreq_res.ex)
+    when (flush || (!io.iaddr.req.fire() && io.iaddr.resp.fire())) {
+      tlbreq_valid := N
+    } .elsewhen (!flush && io.iaddr.req.fire()) {
+      tlbreq_valid := Y
+    }
+  }
+
+  process_request(io.iaddr, io.br_flush.valid || io.ex_flush.valid)
+  process_request(io.daddr, io.ex_flush.valid)
+}
