@@ -35,7 +35,7 @@ object conf {
   val log_rf = true
   val log_IFU = true
   val log_IMemPipe = true
-  val log_BRIDU = true
+  val log_IDU = true
   val log_EXU = true
   val log_PRU = true
   val log_ALU = true

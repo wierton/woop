@@ -124,12 +124,12 @@ class CP0 extends CPRS with LSUConsts {
   }
 
   /* process exception */
-  val ip = WireInit(VecInit(8, N)))
+  val ip = WireInit(VecInit(8, N))
   val is_mtc0_cause = io.cp0_wport.valid && io.cp0_wport.addr === CPR_CAUSE
   val cpr_wcause = io.cp0_wport.data.asTypeOf(new CP0Cause)
   val intr_enable = !cpr_status.ERL && !cpr_status.EXL && cpr_status.IE
-  val intr_valid = (ip.asUInt & cpr_status.IM.asUInt).orR
-    && intr_enable && io.exu.ex.et === ET_None
+  val intr_valid = (ip.asUInt & cpr_status.IM.asUInt).orR &&
+    intr_enable && io.exu.ex.et === ET_None
   val offset = WireInit(0.U(12.W))
   ip(0) := is_mtc0_cause && cpr_wcause.IP(0)
   ip(1) := is_mtc0_cause && cpr_wcause.IP(1)

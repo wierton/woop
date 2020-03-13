@@ -14,26 +14,30 @@ class EXU extends Module {
     val fu_in = Flipped(DecoupledIO(new EXU_IN))
     val fu_out = DecoupledIO(new EXU_OUT)
 
+    val cp0 = new EXU_CP0_IO
     val cp0_rport = new CPR_RPORT
     val cp0_wport = ValidIO(new CPR_WPORT)
     val cp0_tlbr_port = new CP0_TLBR_PORT
     val cp0_tlbw_port = ValidIO(new CP0_TLBW_PORT)
     val cp0_tlbp_port = ValidIO(new CP0_TLBP_PORT)
-    val hard_intr = Output(Bool())
 
     val daddr = new TLBTransaction
     val tlb_rport = new TLB_RPORT
     val tlb_wport = ValidIO(new TLB_WPORT)
     val tlb_pport = new TLB_PPORT
 
-    val ex_flush = ValidIO(new FlushIO)
+    val wb = Flipped(ValidIO(new WriteBackIO))
+    val bp = ValidIO(new BypassIO)
     val can_log_now = Input(Bool())
   })
 
+  val wait_wb = RegInit(N)
+  val wait_id = RegInit(0.U(INSTR_ID_SZ.W))
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
   val fu_valid = RegInit(N)
 
-  io.fu_in.ready := io.fu_out.ready || !fu_valid
+  io.fu_in.ready := (io.fu_out.ready || !fu_valid) &&
+    !(wait_wb || (io.cp0.valid && ip.cp0.intr))
 
   val fu_type = fu_in.ops.fu_type
   val fu_op   = fu_in.ops.fu_op
@@ -91,11 +95,23 @@ class EXU extends Module {
     fu_type === FU_PRU && fu_op === PRU_MTC0
   io.cp0_wport.addr := cpr_addr
   io.cp0_wport.data := op1
-  val soft_intr_et
-  val pru_ex = MuxLookup(ET_None, fu_type, Array(
-    PRU_SYSCALL -> Cat(ET_Sys, EC_Sys),
-    PRU_ERET    -> Cat(ET_Eret, EC_None),
-  ))
+
+  /* pru */
+  val pru_ex = WireInit(0.U.asTypeOf(new CP0Exception))
+  pru_ex.et := MuxLookup(ET_None, fu_op, Array(
+    PRU_SYSCALL -> ET_Sys,
+    PRU_ERET    -> ET_Eret))
+  pru_ex.code := Mux(fu_op === PRU_SYSCALL, EC_Sys, EC_None)
+
+  /* cp0 */
+  io.cp0.valid := io.fu_out.fire()
+  io.cp0.wb := io.fu_out.wb
+  io.cp0.ex := MuxLookup(fu_in.ex, fu_type, Array(
+    FU_ALU -> alu_ex, FU_LSU -> lsu_ex, FU_PRU -> pru_ex))
+  when (io.cp0.valid && io.cp0.intr) { wait_wb := Y }
+  when (io.wb.valid && io.wb.bits.wid === wait_id) {
+    wait_wb := N
+  }
 
   /* fu_out */
   io.fu_out.valid := fu_valid
@@ -108,8 +124,6 @@ class EXU extends Module {
   io.fu_out.wb.v := wb_info(33)
   io.fu_out.wb.wen := wb_info(32)
   io.fu_out.wb.data := wb_info(31, 0)
-  io.fu_out.ex := MuxLookup(fu_in.ex, fu_type, Array(
-    FU_ALU -> alu_ex, FU_LSU -> lsu_ex, FU_PRU -> pru_ex))
 
   /* tlbr */
   val tlbr_mask = ~io.tlb_rport.pagemask.mask.asTypeOf(UInt(32.W))
@@ -154,9 +168,9 @@ class EXU extends Module {
   io.cp0_tlbp_port.index := io.tlb_pport.index
 
   /* pipeline logic */
-  when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
+  when (!io.fu_in.fire() && io.fu_out.fire()) {
     fu_valid := N
-  } .elsewhen(!io.ex_flush.valid && io.fu_in.fire()) {
+  } .elsewhen(io.fu_in.fire()) {
     fu_valid := Y
   }
 }

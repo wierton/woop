@@ -29,26 +29,15 @@ class TLB extends Module {
   val io = IO(new Bundle {
     val iaddr = Flipped(new TLBTransaction)
     val daddr = Flipped(new TLBTransaction)
-    val tlb_rport = Flipped(new TLB_RPORT)
-    val tlb_wport = Flipped(ValidIO(new TLB_WPORT))
-    val tlbp = Flipped(new TLBP_IO)
+    val rport = Flipped(new TLB_RPORT)
+    val wport = Flipped(ValidIO(new TLB_WPORT))
+    val pport = Flipped(new TLB_PPORT)
     val br_flush = Flipped(ValidIO(new FlushIO))
     val ex_flush = Flipped(ValidIO(new FlushIO))
   })
 
-  /* TLB rw io */
   val tlb_entries = Mem(conf.tlbsz, new TLBEntry)
   val tlb_entry_ports = for (i <- 0 until conf.tlbsz) yield tlb_entries(i)
-  io.tlb_cp0_rport.entry := Mux1H(
-    for (i <- 0 until conf.tlbsz) yield
-    (i.U === io.tlb_cp0_rport.index) -> io.tlb_cp0_rport.entry)
-  when (io.tlb_cp0_wport.valid) {
-    for (i <- 0 until conf.tlbsz) {
-      when (i.U === io.tlb_cp0_wport.bits.index) {
-        tlb_entry_ports(i) := io.tlb_cp0_wport.bits.entry
-      }
-    }
-  }
 
   def tlb_entry_match(vpn:UInt, tlb_port:TLBEntry) = {
     val mask = tlb_port.pagemask.asTypeOf(UInt(32.W))
@@ -126,7 +115,7 @@ class TLB extends Module {
 
   def process_request(tlbreq:TLBTransaction, flush:Bool) = {
     /* handle memory translate request, a pipeline stage */
-    val tlbreq_in = RegEnable(tlbreq.bits, enable=tlbreq.fire()))
+    val tlbreq_in = RegEnable(tlbreq.bits, enable=tlbreq.fire())
     val tlbreq_valid = RegInit(N)
     val tlbreq_res = vaddr2paddr(tlbreq_in.vaddr, tlbreq_in.func)
     val addr_l2b = Mux(tlbreq_in.is_aligned,
@@ -156,7 +145,20 @@ class TLB extends Module {
   process_request(io.iaddr, io.br_flush.valid || io.ex_flush.valid)
   process_request(io.daddr, io.ex_flush.valid)
 
-  val matches = Reverse(Cat(for (i <- 0 until conf.tlbsz) yield tlb_entry_match(io.tlbp.entry_hi.vpn, tlb_entry_ports(i))))
-  io.tlbp.index.p := !matches.orR
-  io.tlbp.index.index := Mux1H(for (i <- o until conf.tlbsz) yield matches(i) -> i.U)
+
+  /* TLB rw io */
+  io.rport.entry := Mux1H(
+    for (i <- 0 until conf.tlbsz) yield
+    (i.U === io.rport.index) -> io.rport.entry)
+  when (io.wport.valid) {
+    for (i <- 0 until conf.tlbsz) {
+      when (i.U === io.wport.bits.index) {
+        tlb_entry_ports(i) := io.wport.bits.entry
+      }
+    }
+  }
+
+  val matches = Reverse(Cat(for (i <- 0 until conf.tlbsz) yield tlb_entry_match(io.pport.entry_hi.vpn, tlb_entry_ports(i))))
+  io.pport.index.p := !matches.orR
+  io.pport.index.index := Mux1H(for (i <- o until conf.tlbsz) yield matches(i) -> i.U)
 }

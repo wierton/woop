@@ -8,12 +8,10 @@ import woop.configs._
 import woop.dumps._
 import woop.utils._
 
-class BRIDU extends Module with LSUConsts with MDUConsts {
+class IDU extends Module with LSUConsts with MDUConsts {
   val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new IFU_BRIDU_IO))
-    val fu_out = DecoupledIO(new BRIDU_EXU_IO)
-    val rfio = new RegFileIO
-    val br_flush = ValidIO(new FlushIO)
+    val fu_in = Flipped(DecoupledIO(new IFU_IDU_IO))
+    val fu_out = DecoupledIO(new IDU_ISU_IO)
     val ex_flush = Flipped(ValidIO(new FlushIO))
     val can_log_now = Input(Bool())
   })
@@ -126,74 +124,19 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
     (opd_sel === OPD_31) -> 31.U,
   ))
 
-  /* fu_out IO */
-  io.fu_out.bits.fu_type := fu_type
-  io.fu_out.bits.fu_op := fu_op
-  io.fu_out.bits.op1_sel := op1_sel
-  io.fu_out.bits.op2_sel := op2_sel
-  io.fu_out.bits.opd_sel := opd_sel
-  io.fu_out.bits.ex.et := Mux(valid, fu_in.ex.et, ET_RI)
-  io.fu_out.bits.ex.code := Mux(valid, fu_in.ex.code, EC_RI)
-  io.fu_out.bits.ex.addr := fu_in.ex.addr
-  io.fu_out.bits.ex.asid := 0.U
+  val ri_ex = WireInit(0.U.asTypeOf(new CP0Exception))
+  ri_ex.et := ET_None
+  ri_ex.code := EC_None
 
-  /* register RW */
-  val (instr_id, c) = Counter(io.fu_out.fire(), 1 << conf.INSTR_ID_SZ)
-  io.rfio.rs_idx := instr.rs_idx
-  io.rfio.rt_idx := instr.rt_idx
-  io.rfio.wen := io.fu_out.fire() && opd_sel =/= OPD_X
-  io.rfio.wid := instr_id
-  io.rfio.rd_idx := oprd_idx
-
-  /* branch check */
-  val se_imm = instr.imm.asTypeOf(SInt(conf.xprlen.W)).asUInt
-  val Ia = (fu_in.pc + 4.U + (se_imm << 2))(31, 0)
-  val Ja = Cat(Seq(fu_in.pc(31, 28), instr.addr, 0.U(2.W)))
-  val Za = fu_in.pc + (instr.imm << 2).asTypeOf(SInt(32.W)).asUInt + 4.U
-  val JRa = io.rfio.rs_data.bits
-  val rs_ready = io.rfio.rs_data.valid
-  val rt_ready = io.rfio.rt_data.valid
-  val rs_data = io.rfio.rs_data.bits
-  val rt_data = io.rfio.rt_data.bits
-  /* br_info={34:ready, 33:jump, 32:wb, 31..0:target} */
-  val br_info = Mux1H(Array(
-    (fu_op === BR_EQ)   -> Cat(rs_ready && rt_ready, rs_data === rt_data, N, Ia),
-    (fu_op === BR_NE)   -> Cat(rs_ready && rt_ready, rs_data =/= rt_data, N, Ia),
-    (fu_op === BR_LEZ)  -> Cat(rs_ready, rs_data.asSInt <= 0.S, N, Ia),
-    (fu_op === BR_GEZ)  -> Cat(rs_ready, rs_data.asSInt >= 0.S, N, Ia),
-    (fu_op === BR_LTZ)  -> Cat(rs_ready, rs_data.asSInt < 0.S, N, Ia),
-    (fu_op === BR_GTZ)  -> Cat(rs_ready, rs_data.asSInt > 0.S, N, Ia),
-    (fu_op === BR_GEZAL)-> Cat(rs_ready, rs_data.asSInt >= 0.S, Y, Za),
-    (fu_op === BR_LTZAL)-> Cat(rs_ready, rs_data.asSInt < 0.S, Y, Za),
-    (fu_op === BR_J)    -> Cat(Y, Y, N, Ja),
-    (fu_op === BR_JAL)  -> Cat(Y, Y, Y, Ja),
-    (fu_op === BR_JR)   -> Cat(Y, Y, N, JRa),
-    (fu_op === BR_JALR) -> Cat(Y, Y, Y, JRa)))
-  val br_ready = fu_type =/= FU_BRU || br_info(34)
-
-  io.fu_in.ready := (io.fu_out.ready && br_ready) || !fu_valid
-  io.br_flush.valid := io.fu_out.fire() && fu_type === FU_BRU && br_info(34) && br_info(33)
-  io.br_flush.bits.br_target := br_info(31, 0)
-
-  /* wb */
-  val is_delayslot = RegInit(N)
-  when (io.fu_out.fire() && fu_type === FU_BRU) { is_delayslot := Y }
-  .elsewhen (io.fu_out.fire()) { is_delayslot := N }
-  io.fu_out.valid := fu_valid && !io.ex_flush.valid
-  io.fu_out.bits.wb.v := fu_type === FU_BRU && br_info(32)
-  io.fu_out.bits.wb.id := instr_id
-  io.fu_out.bits.wb.pc := fu_in.pc
-  io.fu_out.bits.wb.instr := instr
-  /* only valid for bru */
-  io.fu_out.bits.wb.rd_idx := oprd_idx
-  io.fu_out.bits.wb.wen := io.fu_out.bits.wb.v
-  io.fu_out.bits.wb.data := fu_in.pc + 8.U
-  io.fu_out.bits.wb.is_ds := is_delayslot
-  io.fu_out.bits.wb.is_br := fu_type === FU_BRU
-  io.fu_out.bits.wb.npc := Mux(io.br_flush.valid,
-    io.br_flush.bits.br_target, fu_in.pc + 4.U)
-  io.fu_out.bits.wb.ip7 := N
-  /* only valid for bru */
+  io.fu_out.valid := fu_valid
+  io.fu_out.fu_type := fu_type
+  io.fu_out.fu_op := fu_op
+  io.fu_out.op1_sel := op1_sel
+  io.fu_out.op2_sel := op2_sel
+  io.fu_out.opd_sel := opd_sel
+  io.fu_out.ex := MuxCase(0.U.asTypeOf(new CP0Exception),
+    Array((fu_in.ex.et =/= ET_None) -> fu_in.ex,
+          (!valid) -> ri_ex))
 
   when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
     fu_valid := N
@@ -201,17 +144,16 @@ class BRIDU extends Module with LSUConsts with MDUConsts {
     fu_valid := Y
   }
 
-  if (conf.log_BRIDU) {
+  if (conf.log_IDU) {
     when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {
-    printf("%d: BRIDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, rd_idx=%d, se_imm=%x, Ia=%x, Ja=%x, JRa=%x, br_info=%x, br_ready=%b, is_ds=%b\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, oprd_idx, se_imm, Ia, Ja, JRa, br_info, br_ready, is_delayslot);
-    io.fu_in.dump("BRIDU.io.fu_in")
-    io.fu_out.dump("BRIDU.io.fu_out")
-    io.rfio.dump("BRIDU.io.rfio")
-    io.br_flush.dump("BRIDU.io.br_flush")
-    io.ex_flush.dump("BRIDU.io.ex_flush")
+    printf("%d: IDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, rd_idx=%d, se_imm=%x, Ia=%x, Ja=%x, JRa=%x, br_info=%x, br_ready=%b, is_ds=%b\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, oprd_idx, se_imm, Ia, Ja, JRa, br_info, br_ready, is_delayslot);
+    io.fu_in.dump("IDU.io.fu_in")
+    io.fu_out.dump("IDU.io.fu_out")
+    io.br_flush.dump("IDU.io.br_flush")
+    io.ex_flush.dump("IDU.io.ex_flush")
   }
 }
 

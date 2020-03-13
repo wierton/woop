@@ -24,6 +24,7 @@ class Instr extends Bundle {
 class CP0Exception extends Bundle {
   val et = UInt(ET_WIDTH.W)
   val code = UInt(EC_WIDTH.W)
+  val addr = Output(UInt(conf.xprlen.W))
 }
 
 class RegFileIO extends Bundle {
@@ -114,12 +115,6 @@ class WriteBackIO extends Bundle {
   val npc = Output(UInt(conf.xprlen.W))
 }
 
-class IFU_BRIDU_IO extends Bundle {
-  val pc = Output(UInt(conf.xprlen.W))
-  val instr = Output(UInt(conf.xprlen.W))
-  val ex = Output(new CP0Exception)
-}
-
 class EXU_OPS extends Bundle {
   val fu_type = Output(UInt(FU_TYPE_SZ.W))
   val fu_op = Output(UInt(FU_OP_SZ.W))
@@ -127,8 +122,15 @@ class EXU_OPS extends Bundle {
   val op2 = Output(UInt(conf.xprlen.W))
 }
 
-class BRIDU_EXU_IO extends Bundle {
-  val wb = new WriteBackIO
+class IFU_IDU_IO extends Bundle {
+  val pc = Output(UInt(conf.xprlen.W))
+  val instr = Output(UInt(conf.xprlen.W))
+  val ex = Output(new CP0Exception)
+}
+
+class IDU_ISU_IO extends Bundle {
+  val pc = Output(UInt(conf.xprlen.W))
+  val instr = Output(UInt(conf.xprlen.W))
   val fu_type = Output(UInt(FU_TYPE_SZ.W))
   val fu_op = Output(UInt(FU_OP_SZ.W))
   val op1_sel = Output(UInt(OP1_SEL_SZ.W))
@@ -137,7 +139,19 @@ class BRIDU_EXU_IO extends Bundle {
   val ex = Output(new CP0Exception)
 }
 
-class EXU_IN extends Bundle {
+class ISU_BRU_IO extends Bundle {
+  val fu_in = Flipped(ValidIO(new Bundle {
+    val wb = Output(new WriteBackIO)
+    val ops = Output(new EXU_OPS)
+  }))
+
+  val fu_out = ValidIO(new Bundle {
+    val wb = Output(new WriteBackIO)
+    val br_target = Output(UInt(conf.xprlen.W))
+  })
+}
+
+class ISU_EXU_IO extends Bundle {
   val wb = new WriteBackIO
   val ops = new EXU_OPS
   val ex = Output(new CP0Exception)
@@ -154,15 +168,6 @@ class EXU_LSMDU_IO extends Bundle {
 class EXU_OUT extends Bundle {
   val wb = new WriteBackIO
   val ex = Output(new CP0Exception)
-}
-
-class ISU_LSU_IO extends Bundle {
-  val fu_op = Output(UInt(FU_OP_SZ.W))
-  val pc = Output(UInt(conf.xprlen.W))
-  val base = Output(UInt(conf.xprlen.W))
-  val offset = Output(UInt(conf.xprlen.W))
-  val data = Output(UInt(conf.xprlen.W))
-  val rd_idx = Output(UInt(REG_SZ.W))
 }
 
 class EXU_WBU_IO extends Bundle {

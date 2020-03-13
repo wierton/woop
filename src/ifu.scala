@@ -98,7 +98,7 @@ class IFU extends Module {
   val io = IO(new Bundle {
     val imem = new MemIO
     val iaddr = new TLBTransaction
-    val fu_out = DecoupledIO(new IFU_BRIDU_IO)
+    val fu_out = DecoupledIO(new IFU_IDU_IO)
     val br_flush = Flipped(ValidIO(new FlushIO))
     val ex_flush = Flipped(ValidIO(new FlushIO))
     val can_log_now = Input(Bool())
@@ -162,8 +162,6 @@ class IFU extends Module {
   io.fu_out.bits.instr := Mux(s1_out_has_ex, 0.U, io.imem.resp.bits.data)
   io.fu_out.bits.ex.et := s1_out.bits.et
   io.fu_out.bits.ex.code := s1_out.bits.code
-  io.fu_out.bits.ex.addr := s1_out.bits.pc
-  io.fu_out.bits.ex.asid := 0.U
 
   if (conf.log_IFU) {
     when (io.can_log_now) { dump() }
