@@ -24,7 +24,8 @@ class Instr extends Bundle {
 class CP0Exception extends Bundle {
   val et = UInt(ET_WIDTH.W)
   val code = UInt(EC_WIDTH.W)
-  val addr = Output(UInt(conf.xprlen.W))
+  val addr = UInt(conf.xprlen.W)
+  val asid = UInt(8.W)
 }
 
 class RegFileIO extends Bundle {
@@ -130,7 +131,7 @@ class IFU_IDU_IO extends Bundle {
 
 class IDU_ISU_IO extends Bundle {
   val pc = Output(UInt(conf.xprlen.W))
-  val instr = Output(UInt(conf.xprlen.W))
+  val instr = Output(new Instr)
   val fu_type = Output(UInt(FU_TYPE_SZ.W))
   val fu_op = Output(UInt(FU_OP_SZ.W))
   val op1_sel = Output(UInt(OP1_SEL_SZ.W))

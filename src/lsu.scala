@@ -96,7 +96,7 @@ class LSUStage2Data extends Bundle {
       ind.wb.pc,
       ind.wb.id,
       ind.ops.op2,
-      ind.paddr,
+      ind.ops.op1,
       ind.is_cached,
       ind.wb.ip7,
       ind.wb.is_br,

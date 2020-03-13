@@ -11,8 +11,8 @@ import woop.dumps._
 
 class EXU extends Module {
   val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new EXU_IN))
-    val fu_out = DecoupledIO(new EXU_OUT)
+    val fu_in = Flipped(DecoupledIO(new ISU_EXU_IO))
+    val fu_out = DecoupledIO(new EXU_LSMDU_IO)
 
     val cp0 = new EXU_CP0_IO
     val cp0_rport = new CPR_RPORT
@@ -32,12 +32,12 @@ class EXU extends Module {
   })
 
   val wait_wb = RegInit(N)
-  val wait_id = RegInit(0.U(INSTR_ID_SZ.W))
+  val wait_id = RegInit(0.U(conf.INSTR_ID_SZ.W))
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
   val fu_valid = RegInit(N)
 
   io.fu_in.ready := (io.fu_out.ready || !fu_valid) &&
-    !(wait_wb || (io.cp0.valid && ip.cp0.intr))
+    !(wait_wb || (io.cp0.valid && io.cp0.intr))
 
   val fu_type = fu_in.ops.fu_type
   val fu_op   = fu_in.ops.fu_op
@@ -78,8 +78,8 @@ class EXU extends Module {
   val lsu_op = io.fu_in.bits.ops.fu_op.asTypeOf(new LSUOp)
   val lsu_ex = io.daddr.resp.bits.ex
   io.daddr.req.valid := io.fu_in.valid &&
-    io.fu_in.bits.fu_type === FU_LSU
-  io.daddr.req.bits.vaddr := io.fu_in.bits.op1
+    io.fu_in.bits.ops.fu_type === FU_LSU
+  io.daddr.req.bits.vaddr := io.fu_in.bits.ops.op1
   io.daddr.req.bits.len := lsu_op.len
   io.daddr.req.bits.is_aligned := lsu_op.align
 
@@ -93,50 +93,51 @@ class EXU extends Module {
   /* mtc0 */
   io.cp0_wport.valid := io.fu_out.fire() &&
     fu_type === FU_PRU && fu_op === PRU_MTC0
-  io.cp0_wport.addr := cpr_addr
-  io.cp0_wport.data := op1
+  io.cp0_wport.bits.addr := cpr_addr
+  io.cp0_wport.bits.data := op1
 
   /* pru */
   val pru_ex = WireInit(0.U.asTypeOf(new CP0Exception))
-  pru_ex.et := MuxLookup(ET_None, fu_op, Array(
+  pru_ex.et := MuxLookup(fu_op, ET_None, Array(
     PRU_SYSCALL -> ET_Sys,
     PRU_ERET    -> ET_Eret))
-  pru_ex.code := Mux(fu_op === PRU_SYSCALL, EC_Sys, EC_None)
+  pru_ex.code := Mux(fu_op === PRU_SYSCALL, EC_Sys, 0.U)
 
   /* cp0 */
   io.cp0.valid := io.fu_out.fire()
-  io.cp0.wb := io.fu_out.wb
-  io.cp0.ex := MuxLookup(fu_in.ex, fu_type, Array(
+  io.cp0.wb := io.fu_out.bits.wb
+  io.cp0.ex := MuxLookup(fu_type, fu_in.ex, Array(
     FU_ALU -> alu_ex, FU_LSU -> lsu_ex, FU_PRU -> pru_ex))
   when (io.cp0.valid && io.cp0.intr) { wait_wb := Y }
-  when (io.wb.valid && io.wb.bits.wid === wait_id) {
+  when (io.wb.valid && io.wb.bits.id === wait_id) {
     wait_wb := N
   }
 
   /* fu_out */
   io.fu_out.valid := fu_valid
-  io.fu_out.wb := fu_in.wb
-  val wb_info = Mux1H(
-    Cat(fu_in.wb.v, fu_in.wb.wen, fu_in.wb.data),
-    fu_type, Array(
+  io.fu_out.bits.wb := fu_in.wb
+  val wb_info = MuxLookup(fu_type,
+    Cat(fu_in.wb.v, fu_in.wb.wen, fu_in.wb.data), Array(
     FU_ALU -> Cat(Y, alu_wen, alu_wdata),
     FU_PRU -> Cat(pru_wen, pru_wen, pru_wdata)))
-  io.fu_out.wb.v := wb_info(33)
-  io.fu_out.wb.wen := wb_info(32)
-  io.fu_out.wb.data := wb_info(31, 0)
+  io.fu_out.bits.wb.v := wb_info(33)
+  io.fu_out.bits.wb.wen := wb_info(32)
+  io.fu_out.bits.wb.data := wb_info(31, 0)
+  io.fu_out.bits.ops.op1 := Mux(fu_in.ops.fu_type === FU_LSU, 
+    io.daddr.resp.bits.paddr, fu_in.ops.op1)
 
   /* tlbr */
-  val tlbr_mask = ~io.tlb_rport.pagemask.mask.asTypeOf(UInt(32.W))
+  val tlbr_mask = ~io.cp0_tlbr_port.pagemask.mask.asTypeOf(UInt(32.W))
   io.tlb_rport.index := io.cp0_tlbr_port.index.index
   io.cp0_tlbw_port.valid := io.fu_out.fire() &&
     fu_type === FU_PRU && fu_op === PRU_TLBR
   io.cp0_tlbw_port.bits.pagemask.mask := tlbr_mask
-  io.cp0_tlbw_port.bits.entry_hi.vpn := io.tlb_rport.entry.vpn & mask
-  io.cp0_tlbw_port.bits.entry_hi.asid := io.tlb_rport.entry.vpn & mask
+  io.cp0_tlbw_port.bits.entry_hi.vpn := io.tlb_rport.entry.vpn & tlbr_mask
+  io.cp0_tlbw_port.bits.entry_hi.asid := io.tlb_rport.entry.vpn & tlbr_mask
   io.cp0_tlbw_port.bits.entry_lo0 := io.tlb_rport.entry.p0
   io.cp0_tlbw_port.bits.entry_lo0.pfn := io.tlb_rport.entry.p0.pfn & tlbr_mask
   io.cp0_tlbw_port.bits.entry_lo1 := io.tlb_rport.entry.p1
-  io.cp0_tlb_wport.bits.entry_lo1.pfn := io.tlb_rport.entry.p1.pfn & tlbr_mask
+  io.cp0_tlbw_port.bits.entry_lo1.pfn := io.tlb_rport.entry.p1.pfn & tlbr_mask
 
   /* tlbw */
   val cpr_random = Reg(new CP0Random)
@@ -144,19 +145,19 @@ class EXU extends Module {
   io.tlb_wport.valid := io.fu_out.fire() &&
     fu_type === FU_PRU && (fu_op === PRU_TLBWI ||
     fu_op === PRU_TLBWR)
-  io.tlb_wport.index := Mux(fu_op === PRU_TLBWI, io.cp0_tlbr_port.index, cpr_random.index)
-  io.tlb_wport.entry.pagemask := io.cp0_tlbr_port.pagemask.mask
-  io.tlb_wport.entry.vpn := io.cp0_tlbr_port.entry_hi.vpn & tlbw_mask
-  io.tlb_wport.entry.asid := io.cp0_tlbr_port.entry_hi.asid
-  io.tlb_wport.entry.g := io.cp0_tlbr_port.entry_hi.g
-  io.tlb_wport.entry.p0.pfn := io.cp0_tlbr_port.entry_lo0.pfn & mask
-  io.tlb_wport.entry.p0.c := io.cp0_tlbr_port.entry_lo0.c
-  io.tlb_wport.entry.p0.d := io.cp0_tlbr_port.entry_lo0.d
-  io.tlb_wport.entry.p0.v := io.cp0_tlbr_port.entry_lo0.v
-  io.tlb_wport.entry.p1.pfn := io.cp0_tlbr_port.entry_lo1.pfn & mask
-  io.tlb_wport.entry.p1.c := io.cp0_tlbr_port.entry_lo1.c
-  io.tlb_wport.entry.p1.d := io.cp0_tlbr_port.entry_lo1.d
-  io.tlb_wport.entry.p1.v := io.cp0_tlbr_port.entry_lo1.v
+  io.tlb_wport.bits.index := Mux(fu_op === PRU_TLBWI, io.cp0_tlbr_port.index, cpr_random.index)
+  io.tlb_wport.bits.entry.pagemask := io.cp0_tlbr_port.pagemask.mask
+  io.tlb_wport.bits.entry.vpn := io.cp0_tlbr_port.entry_hi.vpn & tlbw_mask
+  io.tlb_wport.bits.entry.asid := io.cp0_tlbr_port.entry_hi.asid
+  io.tlb_wport.bits.entry.g := io.cp0_tlbr_port.entry_lo0.g && io.cp0_tlbr_port.entry_lo1.g
+  io.tlb_wport.bits.entry.p0.pfn := io.cp0_tlbr_port.entry_lo0.pfn & tlbw_mask
+  io.tlb_wport.bits.entry.p0.c := io.cp0_tlbr_port.entry_lo0.c
+  io.tlb_wport.bits.entry.p0.d := io.cp0_tlbr_port.entry_lo0.d
+  io.tlb_wport.bits.entry.p0.v := io.cp0_tlbr_port.entry_lo0.v
+  io.tlb_wport.bits.entry.p1.pfn := io.cp0_tlbr_port.entry_lo1.pfn & tlbw_mask
+  io.tlb_wport.bits.entry.p1.c := io.cp0_tlbr_port.entry_lo1.c
+  io.tlb_wport.bits.entry.p1.d := io.cp0_tlbr_port.entry_lo1.d
+  io.tlb_wport.bits.entry.p1.v := io.cp0_tlbr_port.entry_lo1.v
   when (io.tlb_wport.valid) {
     cpr_random.index := cpr_random.index + 1.U
   }
@@ -165,7 +166,7 @@ class EXU extends Module {
   io.tlb_pport.entry_hi := io.cp0_tlbr_port.entry_hi
   io.cp0_tlbp_port.valid := io.fu_out.fire() &&
     fu_type === FU_PRU && fu_op === PRU_TLBP
-  io.cp0_tlbp_port.index := io.tlb_pport.index
+  io.cp0_tlbp_port.bits.index := io.tlb_pport.index
 
   /* pipeline logic */
   when (!io.fu_in.fire() && io.fu_out.fire()) {

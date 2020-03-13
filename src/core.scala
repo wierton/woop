@@ -76,6 +76,6 @@ class Core extends Module {
   /* flush */
   io.br_flush <> isu.io.br_flush
   ifu.io.br_flush <> isu.io.br_flush
-  ifu.io.ex_flush <> exu.io.ex_flush
-  idu.io.ex_flush <> exu.io.ex_flush
+  ifu.io.ex_flush <> cp0.io.ex_flush
+  idu.io.ex_flush <> cp0.io.ex_flush
 }

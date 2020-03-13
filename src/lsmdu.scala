@@ -43,7 +43,7 @@ class LSMDUPipelineStage extends Module {
 class LSMDU extends Module {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new EXU_LSMDU_IO))
-    val fu_out = ValidIO(new WriteBackIO)
+    val wb = ValidIO(new WriteBackIO)
     val dmem = new MemIO
     val can_log_now = Input(Bool())
   })
@@ -86,8 +86,8 @@ class LSMDU extends Module {
   io.fu_in.ready := (to_lsu && lsu.io.fu_in.ready) ||
     (to_mdu && mdu.io.fu_in.ready) ||
     (to_psu && psu.io.fu_in.ready)
-  io.fu_out.valid := lsu.io.fu_out.valid || mdu.io.fu_out.valid || psu.io.fu_out.valid
-  io.fu_out.bits := Mux1H(Array(
+  io.wb.valid := lsu.io.fu_out.valid || mdu.io.fu_out.valid || psu.io.fu_out.valid
+  io.wb.bits := Mux1H(Array(
     lsu.io.fu_out.valid -> lsu.io.fu_out.bits,
     mdu.io.fu_out.valid -> mdu.io.fu_out.bits,
     psu.io.fu_out.valid -> psu.io.fu_out.bits))
@@ -100,7 +100,7 @@ class LSMDU extends Module {
     printf("%d: LSMDU: lsu.working=%b, mdu.working=%b, to_lsu=%b, to_mdu=%b, to_psu=%b\n", GTimer(), lsu.io.working, mdu.io.working, to_lsu, to_mdu, to_psu)
     lsu.io.fu_in.dump("LSU.io.fu_in")
     lsu.io.fu_out.dump("LSU.io.fu_out")
-    io.fu_out.dump("LSMDU.io.fu_out")
+    io.wb.dump("LSMDU.io.wb")
     io.fu_in.dump("LSMDU.io.fu_in")
   }
   assert (AtMost1H(lsu.io.fu_out.valid, mdu.io.fu_out.valid, psu.io.fu_out.valid))

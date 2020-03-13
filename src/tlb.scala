@@ -32,8 +32,10 @@ class TLB extends Module {
     val rport = Flipped(new TLB_RPORT)
     val wport = Flipped(ValidIO(new TLB_WPORT))
     val pport = Flipped(new TLB_PPORT)
+    val status = Input(new CP0Status)
     val br_flush = Flipped(ValidIO(new FlushIO))
     val ex_flush = Flipped(ValidIO(new FlushIO))
+    val can_log_now = Input(Bool())
   })
 
   val tlb_entries = Mem(conf.tlbsz, new TLBEntry)
@@ -42,7 +44,7 @@ class TLB extends Module {
   def tlb_entry_match(vpn:UInt, tlb_port:TLBEntry) = {
     val mask = tlb_port.pagemask.asTypeOf(UInt(32.W))
     (tlb_port.vpn & ~mask) === (vpn & ~mask) &&
-    (tlb_port.g || tlb_port.asid === cpr_entry_hi.asid)
+    (tlb_port.g || tlb_port.asid === io.pport.entry_hi.asid)
   }
   def tlb_entry_translate(vaddr:UInt, rwbit:UInt, tlb_port:TLBEntry) = {
     val mask = tlb_port.pagemask.asTypeOf(UInt(32.W))
@@ -65,8 +67,8 @@ class TLB extends Module {
       res.ex.et := ET_None
       res.ex.code := excode
     }
-    res.ex.addr := vaddr
     res.ex.asid := tlb_port.asid
+    res.ex.addr := vaddr
     res
   }
   class MMURes extends Bundle {
@@ -84,7 +86,6 @@ class TLB extends Module {
     miss_res.ex.et := ET_TLB_REFILL
     miss_res.ex.code := Mux(rwbit === MX_RD, EC_TLBL, EC_TLBS)
     miss_res.ex.addr := vaddr
-    miss_res.ex.asid := cpr_entry_hi.asid
     miss_res.paddr := 0.U
     Mux(miss, miss_res, hit_res)
   }
@@ -97,13 +98,13 @@ class TLB extends Module {
     val paddr = Mux1H(Array(
       (vid === 4.U || vid === 5.U) -> ioremap(vaddr),
       (vid === 6.U) -> ioremap(mmu_res.paddr),
-      (vid(2) === 0.U) -> Mux(cpr_status.ERL,
+      (vid(1) === 0.U) -> Mux(io.status.ERL,
         vaddr, ioremap(mmu_res.paddr)),
     ))
     val et = Mux1H(Array(
       (vid === 4.U || vid === 5.U) -> ET_None,
       (vid === 6.U) -> mmu_res.ex.et,
-      (vid(2) === 0.U) -> Mux(cpr_status.ERL, ET_None, mmu_res.ex.et),
+      (vid(1) === 0.U) -> Mux(io.status.ERL, ET_None, mmu_res.ex.et),
     ))
     val res = WireInit(0.U.asTypeOf(new MMURes))
     res.ex.et := et
@@ -113,9 +114,9 @@ class TLB extends Module {
     res
   }
 
-  def process_request(tlbreq:TLBTransaction, flush:Bool) = {
+  def process_request(rio:TLBTransaction, flush:Bool) = {
     /* handle memory translate request, a pipeline stage */
-    val tlbreq_in = RegEnable(tlbreq.bits, enable=tlbreq.fire())
+    val tlbreq_in = RegEnable(rio.req.bits, enable=rio.req.fire())
     val tlbreq_valid = RegInit(N)
     val tlbreq_res = vaddr2paddr(tlbreq_in.vaddr, tlbreq_in.func)
     val addr_l2b = Mux(tlbreq_in.is_aligned,
@@ -129,15 +130,15 @@ class TLB extends Module {
     addr_ex.et := ET_ADDR_ERR
     addr_ex.code := Mux(tlbreq_in.func === MX_RD, EC_AdEL, EC_AdES)
 
-    tlbreq.req.ready := tlbreq.resp.ready || !tlbreq_valid
-    tlbreq.resp.valid := tlbreq_valid
-    tlbreq.resp.bits.paddr := tlbreq_res.paddr
-    tlbreq.resp.bits.is_cached := is_cached(tlbreq_in.vaddr)
-    tlbreq.resp.bits.ex := Mux(addr_has_ex, addr_ex, tlbreq_res.ex)
+    rio.req.ready := rio.resp.ready || !tlbreq_valid
+    rio.resp.valid := tlbreq_valid
+    rio.resp.bits.paddr := tlbreq_res.paddr
+    rio.resp.bits.is_cached := is_cached(tlbreq_in.vaddr)
+    rio.resp.bits.ex := Mux(addr_has_ex, addr_ex, tlbreq_res.ex)
 
-    when (flush || (!tlbreq.req.fire() && tlbreq.resp.fire())) {
+    when (flush || (!rio.req.fire() && rio.resp.fire())) {
       tlbreq_valid := N
-    } .elsewhen (!flush && tlbreq.req.fire()) {
+    } .elsewhen (!flush && rio.req.fire()) {
       tlbreq_valid := Y
     }
   }
@@ -160,5 +161,5 @@ class TLB extends Module {
 
   val matches = Reverse(Cat(for (i <- 0 until conf.tlbsz) yield tlb_entry_match(io.pport.entry_hi.vpn, tlb_entry_ports(i))))
   io.pport.index.p := !matches.orR
-  io.pport.index.index := Mux1H(for (i <- o until conf.tlbsz) yield matches(i) -> i.U)
+  io.pport.index.index := Mux1H(for (i <- 0 until conf.tlbsz) yield matches(i) -> i.U)
 }

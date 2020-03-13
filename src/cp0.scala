@@ -48,10 +48,11 @@ class CP0 extends CPRS with LSUConsts {
   val io = IO(new Bundle {
     val rport = Flipped(new CPR_RPORT)
     val wport = Flipped(ValidIO(new CPR_WPORT))
-    val tlbr_port = Flipped(new TLBR_PORT)
-    val tlbw_port = Flipped(ValidIO(new TLBW_PORT))
-    val tlbp_port = Flipped(ValidIO(new TLBP_PORT))
+    val tlbr_port = Flipped(new CP0_TLBR_PORT)
+    val tlbw_port = Flipped(ValidIO(new CP0_TLBW_PORT))
+    val tlbp_port = Flipped(ValidIO(new CP0_TLBP_PORT))
     val exu = Flipped(new EXU_CP0_IO)
+    val ex_flush = ValidIO(new FlushIO)
     val can_log_now = Input(Bool())
   })
 
@@ -79,7 +80,7 @@ class CP0 extends CPRS with LSUConsts {
 
   val cpr_wdata = io.wport.bits.data
   when (io.wport.valid) {
-    switch (io.wport.addr) {
+    switch (io.wport.bits.addr) {
     is(CPR_INDEX)     { cpr_index.write(cpr_wdata) }
     is(CPR_ENTRY_LO0) { cpr_entry_lo0.write(cpr_wdata) }
     is(CPR_ENTRY_LO1) { cpr_entry_lo1.write(cpr_wdata) }
@@ -106,7 +107,7 @@ class CP0 extends CPRS with LSUConsts {
   io.tlbr_port.pagemask := cpr_pagemask
   io.tlbr_port.entry_hi := cpr_entry_hi
   io.tlbr_port.entry_lo0 := cpr_entry_lo0
-  io.tlbr_port.entry_lo1 := cpr_entry_lo
+  io.tlbr_port.entry_lo1 := cpr_entry_lo1
 
   when (io.tlbw_port.valid) {
     val wdata = io.tlbw_port.bits
@@ -117,20 +118,19 @@ class CP0 extends CPRS with LSUConsts {
   }
 
   when (io.tlbp_port.valid) {
-    cpr_index.p := io.tlbp_port.index.p
-    when (io.tlbp_port.index.p) {
-      cpr_index.index := io.tlbp_port.index.index
+    cpr_index.p := io.tlbp_port.bits.index.p
+    when (io.tlbp_port.bits.index.p.asBool) {
+      cpr_index.index := io.tlbp_port.bits.index.index
     }
   }
 
   /* process exception */
-  val ip = WireInit(VecInit(8, N))
-  val is_mtc0_cause = io.cp0_wport.valid && io.cp0_wport.addr === CPR_CAUSE
-  val cpr_wcause = io.cp0_wport.data.asTypeOf(new CP0Cause)
+  val ip = Vec(8, WireInit(N))
+  val is_mtc0_cause = io.wport.valid && io.wport.bits.addr === CPR_CAUSE
+  val cpr_wcause = io.wport.bits.data.asTypeOf(new CP0Cause)
   val intr_enable = !cpr_status.ERL && !cpr_status.EXL && cpr_status.IE
   val intr_valid = (ip.asUInt & cpr_status.IM.asUInt).orR &&
     intr_enable && io.exu.ex.et === ET_None
-  val offset = WireInit(0.U(12.W))
   ip(0) := is_mtc0_cause && cpr_wcause.IP(0)
   ip(1) := is_mtc0_cause && cpr_wcause.IP(1)
   ip(7) := cpr_cause.IP(7)
@@ -143,9 +143,9 @@ class CP0 extends CPRS with LSUConsts {
       cpr_cause.BD := (intr_valid && is_br) || is_ds
       cpr_epc := MuxCase(io.exu.wb.pc, Array(
         (intr_valid && is_ds) -> io.exu.wb.npc,
-        (!intr_valid && is_ds) -> io.exu.wb.pc - 4.U))
+        (!intr_valid && is_ds) -> (io.exu.wb.pc - 4.U)))
     }
-    cpr_cause.ExcCode := MuxCase(io.exu.ex.et === ET_None,
+    cpr_cause.ExcCode := Mux(io.exu.ex.et === ET_None,
       EC_Int, io.exu.ex.code)
 
     when (cpr_status.ERL === 0.U) {
@@ -166,7 +166,7 @@ class CP0 extends CPRS with LSUConsts {
     }
   }
   val offset = MuxCase(0x180.U, Array(
-    cpr_status.EXL -> 0x180.U
+    cpr_status.EXL -> 0x180.U,
     (io.exu.ex.et === ET_TLB_REFILL) -> 0x000.U,
     (intr_valid && cpr_cause.IV.asBool) -> 0x200.U))
   io.ex_flush.bits.br_target := Mux(
@@ -175,6 +175,6 @@ class CP0 extends CPRS with LSUConsts {
       "h80000000".U + offset))
 
   when (cpr_compare === cpr_count) { cpr_cause.IP(7) := Y }
-  io.exu.intr := (for(i <- 2 until 8) yield
-    cpr_cause.IP(i) & cpr_status.IM(i)).orR && intr_enable
+  io.exu.intr := Cat(for(i <- 2 until 8) yield
+    cpr_cause.IP(i) && cpr_status.IM(i)).orR && intr_enable
 }

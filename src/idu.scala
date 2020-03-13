@@ -118,25 +118,21 @@ class IDU extends Module with LSUConsts with MDUConsts {
   // assert (valid, "%d: invalid instruction at %x", GTimer(), fu_in.pc)
 
   val instr = fu_in.instr.asTypeOf(new Instr)
-  val oprd_idx = Mux1H(Array(
-    (opd_sel === OPD_RD) -> instr.rd_idx,
-    (opd_sel === OPD_RT) -> instr.rt_idx,
-    (opd_sel === OPD_31) -> 31.U,
-  ))
 
   val ri_ex = WireInit(0.U.asTypeOf(new CP0Exception))
   ri_ex.et := ET_None
-  ri_ex.code := EC_None
+  ri_ex.code := 0.U
 
   io.fu_out.valid := fu_valid
-  io.fu_out.fu_type := fu_type
-  io.fu_out.fu_op := fu_op
-  io.fu_out.op1_sel := op1_sel
-  io.fu_out.op2_sel := op2_sel
-  io.fu_out.opd_sel := opd_sel
-  io.fu_out.ex := MuxCase(0.U.asTypeOf(new CP0Exception),
-    Array((fu_in.ex.et =/= ET_None) -> fu_in.ex,
-          (!valid) -> ri_ex))
+  io.fu_out.bits.fu_type := fu_type
+  io.fu_out.bits.fu_op := fu_op
+  io.fu_out.bits.op1_sel := op1_sel
+  io.fu_out.bits.op2_sel := op2_sel
+  io.fu_out.bits.opd_sel := opd_sel
+  io.fu_out.bits.ex := MuxCase(
+    0.U.asTypeOf(new CP0Exception), Array(
+      (fu_in.ex.et =/= ET_None) -> fu_in.ex,
+      (!valid) -> ri_ex))
 
   when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
     fu_valid := N
@@ -149,10 +145,9 @@ class IDU extends Module with LSUConsts with MDUConsts {
   }
 
   def dump():Unit = {
-    printf("%d: IDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, rd_idx=%d, se_imm=%x, Ia=%x, Ja=%x, JRa=%x, br_info=%x, br_ready=%b, is_ds=%b\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, oprd_idx, se_imm, Ia, Ja, JRa, br_info, br_ready, is_delayslot);
+    printf("%d: IDU: fu_in={pc:%x, instr:%x}, fu_valid:%b\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid)
     io.fu_in.dump("IDU.io.fu_in")
     io.fu_out.dump("IDU.io.fu_out")
-    io.br_flush.dump("IDU.io.br_flush")
     io.ex_flush.dump("IDU.io.ex_flush")
   }
 }
