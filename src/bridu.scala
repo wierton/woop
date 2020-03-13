@@ -11,7 +11,7 @@ import woop.utils._
 class BRIDU extends Module with LSUConsts with MDUConsts {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new IFU_BRIDU_IO))
-    val fu_out = DecoupledIO(new BRIDU_PRALU_IO)
+    val fu_out = DecoupledIO(new BRIDU_EXU_IO)
     val rfio = new RegFileIO
     val br_flush = ValidIO(new FlushIO)
     val ex_flush = Flipped(ValidIO(new FlushIO))

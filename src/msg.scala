@@ -24,8 +24,6 @@ class Instr extends Bundle {
 class CP0Exception extends Bundle {
   val et = UInt(ET_WIDTH.W)
   val code = UInt(EC_WIDTH.W)
-  val addr = UInt(conf.xprlen.W)
-  val asid = UInt(8.W)
 }
 
 class RegFileIO extends Bundle {
@@ -129,7 +127,7 @@ class EXU_OPS extends Bundle {
   val op2 = Output(UInt(conf.xprlen.W))
 }
 
-class BRIDU_PRALU_IO extends Bundle {
+class BRIDU_EXU_IO extends Bundle {
   val wb = new WriteBackIO
   val fu_type = Output(UInt(FU_TYPE_SZ.W))
   val fu_op = Output(UInt(FU_OP_SZ.W))
@@ -139,13 +137,13 @@ class BRIDU_PRALU_IO extends Bundle {
   val ex = Output(new CP0Exception)
 }
 
-class PRALU_FU_IO extends Bundle {
+class EXU_IN extends Bundle {
   val wb = new WriteBackIO
   val ops = new EXU_OPS
   val ex = Output(new CP0Exception)
 }
 
-class PRALU_LSMDU_IO extends Bundle {
+class EXU_LSMDU_IO extends Bundle {
   val wb = new WriteBackIO
   val ops = new EXU_OPS
   val ex = Output(new CP0Exception)
@@ -153,10 +151,7 @@ class PRALU_LSMDU_IO extends Bundle {
   val is_cached = Output(Bool())
 }
 
-class PRU_OUT_PRALU extends PRALU_LSMDU_IO {
-}
-
-class PRALU_OUT extends Bundle {
+class EXU_OUT extends Bundle {
   val wb = new WriteBackIO
   val ex = Output(new CP0Exception)
 }
@@ -180,7 +175,53 @@ class BRINFO_IO extends Bundle {
   val br_target = Output(UInt(conf.xprlen.W))
 }
 
-class TLB_CP0_PORT extends Bundle {
+class TLB_RPORT extends Bundle {
   val index = Output(UInt(log2Ceil(conf.tlbsz).W))
   val entry = Input(new TLBEntry)
+}
+
+class TLB_WPORT extends Bundle {
+  val index = Output(UInt(log2Ceil(conf.tlbsz).W))
+  val entry = Output(new TLBEntry)
+}
+
+class CPR_RPORT extends Bundle {
+  val addr = Output(UInt(32.W))
+  val data = Input(UInt(32.W))
+}
+
+class CPR_WPORT extends Bundle {
+  val addr = Output(UInt(32.W))
+  val data = Output(UInt(32.W))
+}
+
+class CP0_TLBR_PORT extends Bundle {
+  val index     = Input(new CP0Index)
+  val pagemask  = Input(new CP0PageMask)
+  val entry_hi  = Input(new CP0EntryHI)
+  val entry_lo0 = Input(new CP0EntryLO)
+  val entry_lo1 = Input(new CP0EntryLO)
+}
+
+class CP0_TLBW_PORT extends Bundle {
+  val pagemask  = Output(new CP0PageMask)
+  val entry_hi  = Output(new CP0EntryHI)
+  val entry_lo0 = Output(new CP0EntryLO)
+  val entry_lo1 = Output(new CP0EntryLO)
+}
+
+class TLB_PPORT extends Bundle {
+  val entry_hi = Output(new CP0EntryHI)
+  val index = Input(new CP0Index)
+}
+
+class CP0_TLBP_PORT extends Bundle {
+  val index = Output(new CP0Index)
+}
+
+class EXU_CP0_IO extends Bundle {
+  val valid = Output(Bool())
+  val ex = Output(new CP0Exception)
+  val wb = Output(new WriteBackIO)
+  val intr = Input(Bool())
 }

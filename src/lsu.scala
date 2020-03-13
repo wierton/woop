@@ -88,7 +88,7 @@ class LSUStage2Data extends Bundle {
   val is_br = Bool()
   val npc = UInt(conf.xprlen.W)
 
-  def load(ind:PRALU_LSMDU_IO) = {
+  def load(ind:EXU_LSMDU_IO) = {
     this := Cat(
       ind.ops.fu_op,
       ind.wb.instr.asUInt,
@@ -108,7 +108,7 @@ class LSUStage2Data extends Bundle {
 class LSU extends Module with LSUConsts {
   val io = IO(new Bundle {
     val dmem = new MemIO
-    val fu_in = Flipped(DecoupledIO(new PRALU_LSMDU_IO))
+    val fu_in = Flipped(DecoupledIO(new EXU_LSMDU_IO))
     val fu_out = ValidIO(new WriteBackIO)
     val working = Output(Bool())
     val can_log_now = Input(Bool())

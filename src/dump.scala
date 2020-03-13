@@ -20,26 +20,26 @@ object dumps {
     }
   }
 
-  implicit class Decoupled_PRALU_OUT_Dump(data:DecoupledIO[PRALU_OUT]) {
+  implicit class Decoupled_EXU_OUT_Dump(data:DecoupledIO[EXU_OUT]) {
     def dump(msg:String) = {
       printf("%d: "+msg+": [%b,%b]: wb={v:%b, id:%x, pc:%x, instr:%x, rd:%d, wen:%b, data:%x}, et=%d, code=%d\n", GTimer(), data.valid, data.ready, data.bits.wb.v, data.bits.wb.id, data.bits.wb.pc, data.bits.wb.instr.asUInt, data.bits.wb.rd_idx, data.bits.wb.wen, data.bits.wb.data, data.bits.ex.et, data.bits.ex.code)
     }
   }
 
-  implicit class Decoupled_PRALU_FU_IO_Dump(data:DecoupledIO[PRALU_FU_IO]) {
+  implicit class Decoupled_EXU_IN_Dump(data:DecoupledIO[EXU_IN]) {
     def dump(msg:String) = {
       printf("%d: "+msg+": [%b,%b]: wb={v:%b, id=%x, pc:%x, instr:%x, rd:%d, wen:%b, data:%x}, ops={fu_type=%d, fu_op=%d, op1=%x, op2=%x}, et=%d, code=%d\n", GTimer(), data.valid, data.ready, data.bits.wb.v, data.bits.wb.id, data.bits.wb.pc, data.bits.wb.instr.asUInt, data.bits.wb.rd_idx, data.bits.wb.wen, data.bits.wb.data, data.bits.ops.fu_type, data.bits.ops.fu_op, data.bits.ops.op1, data.bits.ops.op2, data.bits.ex.et, data.bits.ex.code)
     }
   }
 
-  implicit class Decoupled_BRIDU_PRALU_IO_Dump(data:DecoupledIO[BRIDU_PRALU_IO]) {
+  implicit class Decoupled_BRIDU_EXU_IO_Dump(data:DecoupledIO[BRIDU_EXU_IO]) {
     def dump(msg:String) = {
       printf("%d: "+msg+": [%b,%b]: fu_type=%d, fu_op=%d, op1_sel=%d, op2_sel=%d, opd_sel=%d, et=%d, code=%d\n", GTimer(), data.valid, data.ready, data.bits.fu_type, data.bits.fu_op, data.bits.op1_sel, data.bits.op2_sel, data.bits.opd_sel, data.bits.ex.et, data.bits.ex.code)
       data.bits.wb.dump(msg+".wb")
     }
   }
 
-  implicit class Decoupled_PRALU_LSMDU_IO_Dump(data:DecoupledIO[PRALU_LSMDU_IO]) {
+  implicit class Decoupled_EXU_LSMDU_IO_Dump(data:DecoupledIO[EXU_LSMDU_IO]) {
     def dump(msg:String) = {
       printf("%d: "+msg+": [%b,%b]: wb={v:%b, id:%x, pc:%x, instr:%x, rd:%d, wen:%b, data:%x}, ops={fu_type=%d, fu_op=%d, op1=%x, op2=%x}, paddr=%x, is_cached=%b, et=%d, code=%d\n", GTimer(), data.valid, data.ready, data.bits.wb.v, data.bits.wb.id, data.bits.wb.pc, data.bits.wb.instr.asUInt, data.bits.wb.rd_idx, data.bits.wb.wen, data.bits.wb.data, data.bits.ops.fu_type, data.bits.ops.fu_op, data.bits.ops.op1, data.bits.ops.op2, data.bits.paddr, data.bits.is_cached, data.bits.ex.et, data.bits.ex.code)
     }

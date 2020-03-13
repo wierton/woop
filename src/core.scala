@@ -21,7 +21,7 @@ class Core extends Module {
   val rf = Module(new RegFile)
   val ifu = Module(new IFU)
   val bridu = Module(new BRIDU)
-  val pralu = Module(new PRALU)
+  val pralu = Module(new EXU)
   val lsmdu = Module(new LSMDU)
 
   rf.io.can_log_now := io.can_log_now

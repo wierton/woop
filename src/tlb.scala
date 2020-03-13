@@ -29,8 +29,9 @@ class TLB extends Module {
   val io = IO(new Bundle {
     val iaddr = Flipped(new TLBTransaction)
     val daddr = Flipped(new TLBTransaction)
-    val tlb_cp0_rport = Flipped(new TLB_CP0_PORT)
-    val tlb_cp0_wport = Flipped(ValidIO(new TLB_CP0_PORT))
+    val tlb_rport = Flipped(new TLB_RPORT)
+    val tlb_wport = Flipped(ValidIO(new TLB_WPORT))
+    val tlbp = Flipped(new TLBP_IO)
     val br_flush = Flipped(ValidIO(new FlushIO))
     val ex_flush = Flipped(ValidIO(new FlushIO))
   })
@@ -43,8 +44,8 @@ class TLB extends Module {
     (i.U === io.tlb_cp0_rport.index) -> io.tlb_cp0_rport.entry)
   when (io.tlb_cp0_wport.valid) {
     for (i <- 0 until conf.tlbsz) {
-      when (i.U === io.tlb_cp0_wport.index) {
-        tlb_entry_ports(i) := io.tlb_cp0_wport.entry
+      when (i.U === io.tlb_cp0_wport.bits.index) {
+        tlb_entry_ports(i) := io.tlb_cp0_wport.bits.entry
       }
     }
   }
@@ -139,18 +140,23 @@ class TLB extends Module {
     addr_ex.et := ET_ADDR_ERR
     addr_ex.code := Mux(tlbreq_in.func === MX_RD, EC_AdEL, EC_AdES)
 
-    io.iaddr.req.ready := io.iaddr.resp.ready || !tlbreq_valid
-    io.iaddr.resp.valid := tlbreq_valid
-    io.iaddr.resp.bits.paddr := tlbreq_res.paddr
-    io.iaddr.resp.bits.is_cached := is_cached(tlbreq_in.vaddr)
-    io.iaddr.resp.bits.ex := Mux(addr_has_ex, addr_ex, tlbreq_res.ex)
-    when (flush || (!io.iaddr.req.fire() && io.iaddr.resp.fire())) {
+    tlbreq.req.ready := tlbreq.resp.ready || !tlbreq_valid
+    tlbreq.resp.valid := tlbreq_valid
+    tlbreq.resp.bits.paddr := tlbreq_res.paddr
+    tlbreq.resp.bits.is_cached := is_cached(tlbreq_in.vaddr)
+    tlbreq.resp.bits.ex := Mux(addr_has_ex, addr_ex, tlbreq_res.ex)
+
+    when (flush || (!tlbreq.req.fire() && tlbreq.resp.fire())) {
       tlbreq_valid := N
-    } .elsewhen (!flush && io.iaddr.req.fire()) {
+    } .elsewhen (!flush && tlbreq.req.fire()) {
       tlbreq_valid := Y
     }
   }
 
   process_request(io.iaddr, io.br_flush.valid || io.ex_flush.valid)
   process_request(io.daddr, io.ex_flush.valid)
+
+  val matches = Reverse(Cat(for (i <- 0 until conf.tlbsz) yield tlb_entry_match(io.tlbp.entry_hi.vpn, tlb_entry_ports(i))))
+  io.tlbp.index.p := !matches.orR
+  io.tlbp.index.index := Mux1H(for (i <- o until conf.tlbsz) yield matches(i) -> i.U)
 }
