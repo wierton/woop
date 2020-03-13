@@ -160,6 +160,7 @@ class TLB extends Module {
   }
 
   val matches = Reverse(Cat(for (i <- 0 until conf.tlbsz) yield tlb_entry_match(io.pport.entry_hi.vpn, tlb_entry_ports(i))))
+  io.pport.index._0 := 0.U
   io.pport.index.p := !matches.orR
   io.pport.index.index := Mux1H(for (i <- 0 until conf.tlbsz) yield matches(i) -> i.U)
 }

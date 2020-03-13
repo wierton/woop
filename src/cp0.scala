@@ -51,10 +51,13 @@ class CP0 extends CPRS with LSUConsts {
     val tlbr_port = Flipped(new CP0_TLBR_PORT)
     val tlbw_port = Flipped(ValidIO(new CP0_TLBW_PORT))
     val tlbp_port = Flipped(ValidIO(new CP0_TLBP_PORT))
+    val status = Output(new CP0Status)
     val exu = Flipped(new EXU_CP0_IO)
     val ex_flush = ValidIO(new FlushIO)
     val can_log_now = Input(Bool())
   })
+
+  io.status := cpr_status
 
   /* cpr io */
   val cpr_raddr = io.rport.addr
@@ -105,6 +108,7 @@ class CP0 extends CPRS with LSUConsts {
   }
 
   io.tlbr_port.pagemask := cpr_pagemask
+  io.tlbr_port.index := cpr_index
   io.tlbr_port.entry_hi := cpr_entry_hi
   io.tlbr_port.entry_lo0 := cpr_entry_lo0
   io.tlbr_port.entry_lo1 := cpr_entry_lo1
@@ -125,7 +129,7 @@ class CP0 extends CPRS with LSUConsts {
   }
 
   /* process exception */
-  val ip = Vec(8, WireInit(N))
+  val ip = WireInit(VecInit(for (i <- 0 until 8) yield N))
   val is_mtc0_cause = io.wport.valid && io.wport.bits.addr === CPR_CAUSE
   val cpr_wcause = io.wport.bits.data.asTypeOf(new CP0Cause)
   val intr_enable = !cpr_status.ERL && !cpr_status.EXL && cpr_status.IE

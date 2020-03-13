@@ -34,7 +34,7 @@ object dumps {
 
   implicit class Decoupled_EXU_LSMDU_IO_Dump(data:DecoupledIO[EXU_LSMDU_IO]) {
     def dump(msg:String) = {
-      printf("%d: "+msg+": [%b,%b]: wb={v:%b, id:%x, pc:%x, instr:%x, rd:%d, wen:%b, data:%x}, ops={fu_type=%d, fu_op=%d, op1=%x, op2=%x}, paddr=%x, is_cached=%b, et=%d, code=%d\n", GTimer(), data.valid, data.ready, data.bits.wb.v, data.bits.wb.id, data.bits.wb.pc, data.bits.wb.instr.asUInt, data.bits.wb.rd_idx, data.bits.wb.wen, data.bits.wb.data, data.bits.ops.fu_type, data.bits.ops.fu_op, data.bits.ops.op1, data.bits.ops.op2, data.bits.paddr, data.bits.is_cached, data.bits.ex.et, data.bits.ex.code)
+      printf("%d: "+msg+": [%b,%b]: wb={v:%b, id:%x, pc:%x, instr:%x, rd:%d, wen:%b, data:%x}, ops={fu_type=%d, fu_op=%d, op1=%x, op2=%x}, is_cached=%b\n", GTimer(), data.valid, data.ready, data.bits.wb.v, data.bits.wb.id, data.bits.wb.pc, data.bits.wb.instr.asUInt, data.bits.wb.rd_idx, data.bits.wb.wen, data.bits.wb.data, data.bits.ops.fu_type, data.bits.ops.fu_op, data.bits.ops.op1, data.bits.ops.op2, data.bits.is_cached)
     }
   }
 
@@ -58,7 +58,7 @@ object dumps {
 
   implicit class Decoupled_IDU_ISU_IO_Dump(data:DecoupledIO[IDU_ISU_IO]) {
     def dump(msg:String) = {
-      printf("%d: "+msg+": [%d,%d]={pc:%x, instr:%x, fu_type=%d, fu_op=%d, op1_sel=%d, op2_sel=%d, opd_sel=%d, et=%, ec=%d}\n", GTimer(), data.valid, data.ready, data.bits.pc, data.bits.instr.asUInt, data.bits.fu_type, data.bits.fu_op, data.bits.op1_sel, data.bits.op2_sel, data.bits.opd_sel, data.bits.ex.et, data.bits.ex.code)
+      printf("%d: "+msg+": [%d,%d]={pc:%x, instr:%x, fu_type=%d, fu_op=%d, op1_sel=%d, op2_sel=%d, opd_sel=%d, et=%d, ec=%d}\n", GTimer(), data.valid, data.ready, data.bits.pc, data.bits.instr.asUInt, data.bits.fu_type, data.bits.fu_op, data.bits.op1_sel, data.bits.op2_sel, data.bits.opd_sel, data.bits.ex.et, data.bits.ex.code)
     }
   }
 

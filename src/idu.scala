@@ -19,6 +19,8 @@ class IDU extends Module with LSUConsts with MDUConsts {
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
   val fu_valid = RegInit(N)
 
+  io.fu_in.ready := !fu_valid || io.fu_out.ready
+
   // instruction decode stage
   val csignals = ListLookup(fu_in.instr,
     List(N, FU_X, FU_OP_X, OP1_X, OP2_X, OPD_X), Array(
@@ -129,6 +131,8 @@ class IDU extends Module with LSUConsts with MDUConsts {
   io.fu_out.bits.op1_sel := op1_sel
   io.fu_out.bits.op2_sel := op2_sel
   io.fu_out.bits.opd_sel := opd_sel
+  io.fu_out.bits.instr := instr
+  io.fu_out.bits.pc := fu_in.pc
   io.fu_out.bits.ex := MuxCase(
     0.U.asTypeOf(new CP0Exception), Array(
       (fu_in.ex.et =/= ET_None) -> fu_in.ex,

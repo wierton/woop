@@ -80,8 +80,10 @@ class EXU extends Module {
   io.daddr.req.valid := io.fu_in.valid &&
     io.fu_in.bits.ops.fu_type === FU_LSU
   io.daddr.req.bits.vaddr := io.fu_in.bits.ops.op1
+  io.daddr.req.bits.func := lsu_op.func
   io.daddr.req.bits.len := lsu_op.len
   io.daddr.req.bits.is_aligned := lsu_op.align
+  io.daddr.resp.ready := Y
 
   val cpr_addr = Cat(fu_in.wb.instr.rd_idx, fu_in.wb.instr.sel)
 
@@ -123,21 +125,45 @@ class EXU extends Module {
   io.fu_out.bits.wb.v := wb_info(33)
   io.fu_out.bits.wb.wen := wb_info(32)
   io.fu_out.bits.wb.data := wb_info(31, 0)
+  io.fu_out.bits.ops := fu_in.ops
   io.fu_out.bits.ops.op1 := Mux(fu_in.ops.fu_type === FU_LSU, 
     io.daddr.resp.bits.paddr, fu_in.ops.op1)
+  io.fu_out.bits.ops.fu_type := Mux(fu_in.ops.fu_type === FU_LSU
+    && lsu_ex.et =/= ET_None, FU_PRU, FU_LSU)
+  io.fu_out.bits.is_cached := Y
+
+  /* write back */
+  io.bp.valid := io.fu_out.valid
+  io.bp.bits.v := io.fu_out.bits.wb.v
+  io.bp.bits.rd_idx := io.fu_out.bits.wb.rd_idx
+  io.bp.bits.wen := io.fu_out.bits.wb.wen
+  io.bp.bits.data := io.fu_out.bits.wb.data
 
   /* tlbr */
   val tlbr_mask = ~io.cp0_tlbr_port.pagemask.mask.asTypeOf(UInt(32.W))
   io.tlb_rport.index := io.cp0_tlbr_port.index.index
   io.cp0_tlbw_port.valid := io.fu_out.fire() &&
     fu_type === FU_PRU && fu_op === PRU_TLBR
+  io.cp0_tlbw_port.bits.pagemask._0 := 0.U
+  io.cp0_tlbw_port.bits.pagemask._1 := 0.U
   io.cp0_tlbw_port.bits.pagemask.mask := tlbr_mask
   io.cp0_tlbw_port.bits.entry_hi.vpn := io.tlb_rport.entry.vpn & tlbr_mask
   io.cp0_tlbw_port.bits.entry_hi.asid := io.tlb_rport.entry.vpn & tlbr_mask
-  io.cp0_tlbw_port.bits.entry_lo0 := io.tlb_rport.entry.p0
+  io.cp0_tlbw_port.bits.entry_hi._0 := 0.U
+  io.cp0_tlbw_port.bits.entry_lo0.v := io.tlb_rport.entry.p0.v
+  io.cp0_tlbw_port.bits.entry_lo0.c := io.tlb_rport.entry.p0.c
+  io.cp0_tlbw_port.bits.entry_lo0.d := io.tlb_rport.entry.p0.d
+  io.cp0_tlbw_port.bits.entry_lo0.g := io.tlb_rport.entry.g
   io.cp0_tlbw_port.bits.entry_lo0.pfn := io.tlb_rport.entry.p0.pfn & tlbr_mask
-  io.cp0_tlbw_port.bits.entry_lo1 := io.tlb_rport.entry.p1
+  io.cp0_tlbw_port.bits.entry_lo0._0 := 0.U
+  io.cp0_tlbw_port.bits.entry_lo0._1 := 0.U
+  io.cp0_tlbw_port.bits.entry_lo1.v := io.tlb_rport.entry.p1.v
+  io.cp0_tlbw_port.bits.entry_lo1.c := io.tlb_rport.entry.p1.c
+  io.cp0_tlbw_port.bits.entry_lo1.d := io.tlb_rport.entry.p1.d
+  io.cp0_tlbw_port.bits.entry_lo1.g := io.tlb_rport.entry.g
   io.cp0_tlbw_port.bits.entry_lo1.pfn := io.tlb_rport.entry.p1.pfn & tlbr_mask
+  io.cp0_tlbw_port.bits.entry_lo1._0 := 0.U
+  io.cp0_tlbw_port.bits.entry_lo1._1 := 0.U
 
   /* tlbw */
   val cpr_random = Reg(new CP0Random)
@@ -145,7 +171,7 @@ class EXU extends Module {
   io.tlb_wport.valid := io.fu_out.fire() &&
     fu_type === FU_PRU && (fu_op === PRU_TLBWI ||
     fu_op === PRU_TLBWR)
-  io.tlb_wport.bits.index := Mux(fu_op === PRU_TLBWI, io.cp0_tlbr_port.index, cpr_random.index)
+  io.tlb_wport.bits.index := Mux(fu_op === PRU_TLBWI, io.cp0_tlbr_port.index.index, cpr_random.index)
   io.tlb_wport.bits.entry.pagemask := io.cp0_tlbr_port.pagemask.mask
   io.tlb_wport.bits.entry.vpn := io.cp0_tlbr_port.entry_hi.vpn & tlbw_mask
   io.tlb_wport.bits.entry.asid := io.cp0_tlbr_port.entry_hi.asid

@@ -74,8 +74,16 @@ class Core extends Module {
   io.commit <> rf.io.commit
 
   /* flush */
-  io.br_flush <> isu.io.br_flush
+  io.br_flush := isu.io.br_flush.valid
+  io.ex_flush := cp0.io.ex_flush.valid
   ifu.io.br_flush <> isu.io.br_flush
   ifu.io.ex_flush <> cp0.io.ex_flush
   idu.io.ex_flush <> cp0.io.ex_flush
+  rf.io.ex_flush <> cp0.io.ex_flush
+  tlb.io.br_flush <> isu.io.br_flush
+  tlb.io.ex_flush <> cp0.io.ex_flush
+
+  isu.io.bru.fu_in <> bru.io.fu_in
+  isu.io.bru.fu_out <> bru.io.fu_out
+  tlb.io.status := cp0.io.status
 }

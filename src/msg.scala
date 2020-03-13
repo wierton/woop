@@ -161,8 +161,6 @@ class ISU_EXU_IO extends Bundle {
 class EXU_LSMDU_IO extends Bundle {
   val wb = new WriteBackIO
   val ops = new EXU_OPS
-  val ex = Output(new CP0Exception)
-  val paddr = Output(UInt(conf.xprlen.W))
   val is_cached = Output(Bool())
 }
 

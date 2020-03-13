@@ -89,8 +89,7 @@ class IMemPipe[T<:Data](gen:T, entries:Int) extends Module {
 }
 
 class IMemPipeData extends Bundle {
-  val et = UInt(ET_WIDTH.W)
-  val code = UInt(EC_WIDTH.W)
+  val ex = new CP0Exception
   val pc = UInt(conf.xprlen.W)
 }
 
@@ -121,32 +120,27 @@ class IFU extends Module {
   /* stage 1: synchronize */
   io.iaddr.req.valid := Y && !io.ex_flush.valid && !io.br_flush.valid && !s0_bad_if
   io.iaddr.req.bits.func := MX_RD
+  io.iaddr.req.bits.len := ML_4
+  io.iaddr.req.bits.is_aligned  := Y
   io.iaddr.req.bits.vaddr := pc
   io.iaddr.resp.ready := io.imem.req.ready
 
   /* stage 2: blocking */
-  val s1_pc = RegInit(0.U(conf.xprlen.W))
-  val s1_bad_if = RegInit(N)
-  when (io.iaddr.req.fire()) {
-    s1_pc := pc
-    s1_bad_if := pc(1, 0) =/= 0.U
-  }
   val s1_in = WireInit(0.U.asTypeOf(new IMemPipeData))
-  s1_in.pc := s1_pc
-  s1_in.et := Mux(s1_bad_if, ET_ADDR_ERR, io.iaddr.resp.bits.ex.et)
-  s1_in.code := Mux(s1_bad_if, EC_AdEL, io.iaddr.resp.bits.ex.code)
+  s1_in.pc := RegEnable(next=pc, enable=io.iaddr.req.fire())
+  s1_in.ex := io.iaddr.resp.bits.ex
 
   val s1_datas = Module(new IMemPipe(new IMemPipeData, conf.icache_stages))
   val s1_out = s1_datas.io.deq.bits
-  val s1_ex_in = io.iaddr.resp.valid && s1_in.et =/= ET_None
-  val s1_out_has_ex = s1_out.bits.et =/= ET_None
+  val s1_ex_in = io.iaddr.resp.valid && s1_in.ex.et =/= ET_None
+  val s1_out_has_ex = s1_out.bits.ex.et =/= ET_None
   s1_datas.io.enq.valid := io.imem.req.fire() || s1_ex_in
   s1_datas.io.enq.bits := s1_in
   s1_datas.io.deq.ready := io.imem.resp.fire() || s1_out_has_ex
   s1_datas.io.br_flush <> io.br_flush
   s1_datas.io.ex_flush <> io.ex_flush
   s1_datas.io.can_log_now := io.can_log_now
-  io.imem.req.valid := io.iaddr.resp.valid && !io.ex_flush.valid && s1_in.et === ET_None
+  io.imem.req.valid := io.iaddr.resp.valid && !io.ex_flush.valid && s1_in.ex.et === ET_None
   io.imem.req.bits.is_cached := io.iaddr.resp.bits.is_cached
   io.imem.req.bits.is_aligned := Y
   io.imem.req.bits.addr  := io.iaddr.resp.bits.paddr
@@ -160,15 +154,14 @@ class IFU extends Module {
   io.fu_out.valid := (io.imem.resp.valid || s1_out_has_ex) && s1_out.valid && !io.ex_flush.valid
   io.fu_out.bits.pc := s1_out.bits.pc
   io.fu_out.bits.instr := Mux(s1_out_has_ex, 0.U, io.imem.resp.bits.data)
-  io.fu_out.bits.ex.et := s1_out.bits.et
-  io.fu_out.bits.ex.code := s1_out.bits.code
+  io.fu_out.bits.ex := s1_out.bits.ex
 
   if (conf.log_IFU) {
     when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {
-    printf("%d: IFU: pc=%x, s1_datas={enq[%b,%b]:%x, deq[%b,%b]:%b%x}, bad_if=%b, s1_in={et:%d, code:%d, pc:%x}\n", GTimer(), pc, s1_datas.io.enq.valid, s1_datas.io.enq.ready, s1_datas.io.enq.bits.pc, s1_datas.io.deq.valid, s1_datas.io.deq.ready, s1_datas.io.deq.bits.valid, s1_datas.io.deq.bits.bits.pc, s0_bad_if, s1_in.et, s1_in.code, s1_in.pc)
+    printf("%d: IFU: pc=%x, s1_datas={enq[%b,%b]:%x, deq[%b,%b]:%b%x}, s1_in={et:%d, code:%d, pc:%x}\n", GTimer(), pc, s1_datas.io.enq.valid, s1_datas.io.enq.ready, s1_datas.io.enq.bits.pc, s1_datas.io.deq.valid, s1_datas.io.deq.ready, s1_datas.io.deq.bits.valid, s1_datas.io.deq.bits.bits.pc, s1_in.ex.et, s1_in.ex.code, s1_in.pc)
     io.imem.dump("IFU.imem")
     io.iaddr.dump("IFU.iaddr")
     io.fu_out.dump("IFU.fu_out")

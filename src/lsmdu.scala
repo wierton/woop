@@ -54,8 +54,7 @@ class LSMDU extends Module {
 
   /* LSU IO */
   val to_lsu = !mdu.io.working &&
-    io.fu_in.bits.ops.fu_type === FU_LSU &&
-    io.fu_in.bits.ex.et === ET_None
+    io.fu_in.bits.ops.fu_type === FU_LSU
   lsu.io.fu_in.valid := io.fu_in.valid && to_lsu
   lsu.io.fu_in.bits := io.fu_in.bits
   lsu.io.dmem <> io.dmem
@@ -63,17 +62,15 @@ class LSMDU extends Module {
 
   /* MDU IO */
   val to_mdu = !lsu.io.working &&
-    io.fu_in.bits.ops.fu_type === FU_MDU &&
-    io.fu_in.bits.ex.et === ET_None
+    io.fu_in.bits.ops.fu_type === FU_MDU
   mdu.io.fu_in.valid := io.fu_in.valid && to_mdu
   mdu.io.fu_in.bits := io.fu_in.bits
   mdu.io.can_log_now := io.can_log_now
 
   /* pipeline stage for ALU,BRU,PRU */
-  val to_psu = !lsu.io.working && !mdu.io.working && (
+  val to_psu = !lsu.io.working && !mdu.io.working &&
     (io.fu_in.bits.ops.fu_type =/= FU_LSU &&
-    io.fu_in.bits.ops.fu_type =/= FU_MDU) ||
-    io.fu_in.bits.ex.et =/= ET_None)
+    io.fu_in.bits.ops.fu_type =/= FU_MDU)
   val is_lsu_load = io.fu_in.bits.ops.fu_type === FU_LSU &&
     io.fu_in.bits.ops.fu_op.asTypeOf(new LSUOp).func === MX_RD
   psu.io.fu_in.valid := io.fu_in.valid && to_psu

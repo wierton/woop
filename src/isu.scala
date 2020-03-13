@@ -88,7 +88,7 @@ class ISU extends Module {
 
   /* branch */
   io.bru.fu_in.valid := io.fu_in.bits.fu_op === FU_BRU
-  io.bru.fu_in.bits.wb := io.fu_out.bits.wb
+  io.bru.fu_in.bits.wb := exu_wb
   io.bru.fu_in.bits.ops := io.fu_out.bits.ops
 
   io.br_flush.valid := io.bru.fu_out.valid && io.fu_out.fire()
