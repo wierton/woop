@@ -150,7 +150,7 @@ class TLB extends Module {
   /* TLB rw io */
   io.rport.entry := Mux1H(
     for (i <- 0 until conf.tlbsz) yield
-    (i.U === io.rport.index) -> io.rport.entry)
+    (i.U === io.rport.index) -> tlb_entry_ports(i))
   when (io.wport.valid) {
     for (i <- 0 until conf.tlbsz) {
       when (i.U === io.wport.bits.index) {
