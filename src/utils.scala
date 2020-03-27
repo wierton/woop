@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 import woop.dumps._
 import woop.configs._
+import java.lang.reflect._
 
 object GTimer {
   def apply(): UInt = {
@@ -123,3 +124,34 @@ object CLZ_32 {
     Mux(in === 0.U, 32.U, out.asUInt)
   }
 }
+
+/*
+object BundleDump {
+  import scala.reflect.runtime.{universe => ru}
+
+  def dump[T<:Data](obj:T) = {
+    val decls = ru.typeOf[T].decls()
+    val fmts:String = ""
+    val sigs:Seq[Bits] = Seq[Bits]()
+    for (decl in fields) {
+      String name = field.getName()
+      Object value = field.get(obj)
+
+      if (value.getType <:< ru.typeOf[Data]) {
+        if (value.getType <:< ru.typeOf[UInt]) {
+        }
+      }
+    }
+    (fmts, sigs)
+  }
+
+  def apply[T<:Data](sig:T, msg:String):Unit = {
+    val fmt = "%d: " + msg + ": "
+    val sig = Seq[Bits](GTimer())
+    val _1, _2 = dump(sig)
+    fmt = fmt +  _1
+    sig = sig ++ _2
+    printf(fmt + "\n", sig:_*)
+  }
+}
+*/

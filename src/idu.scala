@@ -122,8 +122,8 @@ class IDU extends Module with LSUConsts with MDUConsts {
   val instr = fu_in.instr.asTypeOf(new Instr)
 
   val ri_ex = WireInit(0.U.asTypeOf(new CP0Exception))
-  ri_ex.et := ET_None
-  ri_ex.code := 0.U
+  ri_ex.et := ET_RI
+  ri_ex.code := EC_RI
 
   io.fu_out.valid := fu_valid
   io.fu_out.bits.fu_type := fu_type
@@ -149,7 +149,7 @@ class IDU extends Module with LSUConsts with MDUConsts {
   }
 
   def dump():Unit = {
-    printf("%d: IDU: fu_in={pc:%x, instr:%x}, fu_valid:%b\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid)
+    printf("%d: IDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, valid=%b\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, valid)
     io.fu_in.dump("IDU.io.fu_in")
     io.fu_out.dump("IDU.io.fu_out")
     io.ex_flush.dump("IDU.io.ex_flush")

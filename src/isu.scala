@@ -3,6 +3,7 @@ package core
 
 import chisel3._
 import chisel3.util._
+import chisel3.experimental._
 import woop.consts._
 import woop.configs._
 import woop.dumps._
@@ -93,4 +94,8 @@ class ISU extends Module {
 
   io.br_flush.valid := io.bru.fu_out.valid && io.fu_out.fire()
   io.br_flush.bits.br_target := io.bru.fu_out.bits.br_target
+
+  if (conf.log_ISU) {
+    printf(p"ISU.io: ${io.fu_in}\n")
+  }
 }

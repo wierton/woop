@@ -113,8 +113,50 @@ class LOONGSON_TOP extends Module {
   })
 }
 
+import scala.reflect.runtime.{universe => ru}
+
+class A extends Bundle {  }
+class B extends A {  }
+class C extends Bundle {
+  val a = new A
+  val b = new B
+  def c = UInt(32.W)
+  def d = UInt(32.W)
+}
+
 object Main {
+  def getPublicFields(rootClass: Class[_]): Seq[java.lang.reflect.Method] = {
+    // Suggest names to nodes using runtime reflection
+    def getValNames(c: Class[_]): Set[String] = {
+      if (c == rootClass) {
+        Set()
+      } else {
+        getValNames(c.getSuperclass) ++ c.getDeclaredFields.map(_.getName)
+      }
+    }
+    val valNames = getValNames(this.getClass)
+    def isPublicVal(m: java.lang.reflect.Method) =
+      m.getParameterTypes.isEmpty && valNames.contains(m.getName) && !m.getDeclaringClass.isAssignableFrom(rootClass)
+    this.getClass.getMethods.sortWith(_.getName < _.getName).filter(isPublicVal(_))
+  }
+  def getBundleField(m: java.lang.reflect.Method): Option[Data] = m.invoke(this) match {
+    case d: Data => Some(d)
+    case Some(d: Data) => Some(d)
+    case _ => None
+  }
+
   def main(args:Array[String]):Unit = {
+    for (m <- getPublicFields(classOf[C])) {
+      getBundleField(m) match {
+        case Some(d: Data) => {
+          println(m.getName)
+        }
+        case None => {
+          println("none." + m.getName)
+        }
+      }
+    }
+
     val top = args(0)
     val chiselArgs = args.slice(1, args.length)
     chisel3.Driver.execute(chiselArgs, () => {
