@@ -113,98 +113,8 @@ class LOONGSON_TOP extends Module {
   })
 }
 
-import scala.reflect._
-import scala.reflect.runtime.{universe => ru}
-
-class A extends Bundle {
-  val f = UInt(32.W)
-}
-class B extends A {  }
-class C extends Bundle {
-  val e = 1
-  val a = new A
-  val b = new B
-  def c = UInt(32.W)
-  def d = UInt(32.W)
-}
-
-object TTT {
-  def getType[T:ru.TypeTag](obj:T) = ru.typeOf[T]
-  def getTypeTag[T:ru.TypeTag](obj:T) = ru.typeTag[T]
-  // def getClass[T:Class](obj:T) = classOf[T]
-  def getClassTag[T:ClassTag](obj:T) = classTag[T]
-
-  def evalMemberValues[A](topLevelObj: A)(implicit c: ru.TypeTag[A]): Unit = {
-    val mirror = ru.runtimeMirror(getClass.getClassLoader)
-    def loop(obj: Any, tp: ru.Type): Unit = {
-      println(s"INSPECTING: $tp:")
-      val objMirror = mirror.reflect(obj)
-      val members = tp.decls.filter(_.isPublic)
-      members.foreach { m =>
-        if (m.isTerm && m.isModule) {
-          println(s"MODULE: $m")
-          loop(mirror.reflectModule(m.asModule).instance, m.info)
-        }
-        else if (m.isTerm && !m.isConstructor && m.isMethod && m.typeSignature.paramLists.isEmpty && !m.typeSignature.takesTypeArgs) {
-          val value = objMirror.reflectMethod(m.asMethod)()
-          println(s"VAL/DEF: $m = $value")
-        }
-        else {
-          println(s"OTHERS: $m")
-
-        }
-      }
-    }
-    loop(topLevelObj, c.tpe)
-  }
-
-  def getMember[T:ru.TypeTag:ClassTag](obj:T, name:String):Any = {
-    val rm = ru.runtimeMirror(getClass.getClassLoader)
-    val instanceMirror = rm.reflect(obj)
-    val sym = ru.typeOf[T].declaration(ru.TermName(name)).asTerm
-    // println(sym)
-    val fieldMirror = instanceMirror.reflectField(sym)
-    // println(fieldMirror.get)
-    // fieldMirror.set(12)
-    println(fieldMirror)
-    fieldMirror.get
-  }
-
-  def test() = {
-    println(getType(new C))
-    println(getTypeTag(new C))
-    println(getTypeTag(new C).tpe)
-
-    // println(getClass(new C))
-    println(getClassTag(new C))
-    println(classOf[C])
-    println((new C).getClass)
-    println(scala.reflect.classTag[C])
-
-    val c = new C
-    evalMemberValues(c)
-    /*
-    println(a)
-    println(getMember(a.asInstanceOf[A], "f"))
-    getMember(a, "f")
-    */
-
-    // Iterable[ru.Symbol]
-    println(getType(new C).declarations)
-    for (decl <- getType(new C).declarations) {
-      println(decl+","+decl.fullName+", "+decl.name+", "+decl.isPublic
-        +","+decl.isMethod)
-      // println(getMember(c, decl.fullName))
-    }
-    // ru.Symbol
-    println(getType(new C).declarations.take(0))
-  }
-}
-
 object Main {
   def main(args:Array[String]):Unit = {
-    TTT.test()
-    /*
     val top = args(0)
     val chiselArgs = args.slice(1, args.length)
     chisel3.Driver.execute(chiselArgs, () => {
@@ -212,6 +122,5 @@ object Main {
       val constructor = clazz.getConstructor()
       constructor.newInstance().asInstanceOf[Module]
     })
-    */
   }
 }

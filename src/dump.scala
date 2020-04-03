@@ -7,7 +7,46 @@ import woop.configs._
 import woop.utils._
 import woop.core._
 
+import scala.reflect._
+import scala.reflect.runtime.{universe => ru}
+
+object printv {
+  def traverseMemberValues[T](topLevelObj: T)(implicit c: ru.TypeTag[T]) = {
+    val mirror = ru.runtimeMirror(getClass.getClassLoader)
+    def traverse(obj: Any, tp: ru.Type): (String, Seq[Bits]) = {
+      val objMirror = mirror.reflect(obj)
+      val members = tp.members.filter(m => m.isPublic && m.isMethod && m.asMethod.returnType <:< ru.typeOf[Data])
+        .filter(m => !m.isConstructor && m.isMethod && m.info.paramLists.isEmpty && !m.info.takesTypeArgs)
+      var fmtString = ""
+      var fmtBits = Seq[Bits]()
+      members.foreach { m => 
+        if (!(m.asMethod.returnType =:= tp) && m.name.toString != "cloneType") {
+          val value = objMirror.reflectMethod(m.asMethod)()
+          if ((m.asMethod.returnType <:< ru.typeOf[Bundle])) {
+            val ret = traverse(value, m.asMethod.returnType)
+            fmtString = fmtString + m.name.toString+"={"+
+              ret._1.trim + "} "
+            fmtBits = fmtBits++ret._2
+          } else if (m.asMethod.returnType <:< ru.typeOf[Bits]) {
+            fmtString = fmtString + m.name.toString+"=%x "
+            fmtBits = fmtBits++Seq[Bits](value.asInstanceOf[Bits])
+          }
+        }
+      }
+      (fmtString.trim, fmtBits)
+    }
+    val ret = traverse(topLevelObj, c.tpe)
+    ret
+  }
+
+  def apply[T<:Data:ru.TypeTag](sig:T) = {
+    val ret = traverseMemberValues(sig)
+    printf(ret._1, ret._2:_*)
+  }
+}
+
 object dumps {
+
   implicit class Instr_Dump(data:Instr) {
     def dump(msg:String) = {
       printf("%d: "+msg+": instr[%x]={func:%d, shamt:%d, rd:%d, rt:%d, rs:%d, op:%d, imm:%x, addr:%x}\n", GTimer(), data.asUInt, data.func, data.shamt, data.rd_idx, data.rt_idx, data.rs_idx, data.op, data.imm, data.addr)
