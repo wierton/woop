@@ -96,15 +96,13 @@ class CrossbarNx1(m:Int) extends Module {
   assert ((~q_data_sz).orR =/= 0.U || !io.out.resp.valid)
 
   def dump(msg:String) = {
+    printv(this, msg)
     for (i <- 0 until io.in.size) {
       printv(io.in(i), msg+".io.in."+i)
     }
     printv(io.out, msg+".io.out")
     printv(in_req, msg+".in_req")
-    printf("%d: "+msg+": in_valids=%b, in_valids_1H=%b, in_readys=%b, in_resp_readys=%b\n", GTimer(), in_valids, in_valids_1H, in_readys, in_resp_readys)
-    val p = Seq[Bits](GTimer(), q_data_sz, q_out)
-    val q = for (i <- 0 until conf.mio_cycles) yield q_datas(i)
-    printf("%d: "+msg+": q_data_sz=%d, q_out=%b, q_datas={"+List.fill(conf.mio_cycles)("%b,").mkString+"}\n", (p++q):_*)
+    printv.memdump(q_datas, msg)
   }
 }
 
@@ -160,15 +158,13 @@ class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
   dump("crossbar")
 
   def dump(msg:String) = {
+    printv(this, msg)
     for (i <- 0 until io.in.size) {
       printv(io.in(i), msg+".io.in."+i)
     }
     for (i <- 0 until io.out.size) {
       printv(io.out(i), msg+".io.out."+i)
     }
-    printv(cached_in_req, msg+".cached_in_req")
-    printf("%d: "+msg+": in_valids=%b, in_valids_1H=%b, cached_in_valids_1H=%b, has_req=%d, in_readys=%b\n", GTimer(), in_valids, in_valids_1H, cached_in_valids_1H, has_req, in_readys)
-    printf("%d: "+msg+": reqing=%b, has_resp=%b, resping=%b, working=%b, cached_out_valids=%b\n", GTimer(), reqing, has_resp, resping, working, cached_out_valids)
   }
 }
 

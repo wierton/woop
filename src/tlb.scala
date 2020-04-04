@@ -92,7 +92,7 @@ class TLB extends Module {
 
   def is_cached(vaddr:UInt) = vaddr(31, 29) =/= "b101".U
   def ioremap(addr:UInt) = Cat("b000".U, addr(28, 0))
-  def vaddr2paddr(vaddr:UInt, rwbit:UInt) = {
+  def vaddr2paddr(name:String, vaddr:UInt, rwbit:UInt) = {
     val mmu_res = tlb_translate(vaddr, rwbit)
     val vid = vaddr(31, 29)
     val paddr = Mux1H(Array(
@@ -111,14 +111,24 @@ class TLB extends Module {
     res.ex.code := mmu_res.ex.code
     res.ex.addr := vaddr
     res.paddr := paddr
+
+    if (conf.log_TLB) {
+      printv(name+".v2p", Array[(String,Data)](
+        ("mmu_res", mmu_res),
+        ("vid", vid),
+        ("paddr", paddr),
+        ("et", et),
+        ("res", res)))
+    }
+
     res
   }
 
-  def process_request(rio:TLBTransaction, flush:Bool) = {
+  def process_request(name:String, rio:TLBTransaction, flush:Bool) = {
     /* handle memory translate request, a pipeline stage */
     val tlbreq_in = RegEnable(rio.req.bits, enable=rio.req.fire())
     val tlbreq_valid = RegInit(N)
-    val tlbreq_res = vaddr2paddr(tlbreq_in.vaddr, tlbreq_in.func)
+    val tlbreq_res = vaddr2paddr(name, tlbreq_in.vaddr, tlbreq_in.func)
     val addr_l2b = Mux(tlbreq_in.is_aligned,
       tlbreq_in.vaddr(1, 0), "b00".U(2.W))
     val addr_has_ex = Mux1H(Array(
@@ -141,10 +151,20 @@ class TLB extends Module {
     } .elsewhen (!flush && rio.req.fire()) {
       tlbreq_valid := Y
     }
+
+    if (conf.log_TLB) {
+      printv(name, Array[(String,Data)](
+        ("tlbreq_valid", tlbreq_valid),
+        ("tlbreq_in", tlbreq_in),
+        ("tlbreq_res", tlbreq_res),
+        ("addr_l2b", addr_l2b),
+        ("addr_has_ex", addr_has_ex),
+        ("addr_ex", addr_ex)))
+    }
   }
 
-  process_request(io.iaddr, io.br_flush.valid || io.ex_flush.valid)
-  process_request(io.daddr, io.ex_flush.valid)
+  process_request("TLB.iaddr", io.iaddr, io.br_flush.valid || io.ex_flush.valid)
+  process_request("TLB.daddr", io.daddr, io.ex_flush.valid)
 
 
   /* TLB rw io */
