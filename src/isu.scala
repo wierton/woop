@@ -68,9 +68,14 @@ class ISU extends Module {
   )).asUInt
 
   val is_delayslot = RegInit(N)
+  val br_target = RegInit(0.U(32.W))
   val exu_wb = WireInit(0.U.asTypeOf(new WriteBackIO))
-  when (io.br_flush.valid) { is_delayslot := Y }
-  .elsewhen (io.fu_out.fire()) {  is_delayslot := N  }
+  when (io.fu_out.fire() && io.fu_in.bits.fu_type === FU_BRU) {
+    is_delayslot := Y
+    br_target := Mux(io.br_flush.valid,
+      io.br_flush.bits.br_target,
+      io.fu_out.bits.wb.pc + 4.U)
+  } .elsewhen (io.fu_out.fire()) {  is_delayslot := N  }
   exu_wb := 0.U.asTypeOf(new WriteBackIO)
   exu_wb.pc := io.fu_in.bits.pc
   exu_wb.instr := io.fu_in.bits.instr
@@ -84,6 +89,8 @@ class ISU extends Module {
   io.fu_out.bits.ops.op2 := op2_data
   io.fu_out.bits.wb := Mux(io.fu_in.bits.fu_type === FU_BRU,
     io.bru.fu_out.bits.wb, exu_wb)
+  io.fu_out.bits.wb.npc := Mux(is_delayslot, br_target,
+    io.fu_out.bits.wb.pc + 4.U)
   io.fu_out.bits.wb.id := instr_id
   io.fu_out.bits.wb.rd_idx := io.rfio.rd_idx
   io.fu_out.bits.ex := io.fu_in.bits.ex

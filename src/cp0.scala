@@ -135,6 +135,7 @@ class CP0 extends CPRS with LSUConsts {
   val intr_enable = !cpr_status.ERL && !cpr_status.EXL && cpr_status.IE
   val intr_valid = (ip.asUInt & cpr_status.IM.asUInt).orR &&
     intr_enable && io.exu.ex.et === ET_None
+  io.exu.intr := intr_valid
   ip(0) := is_mtc0_cause && cpr_wcause.IP(0)
   ip(1) := is_mtc0_cause && cpr_wcause.IP(1)
   ip(7) := cpr_cause.IP(7)
@@ -146,7 +147,7 @@ class CP0 extends CPRS with LSUConsts {
       val is_ds = io.exu.wb.is_ds
       cpr_cause.BD := (intr_valid && is_br) || is_ds
       cpr_epc := MuxCase(io.exu.wb.pc, Array(
-        (intr_valid && is_ds) -> io.exu.wb.npc,
+        (intr_valid && !is_br) -> io.exu.wb.npc,
         (!intr_valid && is_ds) -> (io.exu.wb.pc - 4.U)))
     }
     cpr_cause.ExcCode := Mux(io.exu.ex.et === ET_None,
@@ -179,8 +180,6 @@ class CP0 extends CPRS with LSUConsts {
       "h80000000".U + offset))
 
   when (cpr_compare === cpr_count) { cpr_cause.IP(7) := Y }
-  io.exu.intr := Cat(for(i <- 2 until 8) yield
-    cpr_cause.IP(i) && cpr_status.IM(i)).orR && intr_enable
 
   if (conf.log_CP0) {
     when (io.can_log_now) { dump() }

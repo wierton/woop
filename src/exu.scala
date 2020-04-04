@@ -36,7 +36,7 @@ class EXU extends Module {
   val fu_valid = RegInit(N)
 
   io.fu_in.ready := (io.fu_out.ready || !fu_valid) &&
-    !(wait_wb || (io.cp0.valid && io.cp0.intr)) &&
+    !wait_wb && !(io.cp0.valid && io.cp0.intr) &&
     !(io.cp0.valid && io.cp0.ex.et =/= ET_None)
 
   val fu_type = fu_in.ops.fu_type
@@ -114,7 +114,10 @@ class EXU extends Module {
   io.cp0.wb := io.fu_out.bits.wb
   io.cp0.ex := MuxLookup(fu_type, fu_in.ex, Array(
     FU_ALU -> alu_ex, FU_LSU -> lsu_ex, FU_PRU -> pru_ex))
-  when (io.cp0.valid && io.cp0.intr) { wait_wb := Y }
+  when (io.cp0.valid && io.cp0.intr) {
+    wait_wb := Y
+    wait_id := io.fu_out.bits.wb.id
+  }
   when (io.wb.valid && io.wb.bits.id === wait_id) {
     wait_wb := N
   }
