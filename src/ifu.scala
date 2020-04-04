@@ -5,7 +5,7 @@ import chisel3._
 import chisel3.util._
 import woop.consts._
 import woop.configs._
-import woop.dumps._
+
 import woop.utils._
 
 
@@ -156,18 +156,18 @@ class IFU extends Module {
   io.fu_out.bits.instr := Mux(s1_out_has_ex, 0.U, io.imem.resp.bits.data)
   io.fu_out.bits.ex := s1_out.bits.ex
 
-  printv(io.imem, "QWER")
   if (conf.log_IFU) {
     when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {
+    printv(this, "IFU")
     printf("%d: IFU: pc=%x, s1_datas={enq[%b,%b]:%x, deq[%b,%b]:%b%x}, s1_in={et:%d, code:%d, pc:%x}\n", GTimer(), pc, s1_datas.io.enq.valid, s1_datas.io.enq.ready, s1_datas.io.enq.bits.pc, s1_datas.io.deq.valid, s1_datas.io.deq.ready, s1_datas.io.deq.bits.valid, s1_datas.io.deq.bits.bits.pc, s1_in.ex.et, s1_in.ex.code, s1_in.pc)
-    io.imem.dump("IFU.imem")
-    io.iaddr.dump("IFU.iaddr")
-    io.fu_out.dump("IFU.fu_out")
-    io.br_flush.dump("IFU.br_flush")
-    io.ex_flush.dump("IFU.ex_flush")
+    printv(io.imem, "IFU.imem")
+    printv(io.iaddr, "IFU.iaddr")
+    printv(io.fu_out, "IFU.fu_out")
+    printv(io.br_flush, "IFU.br_flush")
+    printv(io.ex_flush, "IFU.ex_flush")
   }
 }
 

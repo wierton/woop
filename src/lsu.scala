@@ -6,7 +6,7 @@ import chisel3.util._
 import woop.consts._
 import woop.configs._
 import woop.utils._
-import woop.dumps._
+
 
 object LSUConsts extends LSUConsts { }
 
@@ -160,13 +160,13 @@ class LSU extends Module with LSUConsts {
   }
 
   def dump():Unit = {
-    s2_in.dump("LSU.s2_in")
-    s3_in.dump("LSU.s3_in")
-    s2_datas.io.enq.dump("LSU.s2_datas.enq")
-    s2_datas.io.deq.dump("LSU.s2_datas.deq")
-    io.fu_in.dump("LSU.io.in")
-    io.fu_out.dump("LSU.io.out")
-    io.dmem.dump("LSU.io.dmem")
+    printv(s2_in, "LSU.s2_in")
+    printv(s3_in, "LSU.s3_in")
+    printv(s2_datas.io.enq, "LSU.s2_datas.enq")
+    printv(s2_datas.io.deq, "LSU.s2_datas.deq")
+    printv(io.fu_in, "LSU.fu_in")
+    printv(io.fu_out, "LSU.fu_out")
+    printv(io.dmem, "LSU.dmem")
   }
 }
 

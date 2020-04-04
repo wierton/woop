@@ -5,7 +5,7 @@ import chisel3._
 import chisel3.util._
 import woop.consts._
 import woop.configs._
-import woop.dumps._
+
 import woop.utils._
 
 class RegFile extends Module {
@@ -80,10 +80,10 @@ class RegFile extends Module {
   }
 
   def dump():Unit = {
-    printf("%d: RF.commit: valid=%b, pc=%x, instr=%x, rd@%d.id=%x\n", GTimer(), io.commit.valid, io.commit.pc, io.commit.instr, io.rfio.rd_idx, wbids(io.rfio.rd_idx))
-    io.bp.dump("RF.bp")
-    io.wb.dump("RF.wb")
-    io.rfio.dump("RF.rfio")
+    printv(io.commit, "RF.commit")
+    printv(io.bp, "RF.bp")
+    printv(io.wb, "RF.wb")
+    printv(io.rfio, "RF.rfio")
     printf("%d: RF: rf_dirtys=%b\n", GTimer(), Cat(for (i <- 0 until 32) yield rf_dirtys(i)).asUInt)
     printf("%d: RF: bp_readys=%b\n", GTimer(), Cat(for (i <- 0 until 32) yield bp_readys(i)).asUInt)
     printf("%d: RF: RS@%d={bp_match:%b, rf_ready=%b, bits=%x, wbrf=%x, bprf=%x}\n", GTimer(), io.rfio.rs_idx, bypass_match(io.rfio.rs_idx), rf_data_ready(io.rfio.rs_idx), rf_data_bits(io.rfio.rs_idx), wb_rf(io.rfio.rs_idx), bp_rf(io.rfio.rs_idx))

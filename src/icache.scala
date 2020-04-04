@@ -5,7 +5,7 @@ import chisel3._
 import chisel3.util._
 import woop.consts._
 import woop.configs._
-import woop.dumps._
+
 import woop.utils._
 
 object ICacheParams {
@@ -178,8 +178,8 @@ class SimICache extends Module {
   def dump():Unit = {
     printf("%d: SimICache: br=%b, ex=%b, s0_valid=%b, s0_in.addr=%x, s0_out_ready=%b, s0_out_fire=%b\n", GTimer(), io.br_flush, io.ex_flush, s0_valid, s0_in.addr, s0_out_ready, s0_out_fire)
     printf("%d: SimICache: s1_in_fire=%b, s1_valid=%b, s1_in.addr=%x, s1_tag=%b, s1_entry={v:%b, tag:%x, data:%x}, s1_hit=%b, s1_req=%b\n", GTimer(), s1_in_fire, s1_valid, s1_in.addr, s1_tag, s1_entry.v, s1_entry.tag, s1_entry.data, s1_hit, s1_req)
-    io.in.dump("SimICache.in")
-    io.out.dump("SimICache.out")
+    printv(io.in, "SimICache.in")
+    printv(io.out, "SimICache.out")
   }
 }
 
@@ -295,7 +295,7 @@ class IMemCistern(entries:Int) extends Module {
     val q_fmt_s = List.fill(entries)("(req[%b]=%x,resp[%b]=%x), ").mkString
     printf("%d: IMemCistern: head=%d, tail=%d, is_full=%b, is_empty=%b, mreq_valid=%b, mreq_idx=%d, working=%b, br=%b, ex=%b\n", GTimer(), head, tail, is_full, is_empty, mreq_valid, mreq_idx, mreq_working, io.br_flush, io.ex_flush)
     printf("%d: IMemCistern: queue={"+q_fmt_s+"}\n", (p++q):_*)
-    io.in.dump("IMemCistern.in")
-    io.out.dump("IMemCistern.out")
+    printv(io.in, "IMemCistern.in")
+    printv(io.out, "IMemCistern.out")
   }
 }

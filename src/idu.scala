@@ -5,7 +5,7 @@ import chisel3._
 import chisel3.util._
 import woop.consts._
 import woop.configs._
-import woop.dumps._
+
 import woop.utils._
 
 class IDU extends Module with LSUConsts with MDUConsts {
@@ -150,9 +150,9 @@ class IDU extends Module with LSUConsts with MDUConsts {
 
   def dump():Unit = {
     printf("%d: IDU: fu_in={pc:%x, instr:%x}, fu_valid:%b, valid=%b\n", GTimer(), fu_in.pc, fu_in.instr.asUInt, fu_valid, valid)
-    io.fu_in.dump("IDU.io.fu_in")
-    io.fu_out.dump("IDU.io.fu_out")
-    io.ex_flush.dump("IDU.io.ex_flush")
+    printv(io.fu_in, "IDU.fu_in")
+    printv(io.fu_out, "IDU.fu_out")
+    printv(io.ex_flush, "IDU.ex_flush")
   }
 }
 

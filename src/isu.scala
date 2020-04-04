@@ -6,7 +6,7 @@ import chisel3.util._
 import chisel3.experimental._
 import woop.consts._
 import woop.configs._
-import woop.dumps._
+
 import woop.utils._
 
 
@@ -96,6 +96,10 @@ class ISU extends Module {
   io.br_flush.bits.br_target := io.bru.fu_out.bits.br_target
 
   if (conf.log_ISU) {
-    printf(p"ISU.io: ${io.fu_in}\n")
+    printv(io.fu_in, "ISU.fu_in")
+    printv(io.fu_out, "ISU.fu_out")
+    printv(io.bru, "ISU.bru")
+    printv(io.br_flush, "ISU.br_flush")
+    printv(io.rfio, "ISU.rfio")
   }
 }

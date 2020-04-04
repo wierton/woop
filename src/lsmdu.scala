@@ -5,7 +5,7 @@ import chisel3._
 import chisel3.util._
 import woop.consts._
 import woop.configs._
-import woop.dumps._
+
 import woop.utils._
 
 
@@ -36,7 +36,7 @@ class LSMDUPipelineStage extends Module {
 
   def dump():Unit = {
     printf("%d: LSMDU.psu.io.fu_in: fu_valid=%b, io.fu_in[%b,%b]={fu_type=%d}\n", GTimer(), fu_valid, io.fu_in.valid, io.fu_in.ready, io.fu_in.bits.fu_type)
-    io.fu_out.dump("LSMDU.psu.io.fu_out")
+    printv(io.fu_out, "LSMD-PSU.fu_out")
   }
 }
 
@@ -95,10 +95,10 @@ class LSMDU extends Module {
 
   def dump():Unit = {
     printf("%d: LSMDU: lsu.working=%b, mdu.working=%b, to_lsu=%b, to_mdu=%b, to_psu=%b\n", GTimer(), lsu.io.working, mdu.io.working, to_lsu, to_mdu, to_psu)
-    lsu.io.fu_in.dump("LSU.io.fu_in")
-    lsu.io.fu_out.dump("LSU.io.fu_out")
-    io.wb.dump("LSMDU.io.wb")
-    io.fu_in.dump("LSMDU.io.fu_in")
+    printv(lsu.io.fu_in, "LSU.fu_in")
+    printv(lsu.io.fu_out, "LSU.fu_out")
+    printv(io.wb, "LSMDU.wb")
+    printv(io.fu_in, "LSMDU.fu_in")
   }
   assert (AtMost1H(lsu.io.fu_out.valid, mdu.io.fu_out.valid, psu.io.fu_out.valid))
 }

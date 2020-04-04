@@ -4,7 +4,7 @@ package core
 import chisel3._
 import chisel3.util._
 import woop.consts._
-import woop.dumps._
+
 import woop.configs._
 import woop.utils._
 

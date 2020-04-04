@@ -5,7 +5,7 @@ import chisel3._
 import chisel3.util._
 import woop.consts._
 import woop.configs._
-import woop.dumps._
+
 import woop.utils._
 
 class AddrSpace(start:UInt, end:UInt) {
@@ -45,9 +45,9 @@ class MemMux(name:String) extends Module {
 
   if (conf.log_MemMux) {
     when (io.can_log_now) {
-      io.in.dump(name+".in")
-      io.cached.dump(name+".cached")
-      io.uncached.dump(name+".uncached")
+      printv(io.in, name+".in")
+      printv(io.cached, name+".cached")
+      printv(io.uncached, name+".uncached")
     }
   }
 }
@@ -97,10 +97,10 @@ class CrossbarNx1(m:Int) extends Module {
 
   def dump(msg:String) = {
     for (i <- 0 until io.in.size) {
-      io.in(i).dump(msg+".io.in."+i)
+      printv(io.in(i), msg+".io.in."+i)
     }
-    io.out.dump(msg+".io.out")
-    in_req.dump(msg+".in_req")
+    printv(io.out, msg+".io.out")
+    printv(in_req, msg+".in_req")
     printf("%d: "+msg+": in_valids=%b, in_valids_1H=%b, in_readys=%b, in_resp_readys=%b\n", GTimer(), in_valids, in_valids_1H, in_readys, in_resp_readys)
     val p = Seq[Bits](GTimer(), q_data_sz, q_out)
     val q = for (i <- 0 until conf.mio_cycles) yield q_datas(i)
@@ -161,12 +161,12 @@ class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
 
   def dump(msg:String) = {
     for (i <- 0 until io.in.size) {
-      io.in(i).dump(msg+".io.in."+i)
+      printv(io.in(i), msg+".io.in."+i)
     }
     for (i <- 0 until io.out.size) {
-      io.out(i).dump(msg+".io.out."+i)
+      printv(io.out(i), msg+".io.out."+i)
     }
-    cached_in_req.dump(msg+".cached_in_req")
+    printv(cached_in_req, msg+".cached_in_req")
     printf("%d: "+msg+": in_valids=%b, in_valids_1H=%b, cached_in_valids_1H=%b, has_req=%d, in_readys=%b\n", GTimer(), in_valids, in_valids_1H, cached_in_valids_1H, has_req, in_readys)
     printf("%d: "+msg+": reqing=%b, has_resp=%b, resping=%b, working=%b, cached_out_valids=%b\n", GTimer(), reqing, has_resp, resping, working, cached_out_valids)
   }
