@@ -13,7 +13,17 @@ import scala.reflect.runtime.{universe => ru}
 object printv {
   val defaultFmtMap = Map[String,String](
     "func" -> "%d", "et" -> "%d", "code" -> "%d",
-    "instr" -> "%x"
+    "instr" -> "%x", "rf_dirtys" -> "%b",
+    "bp_readys" -> "%b", "cpr_index" -> "%x",
+    "cpr_entry_lo0" -> "%x", "cpr_entry_lo1" -> "%x",
+    "cpr_context" -> "%x", "cpr_pagemask" -> "%x",
+    "cpr_wired" -> "%x", "cpr_base" -> "%x",
+    "cpr_badvaddr" -> "%x", "cpr_count" -> "%x",
+    "cpr_entry_hi" -> "%x", "cpr_compare" -> "%x",
+    "cpr_status" -> "%x", "cpr_cause" -> "%x",
+    "cpr_epc" -> "%x", "cpr_prid" -> "%x",
+    "cpr_ebase" -> "%x", "cpr_config" -> "%x",
+    "cpr_config1" -> "%x"
     )
 
   def getTypeFromString(name: String): ru.Type = {
@@ -33,6 +43,7 @@ object printv {
       val objMirror = mirror.reflect(obj)
       var members = tp.members.filter(m => m.isPublic && m.isMethod && m.asMethod.returnType <:< ru.typeOf[Data])
         .filter(m => !m.isConstructor && m.isMethod && m.info.paramLists.isEmpty && !m.info.takesTypeArgs)
+        .filter(m => !(m.asMethod.returnType =:= tp) && m.name.toString != "cloneType" && m.name.toString != "io" && m.name.toString.exists(_.isLower))
       var fmtString = ""
       var fmtBits = Seq[Bits]()
       var isBits = false
@@ -53,8 +64,7 @@ object printv {
         members = members.filter(_.name.toString == "bits")
         isBits = true
       }
-      members.foreach { m => 
-        if (!(m.asMethod.returnType =:= tp) && m.name.toString != "cloneType" && m.name.toString != "io") {
+      members.foreach { m => {
           val value = objMirror.reflectMethod(m.asMethod)()
           val info = if(isBits)
             getTypeFromString(value.getClass.getName)
@@ -90,5 +100,16 @@ object printv {
     val ret = traverseMemberValues(sig, fmtmap)
     val bits = Seq[Bits](GTimer())++ret._2
     printf("%d: "+module+": "+ret._1+"\n", bits:_*)
+  }
+
+  def memdump[T<:Data:ru.TypeTag](mem:Mem[T], msg:String, fmtmap:Map[String,String]=defaultFmtMap) = {
+    var fmts = ""
+    var bits = Seq[Bits](GTimer())
+    for (i <- 0 until mem.length.toInt) {
+      val ret = traverseMemberValues(mem(i), fmtmap)
+      fmts=fmts+ret._1 + " "
+      bits=bits++ret._2
+    }
+    printf("%d: "+msg+": "+fmts.trim+"\n", bits:_*)
   }
 }

@@ -181,4 +181,20 @@ class CP0 extends CPRS with LSUConsts {
   when (cpr_compare === cpr_count) { cpr_cause.IP(7) := Y }
   io.exu.intr := Cat(for(i <- 2 until 8) yield
     cpr_cause.IP(i) && cpr_status.IM(i)).orR && intr_enable
+
+  if (conf.log_CP0) {
+    when (io.can_log_now) { dump() }
+  }
+
+  def dump():Unit = {
+    printv(this, "CP0")
+    printv(io.rport, "CP0.rport")
+    printv(io.wport, "CP0.wport")
+    printv(io.tlbr_port, "CP0.tlbr_port")
+    printv(io.tlbw_port, "CP0.tlbw_port")
+    printv(io.tlbp_port, "CP0.tlbp_port")
+    printv(io.status, "CP0.status")
+    printv(io.exu, "CP0.exu")
+    printv(io.ex_flush, "CP0.ex_flush")
+  }
 }

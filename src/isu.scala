@@ -96,6 +96,7 @@ class ISU extends Module {
   io.br_flush.bits.br_target := io.bru.fu_out.bits.br_target
 
   if (conf.log_ISU) {
+    printv(this, "ISU")
     printv(io.fu_in, "ISU.fu_in")
     printv(io.fu_out, "ISU.fu_out")
     printv(io.bru, "ISU.bru")

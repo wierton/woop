@@ -36,11 +36,14 @@ object conf {
   val log_IFU = true
   val log_IMemPipe = true
   val log_IDU = true
+  val log_BRU = true
   val log_ISU = true
   val log_EXU = true
   val log_PRU = true
   val log_ALU = true
   val log_LSU = true
   val log_MDU = true
+  val log_CP0 = true
+  val log_TLB = true
   val log_LSMDU = true
 }

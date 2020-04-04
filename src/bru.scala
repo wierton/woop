@@ -46,4 +46,14 @@ class BRU extends Module {
   io.fu_out.bits.wb.data := pc + 8.U
   io.fu_out.bits.wb.is_br := Y
   io.fu_out.bits.br_target := br_info(31, 0)
+
+  if (conf.log_BRU) {
+    when (io.can_log_now) { dump() }
+  }
+
+  def dump():Unit = {
+    printv(this, "BRU")
+    printv(io.fu_in, "BRU.fu_in")
+    printv(io.fu_out, "BRU.fu_out")
+  }
 }

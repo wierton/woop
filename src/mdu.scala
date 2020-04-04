@@ -81,7 +81,7 @@ class MDU extends Module with MDUConsts {
   }
 
   def dump():Unit = {
-    printf("%d: MDU: fu_valid=%b, hi=%x, lo=%x, op1=%x, op2=%x, result=%x, wb_rd=%b, wb_hilo=%b, s_mul=%x, u_mul=%x, s_div=%x, s_mod=%x, u_div=%x, u_mod=%x\n", GTimer(), fu_valid, hi, lo, op1, op2, result, wb_rd, wb_hilo, s_mul, u_mul, s_div, s_mod, u_div, u_mod)
+    printv(this, "MDU")
     printv(io.fu_in, "MDU.fu_in")
     printv(io.fu_out, "MDU.fu_out")
   }

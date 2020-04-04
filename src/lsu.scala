@@ -160,6 +160,7 @@ class LSU extends Module with LSUConsts {
   }
 
   def dump():Unit = {
+    printv(this, "LSU")
     printv(s2_in, "LSU.s2_in")
     printv(s3_in, "LSU.s3_in")
     printv(s2_datas.io.enq, "LSU.s2_datas.enq")

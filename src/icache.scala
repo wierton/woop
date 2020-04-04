@@ -176,8 +176,7 @@ class SimICache extends Module {
     when (io.can_log_now) { dump() }
   }
   def dump():Unit = {
-    printf("%d: SimICache: br=%b, ex=%b, s0_valid=%b, s0_in.addr=%x, s0_out_ready=%b, s0_out_fire=%b\n", GTimer(), io.br_flush, io.ex_flush, s0_valid, s0_in.addr, s0_out_ready, s0_out_fire)
-    printf("%d: SimICache: s1_in_fire=%b, s1_valid=%b, s1_in.addr=%x, s1_tag=%b, s1_entry={v:%b, tag:%x, data:%x}, s1_hit=%b, s1_req=%b\n", GTimer(), s1_in_fire, s1_valid, s1_in.addr, s1_tag, s1_entry.v, s1_entry.tag, s1_entry.data, s1_hit, s1_req)
+    printv(this, "SimICache")
     printv(io.in, "SimICache.in")
     printv(io.out, "SimICache.out")
   }

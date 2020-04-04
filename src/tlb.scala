@@ -163,4 +163,20 @@ class TLB extends Module {
   io.pport.index._0 := 0.U
   io.pport.index.p := !matches.orR
   io.pport.index.index := Mux1H(for (i <- 0 until conf.tlbsz) yield matches(i) -> i.U)
+
+  if (conf.log_TLB) {
+    when (io.can_log_now) { dump() }
+  }
+
+  def dump():Unit = {
+    printv(this, "TLB")
+    printv(io.iaddr, "TLB.iaddr")
+    printv(io.daddr, "TLB.daddr")
+    printv(io.rport, "TLB.rport")
+    printv(io.wport, "TLB.wport")
+    printv(io.pport, "TLB.pport")
+    printv(io.status, "TLB.status")
+    printv(io.br_flush, "TLB.br_flush")
+    printv(io.ex_flush, "TLB.ex_flush")
+  }
 }

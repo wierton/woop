@@ -5,12 +5,12 @@ import chisel3._
 import chisel3.util._
 import woop.consts._
 import woop.configs._
-
 import woop.utils._
+import scala.reflect.runtime.{universe => ru}
 
 
 /* without cache */
-class IMemPipe[T<:Data](gen:T, entries:Int) extends Module {
+class IMemPipe[T<:Data:ru.TypeTag](gen:T, entries:Int) extends Module {
   val io = IO(new Bundle {
     val enq = Flipped(DecoupledIO(gen))
     val deq = DecoupledIO(ValidIO(gen))
@@ -81,9 +81,7 @@ class IMemPipe[T<:Data](gen:T, entries:Int) extends Module {
   def dump():Unit = {
     printf("%d: IFUPD.io: enq[%b,%b]=%x, deq[%b,%b]=%b%x, br_flush=%b, ex_flush=%b\n", GTimer(), io.enq.valid, io.enq.ready, io.enq.bits.asUInt, io.deq.valid, io.deq.ready, io.deq.bits.valid, io.deq.bits.bits.asUInt, io.br_flush.valid, io.ex_flush.valid)
     printf("%d: IFUPD: head=%d, tail=%d, is_full=%d, is_empty=%d, next_head=%d, next_tail=%d\n", GTimer(), head, tail, is_full, is_empty, next_head, next_tail)
-    val p = Seq[Bits](GTimer())
-    val q = for (i <- 0 until entries) yield queue(i).asUInt
-    printf("%d: IFUPD: queue={"+List.fill(entries)("%x,").mkString+"}\n", (p++q):_*)
+    printv.memdump(queue, "IFUPD.queue")
   }
   assert (!is_full || !is_empty)
 }
@@ -162,7 +160,8 @@ class IFU extends Module {
 
   def dump():Unit = {
     printv(this, "IFU")
-    printf("%d: IFU: pc=%x, s1_datas={enq[%b,%b]:%x, deq[%b,%b]:%b%x}, s1_in={et:%d, code:%d, pc:%x}\n", GTimer(), pc, s1_datas.io.enq.valid, s1_datas.io.enq.ready, s1_datas.io.enq.bits.pc, s1_datas.io.deq.valid, s1_datas.io.deq.ready, s1_datas.io.deq.bits.valid, s1_datas.io.deq.bits.bits.pc, s1_in.ex.et, s1_in.ex.code, s1_in.pc)
+    printv(s1_datas.io.enq, "IFU.s1.enq")
+    printv(s1_datas.io.deq, "IFU.s1.deq")
     printv(io.imem, "IFU.imem")
     printv(io.iaddr, "IFU.iaddr")
     printv(io.fu_out, "IFU.fu_out")

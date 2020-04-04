@@ -88,9 +88,7 @@ class RegFile extends Module {
     printf("%d: RF: bp_readys=%b\n", GTimer(), Cat(for (i <- 0 until 32) yield bp_readys(i)).asUInt)
     printf("%d: RF: RS@%d={bp_match:%b, rf_ready=%b, bits=%x, wbrf=%x, bprf=%x}\n", GTimer(), io.rfio.rs_idx, bypass_match(io.rfio.rs_idx), rf_data_ready(io.rfio.rs_idx), rf_data_bits(io.rfio.rs_idx), wb_rf(io.rfio.rs_idx), bp_rf(io.rfio.rs_idx))
     printf("%d: RF: RT@%d={bp_match:%b, rf_ready=%b, bits=%x, wbrf=%x, bprf=%x}\n", GTimer(), io.rfio.rt_idx, bypass_match(io.rfio.rt_idx), rf_data_ready(io.rfio.rt_idx), rf_data_bits(io.rfio.rt_idx), wb_rf(io.rfio.rt_idx), bp_rf(io.rfio.rt_idx))
-    val p = Seq[Bits](GTimer())
-    val q = for(i <- 0 until 32) yield wbids(i)
-    printf("%d: wbids={"+List.fill(32)("%x,").mkString+"}\n", (p++q):_*)
+    printv.memdump(wbids, "RF.wbids")
 
     when (io.commit.valid) {
       printf("$pc:    %x\n", io.commit.pc)

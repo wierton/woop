@@ -94,7 +94,7 @@ class LSMDU extends Module {
   }
 
   def dump():Unit = {
-    printf("%d: LSMDU: lsu.working=%b, mdu.working=%b, to_lsu=%b, to_mdu=%b, to_psu=%b\n", GTimer(), lsu.io.working, mdu.io.working, to_lsu, to_mdu, to_psu)
+    printv(this, "LSU")
     printv(lsu.io.fu_in, "LSU.fu_in")
     printv(lsu.io.fu_out, "LSU.fu_out")
     printv(io.wb, "LSMDU.wb")
