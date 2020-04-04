@@ -35,7 +35,8 @@ object printv {
   }
 
   private def traverse(obj: Any, tp: ru.Type, fmtmap:Map[String,String]=dftFmtMap): (String, Seq[Bits]) = {
-    if (tp =:= ru.typeOf[UInt] || tp =:= ru.typeOf[SInt]) {
+    if (tp =:= ru.typeOf[UInt] || tp =:= ru.typeOf[SInt]
+      || tp =:= ru.typeOf[Bool]) {
       return ("%x", Seq[Bits](obj.asInstanceOf[Bits]))
     }
 
@@ -121,7 +122,7 @@ object printv {
     var bits = Seq[Bits](GTimer())
     for ((name, sig) <- sigs) {
       val ret = traverse(sig, getTypeFromString(sig.getClass.getName))
-      fmts=fmts+name+"="+ret._1 + " "
+      fmts=fmts+name+"={"+ret._1.trim+"} "
       bits=bits++ret._2
     }
     printf("%d: "+module+": "+fmts.trim+"\n", bits:_*)

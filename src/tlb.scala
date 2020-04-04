@@ -24,6 +24,10 @@ class TLBEntry extends Bundle {
   val p1   = new TLBPhyn
 }
 
+class MMURes extends Bundle {
+  val ex = new CP0Exception
+  val paddr = UInt(conf.xprlen.W)
+}
 
 class TLB extends Module {
   val io = IO(new Bundle {
@@ -71,10 +75,7 @@ class TLB extends Module {
     res.ex.addr := vaddr
     res
   }
-  class MMURes extends Bundle {
-    val ex = new CP0Exception
-    val paddr = UInt(conf.xprlen.W)
-  }
+
   def tlb_translate(vaddr:UInt, rwbit:UInt) = {
     val tlb_rports = for (i <- 0 until conf.tlbsz) yield tlb_entries(i)
     val matches = Reverse(Cat(for (i <- 0 until conf.tlbsz) yield
