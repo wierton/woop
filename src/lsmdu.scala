@@ -94,9 +94,9 @@ class LSMDU extends Module {
   }
 
   def dump():Unit = {
-    printv(this, "LSU")
-    printv(lsu.io.fu_in, "LSU.fu_in")
-    printv(lsu.io.fu_out, "LSU.fu_out")
+    printv(this, "LSMDU")
+    printv(lsu.io.fu_in, "LSMDU.lsu_in")
+    printv(lsu.io.fu_out, "LSMDU.lsu_out")
     printv(io.wb, "LSMDU.wb")
     printv(io.fu_in, "LSMDU.fu_in")
   }

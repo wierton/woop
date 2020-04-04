@@ -99,13 +99,13 @@ class TLB extends Module {
     val paddr = Mux1H(Array(
       (vid === 4.U || vid === 5.U) -> ioremap(vaddr),
       (vid === 6.U) -> ioremap(mmu_res.paddr),
-      (vid(1) === 0.U) -> Mux(io.status.ERL,
+      (vid(2) === 0.U) -> Mux(io.status.ERL,
         vaddr, ioremap(mmu_res.paddr)),
     ))
     val et = Mux1H(Array(
       (vid === 4.U || vid === 5.U) -> ET_None,
       (vid === 6.U) -> mmu_res.ex.et,
-      (vid(1) === 0.U) -> Mux(io.status.ERL, ET_None, mmu_res.ex.et),
+      (vid(2) === 0.U) -> Mux(io.status.ERL, ET_None, mmu_res.ex.et),
     ))
     val res = WireInit(0.U.asTypeOf(new MMURes))
     res.ex.et := et
@@ -114,12 +114,14 @@ class TLB extends Module {
     res.paddr := paddr
 
     if (conf.log_TLB) {
-      printv(name+".v2p", Array[(String,Data)](
-        ("mmu_res", mmu_res),
-        ("vid", vid),
-        ("paddr", paddr),
-        ("et", et),
-        ("res", res)))
+      when (io.can_log_now) {
+        printv(name+".v2p", Array[(String,Data)](
+          ("mmu_res", mmu_res),
+          ("vid", vid),
+          ("paddr", paddr),
+          ("et", et),
+          ("res", res)))
+      }
     }
 
     res
@@ -154,13 +156,15 @@ class TLB extends Module {
     }
 
     if (conf.log_TLB) {
-      printv(name, Array[(String,Data)](
-        ("tlbreq_valid", tlbreq_valid),
-        ("tlbreq_in", tlbreq_in),
-        ("tlbreq_res", tlbreq_res),
-        ("addr_l2b", addr_l2b),
-        ("addr_has_ex", addr_has_ex),
-        ("addr_ex", addr_ex)))
+      when(io.can_log_now) {
+        printv(name, Array[(String,Data)](
+          ("tlbreq_valid", tlbreq_valid),
+          ("tlbreq_in", tlbreq_in),
+          ("tlbreq_res", tlbreq_res),
+          ("addr_l2b", addr_l2b),
+          ("addr_has_ex", addr_has_ex),
+          ("addr_ex", addr_ex)))
+      }
     }
   }
 

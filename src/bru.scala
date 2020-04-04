@@ -39,7 +39,7 @@ class BRU extends Module {
     BR_JR    -> Cat(Y, Y, N, JRa),
     BR_JALR  -> Cat(Y, Y, Y, JRa)))
 
-  io.fu_out.valid := io.fu_in.valid
+  io.fu_out.valid := io.fu_in.valid && br_info(33)
   io.fu_out.bits.wb := io.fu_in.bits.wb
   io.fu_out.bits.wb.v := br_info(32)
   io.fu_out.bits.wb.wen := br_info(32)

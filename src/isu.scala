@@ -84,11 +84,12 @@ class ISU extends Module {
   io.fu_out.bits.ops.op2 := op2_data
   io.fu_out.bits.wb := Mux(io.fu_in.bits.fu_type === FU_BRU,
     io.bru.fu_out.bits.wb, exu_wb)
+  io.fu_out.bits.wb.id := instr_id
   io.fu_out.bits.wb.rd_idx := io.rfio.rd_idx
   io.fu_out.bits.ex := io.fu_in.bits.ex
 
   /* branch */
-  io.bru.fu_in.valid := io.fu_in.bits.fu_op === FU_BRU
+  io.bru.fu_in.valid := io.fu_in.valid && io.fu_in.bits.fu_type === FU_BRU
   io.bru.fu_in.bits.wb := exu_wb
   io.bru.fu_in.bits.ops := io.fu_out.bits.ops
 
@@ -96,6 +97,10 @@ class ISU extends Module {
   io.br_flush.bits.br_target := io.bru.fu_out.bits.br_target
 
   if (conf.log_ISU) {
+    when (io.can_log_now) { dump() }
+  }
+
+  def dump() = {
     printv(this, "ISU")
     printv(io.fu_in, "ISU.fu_in")
     printv(io.fu_out, "ISU.fu_out")

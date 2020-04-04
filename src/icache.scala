@@ -182,6 +182,11 @@ class SimICache extends Module {
   }
 }
 
+class IMemCisternEntry extends Bundle {
+  val req = ValidIO(new MemReq)
+  val resp = ValidIO(new MemResp)
+}
+
 class IMemCistern(entries:Int) extends Module {
   val io = IO(new Bundle {
     val in = Flipped(new MemIO)
@@ -191,10 +196,7 @@ class IMemCistern(entries:Int) extends Module {
     val can_log_now = Input(Bool())
   })
 
-  val queue = Mem(entries, new Bundle {
-    val req = ValidIO(new MemReq)
-    val resp = ValidIO(new MemResp)
-  })
+  val queue = Mem(entries, new IMemCisternEntry)
 
   val head = RegInit(0.U(log2Ceil(entries).W))
   val tail = RegInit(0.U(log2Ceil(entries).W))
@@ -286,14 +288,16 @@ class IMemCistern(entries:Int) extends Module {
   }
 
   def dump():Unit = {
+    printv(this, "IMemCistern")
+
     val p = Seq[Bits](GTimer())
     val q = (for (i <- 0 until entries) yield Seq(
       queue(i).req.valid, queue(i).req.bits.addr,
       queue(i).resp.valid, queue(i).resp.bits.data
     )).reduce(_++_)
     val q_fmt_s = List.fill(entries)("(req[%b]=%x,resp[%b]=%x), ").mkString
-    printf("%d: IMemCistern: head=%d, tail=%d, is_full=%b, is_empty=%b, mreq_valid=%b, mreq_idx=%d, working=%b, br=%b, ex=%b\n", GTimer(), head, tail, is_full, is_empty, mreq_valid, mreq_idx, mreq_working, io.br_flush, io.ex_flush)
     printf("%d: IMemCistern: queue={"+q_fmt_s+"}\n", (p++q):_*)
+
     printv(io.in, "IMemCistern.in")
     printv(io.out, "IMemCistern.out")
   }

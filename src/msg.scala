@@ -140,16 +140,19 @@ class IDU_ISU_IO extends Bundle {
   val ex = Output(new CP0Exception)
 }
 
-class ISU_BRU_IO extends Bundle {
-  val fu_in = Flipped(ValidIO(new Bundle {
-    val wb = Output(new WriteBackIO)
-    val ops = Output(new EXU_OPS)
-  }))
+class ISU_BRU_IN extends Bundle {
+  val wb = Output(new WriteBackIO)
+  val ops = Output(new EXU_OPS)
+}
 
-  val fu_out = ValidIO(new Bundle {
-    val wb = Output(new WriteBackIO)
-    val br_target = Output(UInt(conf.xprlen.W))
-  })
+class ISU_BRU_OUT extends Bundle {
+  val wb = Output(new WriteBackIO)
+  val br_target = Output(UInt(conf.xprlen.W))
+}
+
+class ISU_BRU_IO extends Bundle {
+  val fu_in = Flipped(ValidIO(new ISU_BRU_IN))
+  val fu_out = ValidIO(new ISU_BRU_OUT)
 }
 
 class ISU_EXU_IO extends Bundle {

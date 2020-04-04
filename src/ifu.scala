@@ -79,8 +79,12 @@ class IMemPipe[T<:Data:ru.TypeTag](gen:T, entries:Int) extends Module {
   }
 
   def dump():Unit = {
-    printf("%d: IFUPD.io: enq[%b,%b]=%x, deq[%b,%b]=%b%x, br_flush=%b, ex_flush=%b\n", GTimer(), io.enq.valid, io.enq.ready, io.enq.bits.asUInt, io.deq.valid, io.deq.ready, io.deq.bits.valid, io.deq.bits.bits.asUInt, io.br_flush.valid, io.ex_flush.valid)
-    printf("%d: IFUPD: head=%d, tail=%d, is_full=%d, is_empty=%d, next_head=%d, next_tail=%d\n", GTimer(), head, tail, is_full, is_empty, next_head, next_tail)
+    printv(this, "IFUPD")
+    printv("IFUPD.io", Array[(String,Data)](
+      ("br_flush", io.br_flush),
+      ("ex_flush", io.ex_flush),
+      ("enq", io.enq),
+      ("deq", io.deq)))
     printv.memdump(queue, "IFUPD.queue")
   }
   assert (!is_full || !is_empty)

@@ -15,6 +15,7 @@ object printv {
   val dftFmtMap = Map[String,String](
     "func" -> "%d", "et" -> "%d", "code" -> "%d",
     "instr" -> "%x", "rf_dirtys" -> "%b",
+    "fu_type" -> "%d", "fu_op" -> "%d",
     "bp_readys" -> "%b", "cpr_index" -> "%x",
     "cpr_entry_lo0" -> "%x", "cpr_entry_lo1" -> "%x",
     "cpr_context" -> "%x", "cpr_pagemask" -> "%x",

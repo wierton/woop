@@ -8,7 +8,6 @@ import woop.configs._
 import woop.utils._
 
 
-
 class EXU extends Module {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new ISU_EXU_IO))
@@ -63,7 +62,7 @@ class EXU extends Module {
     (fu_op === ALU_ADD_OV) -> (op1 + op2).asUInt,
     (fu_op === ALU_SUB_OV) -> (op1 - op2).asUInt,
     (fu_op === ALU_CLZ)  -> CLZ_32(op1),
-  ))
+  ))(31, 0)
   val alu_ov = Mux1H(Array(
     (fu_op === ALU_ADD_OV)  -> ((!op1(31) && !op2(31) && alu_wdata(31)) || (op1(31) && op2(31) && !alu_wdata(31))),
     (fu_op === ALU_SUB_OV)  -> ((!op1(31) && op2(31) && alu_wdata(31)) || (op1(31) && !op2(31) && !alu_wdata(31)))))
@@ -77,7 +76,7 @@ class EXU extends Module {
   /* lsu addr translation */
   val lsu_op = io.fu_in.bits.ops.fu_op.asTypeOf(new LSUOp)
   val lsu_ex = io.daddr.resp.bits.ex
-  io.daddr.req.valid := io.fu_in.valid &&
+  io.daddr.req.valid := io.fu_in.fire() &&
     io.fu_in.bits.ops.fu_type === FU_LSU
   io.daddr.req.bits.vaddr := io.fu_in.bits.ops.op1
   io.daddr.req.bits.func := lsu_op.func
@@ -128,8 +127,8 @@ class EXU extends Module {
   io.fu_out.bits.ops := fu_in.ops
   io.fu_out.bits.ops.op1 := Mux(fu_in.ops.fu_type === FU_LSU, 
     io.daddr.resp.bits.paddr, fu_in.ops.op1)
-  io.fu_out.bits.ops.fu_type := Mux(fu_in.ops.fu_type === FU_LSU
-    && lsu_ex.et =/= ET_None, FU_PRU, FU_LSU)
+  io.fu_out.bits.ops.fu_type := Mux(fu_in.ops.fu_type === FU_LSU, Mux(
+    lsu_ex.et =/= ET_None, FU_PRU, FU_LSU), fu_in.ops.fu_type)
   io.fu_out.bits.is_cached := Y
 
   /* write back */
@@ -199,5 +198,30 @@ class EXU extends Module {
     fu_valid := N
   } .elsewhen(io.fu_in.fire()) {
     fu_valid := Y
+  }
+
+  if (conf.log_EXU) {
+    when (io.can_log_now) { dump() }
+  }
+
+  def dump() = {
+    printv(this, "EXU")
+    printv(io.fu_in, "EXU.fu_in")
+    printv(io.fu_out, "EXU.fu_out")
+
+    printv(io.cp0, "EXU.cp0")
+    printv(io.cp0_rport, "EXU.cp0_rport")
+    printv(io.cp0_wport, "EXU.cp0_wport")
+    printv(io.cp0_tlbr_port, "EXU.cp0_tlbr_port")
+    printv(io.cp0_tlbw_port, "EXU.cp0_tlbw_port")
+    printv(io.cp0_tlbp_port, "EXU.cp0_tlbp_port")
+
+    printv(io.daddr, "EXU.daddr")
+    printv(io.tlb_rport, "EXU.tlb_rport")
+    printv(io.tlb_wport, "EXU.tlb_wport")
+    printv(io.tlb_pport, "EXU.tlb_pport")
+
+    printv(io.wb, "EXU.wb")
+    printv(io.bp, "EXU.bp")
   }
 }
