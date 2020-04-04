@@ -36,7 +36,8 @@ class EXU extends Module {
   val fu_valid = RegInit(N)
 
   io.fu_in.ready := (io.fu_out.ready || !fu_valid) &&
-    !(wait_wb || (io.cp0.valid && io.cp0.intr))
+    !(wait_wb || (io.cp0.valid && io.cp0.intr)) &&
+    !(io.cp0.valid && io.cp0.ex.et =/= ET_None)
 
   val fu_type = fu_in.ops.fu_type
   val fu_op   = fu_in.ops.fu_op
@@ -101,8 +102,11 @@ class EXU extends Module {
   val pru_ex = WireInit(0.U.asTypeOf(new CP0Exception))
   pru_ex.et := MuxLookup(fu_op, ET_None, Array(
     PRU_SYSCALL -> ET_Sys,
+    PRU_BREAK   -> ET_Bp,
     PRU_ERET    -> ET_Eret))
-  pru_ex.code := Mux(fu_op === PRU_SYSCALL, EC_Sys, 0.U)
+  pru_ex.code := MuxLookup(fu_op, 0.U, Array(
+    PRU_SYSCALL -> EC_Sys,
+    PRU_BREAK   -> EC_Bp))
 
   /* cp0 */
   io.cp0.valid := io.fu_out.fire()

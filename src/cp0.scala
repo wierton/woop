@@ -153,9 +153,9 @@ class CP0 extends CPRS with LSUConsts {
       EC_Int, io.exu.ex.code)
 
     when (cpr_status.ERL === 0.U) {
-      cpr_status.EXL := io.exu.ex.et === ET_Eret
+      cpr_status.EXL := io.exu.ex.et =/= ET_Eret
     } .elsewhen (io.exu.ex.et === ET_Eret) {
-        cpr_status.ERL := 0.U
+      cpr_status.ERL := 0.U
     }
 
     when (io.exu.ex.et === ET_ADDR_ERR) {
