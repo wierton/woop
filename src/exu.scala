@@ -132,6 +132,7 @@ class EXU extends Module {
   io.fu_out.bits.wb.v := wb_info(33)
   io.fu_out.bits.wb.wen := wb_info(32)
   io.fu_out.bits.wb.data := wb_info(31, 0)
+  io.fu_out.bits.wb.ip7 := io.cp0.intr
   io.fu_out.bits.ops := fu_in.ops
   io.fu_out.bits.ops.op1 := Mux(fu_in.ops.fu_type === FU_LSU, 
     io.daddr.resp.bits.paddr, fu_in.ops.op1)

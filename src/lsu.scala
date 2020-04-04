@@ -75,36 +75,6 @@ object AddrLen2Strb {
   }
 }
 
-class LSUStage2Data extends Bundle {
-  val op = new LSUOp
-  val instr = new Instr
-  val rd_idx = UInt(REG_SZ.W)
-  val pc = UInt(conf.xprlen.W)
-  val id = UInt(conf.INSTR_ID_SZ.W)
-  val data = UInt(conf.xprlen.W)
-  val addr = UInt(conf.xprlen.W)
-  val is_cached = Bool()
-  val ip7 = Bool()
-  val is_br = Bool()
-  val npc = UInt(conf.xprlen.W)
-
-  def load(ind:EXU_LSMDU_IO) = {
-    this := Cat(
-      ind.ops.fu_op,
-      ind.wb.instr.asUInt,
-      ind.wb.rd_idx,
-      ind.wb.pc,
-      ind.wb.id,
-      ind.ops.op2,
-      ind.ops.op1,
-      ind.is_cached,
-      ind.wb.ip7,
-      ind.wb.is_br,
-      ind.wb.npc
-    ).asTypeOf(this)
-  }
-}
-
 class LSU extends Module with LSUConsts {
   val io = IO(new Bundle {
     val dmem = new MemIO
@@ -117,43 +87,44 @@ class LSU extends Module with LSUConsts {
   io.fu_in.ready := !io.fu_in.valid || io.dmem.req.ready
 
   /* stage 2: send memory request */
-  val s2_in = Wire(new LSUStage2Data)
-  s2_in.load(io.fu_in.bits)
-  val s2_datas = Module(new Queue(new LSUStage2Data, conf.mio_cycles))
+  val s2_in = io.fu_in.bits
+  val s2_in_op = s2_in.ops.fu_op.asTypeOf(new LSUOp)
+  val s2_datas = Module(new Queue(new EXU_LSMDU_IO, conf.mio_cycles))
   s2_datas.io.enq.valid := io.dmem.req.fire()
   s2_datas.io.enq.bits := s2_in
   s2_datas.io.deq.ready := io.dmem.resp.fire()
   io.working := s2_datas.io.deq.valid
   io.dmem.req.valid := io.fu_in.valid
   io.dmem.req.bits.is_cached  := s2_in.is_cached
-  io.dmem.req.bits.is_aligned := s2_in.op.align
-  io.dmem.req.bits.addr  := Mux(s2_in.op.align, s2_in.addr, s2_in.addr & ~(3.U(32.W)))
-  io.dmem.req.bits.len   := s2_in.op.len
-  io.dmem.req.bits.func  := s2_in.op.func
-  io.dmem.req.bits.data  := s2_in.op.memReqDataOf(s2_in.addr, s2_in.data)
-  io.dmem.req.bits.strb  := s2_in.op.strbOf(s2_in.addr)
+  io.dmem.req.bits.is_aligned := s2_in_op.align
+  io.dmem.req.bits.addr  := Mux(s2_in_op.align, s2_in.ops.op1, s2_in.ops.op1 & ~(3.U(32.W)))
+  io.dmem.req.bits.len   := s2_in_op.len
+  io.dmem.req.bits.func  := s2_in_op.func
+  io.dmem.req.bits.data  := s2_in_op.memReqDataOf(s2_in.ops.op1, s2_in.ops.op2)
+  io.dmem.req.bits.strb  := s2_in_op.strbOf(s2_in.ops.op1)
   io.dmem.resp.ready := Y
 
   /* stage 3: recv contents and commit */
   val s3_in = s2_datas.io.deq.bits
-  val ze_data = s3_in.op.dataOf(s3_in.addr,
-    io.dmem.resp.bits.data, Mux(s3_in.op.align,
-      0.U(32.W), s3_in.data))
+  val s3_in_op = s3_in.ops.fu_op.asTypeOf(new LSUOp)
+  val ze_data = s3_in_op.dataOf(s3_in.ops.op1,
+    io.dmem.resp.bits.data, Mux(s3_in_op.align,
+      0.U(32.W), s3_in.ops.op2))
   /* io.fu_out.bits.wb.data */
   io.fu_out.valid := io.dmem.resp.valid
-  io.fu_out.bits.v := s3_in.op.func === MX_RD
-  io.fu_out.bits.pc := s3_in.pc
-  io.fu_out.bits.id := s3_in.id
-  io.fu_out.bits.wen := s3_in.op.func === MX_RD
-  io.fu_out.bits.rd_idx := s3_in.rd_idx
-  io.fu_out.bits.instr := s3_in.instr
+  io.fu_out.bits.v := s3_in_op.func === MX_RD
+  io.fu_out.bits.pc := s3_in.wb.pc
+  io.fu_out.bits.id := s3_in.wb.id
+  io.fu_out.bits.wen := s3_in_op.func === MX_RD
+  io.fu_out.bits.rd_idx := s3_in.wb.rd_idx
+  io.fu_out.bits.instr := s3_in.wb.instr
   io.fu_out.bits.is_ds := N
-  io.fu_out.bits.ip7 := s3_in.ip7
-  io.fu_out.bits.is_br := s3_in.is_br
-  io.fu_out.bits.npc := s3_in.npc
+  io.fu_out.bits.ip7 := s3_in.wb.ip7
+  io.fu_out.bits.is_br := s3_in.wb.is_br
+  io.fu_out.bits.npc := s3_in.wb.npc
   io.fu_out.bits.data := MuxCase(ze_data, Array(
-    (s3_in.op.asUInt === LSU_LB) -> io.dmem.resp.bits.data(7, 0).asTypeOf(SInt(32.W)).asUInt,
-    (s3_in.op.asUInt === LSU_LH) -> io.dmem.resp.bits.data(15, 0).asTypeOf(SInt(32.W)).asUInt))
+    (s3_in_op.asUInt === LSU_LB) -> io.dmem.resp.bits.data(7, 0).asTypeOf(SInt(32.W)).asUInt,
+    (s3_in_op.asUInt === LSU_LH) -> io.dmem.resp.bits.data(15, 0).asTypeOf(SInt(32.W)).asUInt))
 
   if (conf.log_LSU) {
     when (io.can_log_now) { dump() }

@@ -125,7 +125,7 @@ class IDU extends Module with LSUConsts with MDUConsts {
   ri_ex.et := ET_RI
   ri_ex.code := EC_RI
 
-  io.fu_out.valid := fu_valid
+  io.fu_out.valid := fu_valid && !io.ex_flush.valid
   io.fu_out.bits.fu_type := fu_type
   io.fu_out.bits.fu_op := fu_op
   io.fu_out.bits.op1_sel := op1_sel

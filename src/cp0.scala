@@ -135,7 +135,7 @@ class CP0 extends CPRS with LSUConsts {
   val intr_enable = !cpr_status.ERL && !cpr_status.EXL && cpr_status.IE
   val intr_valid = (ip.asUInt & cpr_status.IM.asUInt).orR &&
     intr_enable && io.exu.ex.et === ET_None
-  io.exu.intr := intr_valid
+  io.exu.intr := intr_valid && ip(7)
   ip(0) := is_mtc0_cause && cpr_wcause.IP(0)
   ip(1) := is_mtc0_cause && cpr_wcause.IP(1)
   ip(7) := cpr_cause.IP(7)
