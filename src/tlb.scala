@@ -142,6 +142,7 @@ class TLB extends Module {
     val addr_ex = WireInit(0.U.asTypeOf(new CP0Exception))
     addr_ex.et := ET_ADDR_ERR
     addr_ex.code := Mux(tlbreq_in.func === MX_RD, EC_AdEL, EC_AdES)
+    addr_ex.addr := tlbreq_in.vaddr
 
     rio.req.ready := rio.resp.ready || !tlbreq_valid
     rio.resp.valid := tlbreq_valid

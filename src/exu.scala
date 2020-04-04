@@ -100,11 +100,12 @@ class EXU extends Module {
 
   /* pru */
   val pru_ex = WireInit(0.U.asTypeOf(new CP0Exception))
-  pru_ex.et := MuxLookup(fu_op, ET_None, Array(
+  pru_ex := fu_in.ex
+  pru_ex.et := MuxLookup(fu_op, fu_in.ex.et, Array(
     PRU_SYSCALL -> ET_Sys,
     PRU_BREAK   -> ET_Bp,
     PRU_ERET    -> ET_Eret))
-  pru_ex.code := MuxLookup(fu_op, 0.U, Array(
+  pru_ex.code := MuxLookup(fu_op, fu_in.ex.code, Array(
     PRU_SYSCALL -> EC_Sys,
     PRU_BREAK   -> EC_Bp))
 
