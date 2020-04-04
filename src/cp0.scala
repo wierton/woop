@@ -123,7 +123,7 @@ class CP0 extends CPRS with LSUConsts {
 
   when (io.tlbp_port.valid) {
     cpr_index.p := io.tlbp_port.bits.index.p
-    when (io.tlbp_port.bits.index.p.asBool) {
+    when (!io.tlbp_port.bits.index.p.asBool) {
       cpr_index.index := io.tlbp_port.bits.index.index
     }
   }
