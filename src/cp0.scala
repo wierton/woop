@@ -51,9 +51,8 @@ class CP0 extends CPRS with LSUConsts {
     val tlbw_port = Flipped(ValidIO(new CP0_TLBW_PORT))
     val tlbp_port = Flipped(ValidIO(new CP0_TLBP_PORT))
     val status = Output(new CP0Status)
-    val exu = Flipped(new EXU_CP0_IO)
+    val ehu = Flipped(new EHU_CP0_IO)
     val ex_flush = ValidIO(new FlushIO)
-    val ehu = new CP0_EHU_IO
     val can_log_now = Input(Bool())
   })
 
@@ -82,7 +81,7 @@ class CP0 extends CPRS with LSUConsts {
   ))
 
   val cpr_wdata = io.wport.bits.data
-  when (io.wport.valid) {
+  when (io.wport.valid && !io.ex_flush.valid) {
     switch (io.wport.bits.addr) {
     is(CPR_INDEX)     { cpr_index.write(cpr_wdata) }
     is(CPR_ENTRY_LO0) { cpr_entry_lo0.write(cpr_wdata) }
@@ -113,7 +112,7 @@ class CP0 extends CPRS with LSUConsts {
   io.tlbr_port.entry_lo0 := cpr_entry_lo0
   io.tlbr_port.entry_lo1 := cpr_entry_lo1
 
-  when (io.tlbw_port.valid) {
+  when (io.tlbw_port.valid && !io.ex_flush.valid) {
     val wdata = io.tlbw_port.bits
     cpr_pagemask.write(wdata.pagemask.asUInt)
     cpr_entry_hi.write(wdata.entry_hi.asUInt)
@@ -132,45 +131,44 @@ class CP0 extends CPRS with LSUConsts {
   val ip = WireInit(VecInit(for (i <- 0 until 8) yield N))
   val intr_enable = !cpr_status.ERL && !cpr_status.EXL && cpr_status.IE
   val intr_valid = (cpr_cause.IP.asUInt & cpr_status.IM.asUInt).orR && intr_enable
-  val intr_flush = io.exu.valid && io.ehu.valid && intr_valid
-  val ex_flush = io.exu.fire && io.exu.ex.et =/= ET_None
+  val intr_flush = io.ehu.valid && intr_valid
+  val ex_flush = io.ehu.valid && io.ehu.ex.et =/= ET_None
   io.ehu.ip7 := cpr_cause.IP(7)
-  io.ehu.intr := intr_flush
   io.ex_flush.valid := intr_flush || ex_flush
   when (io.ex_flush.valid) {
     when (cpr_status.EXL === 0.U) {
-      val is_br = io.exu.wb.is_br
-      val is_ds = io.exu.wb.is_ds
+      val is_br = io.ehu.wb.is_br
+      val is_ds = io.ehu.wb.is_ds
       cpr_cause.BD := is_ds
-      cpr_epc := MuxCase(io.exu.wb.pc, Array(
-        is_ds -> (io.exu.wb.pc - 4.U)))
+      cpr_epc := MuxCase(io.ehu.wb.pc, Array(
+        is_ds -> (io.ehu.wb.pc - 4.U)))
     }
-    cpr_cause.ExcCode := Mux(io.exu.ex.et === ET_None,
-      EC_Int, io.exu.ex.code)
+    cpr_cause.ExcCode := Mux(io.ehu.ex.et === ET_None,
+      EC_Int, io.ehu.ex.code)
 
     when (cpr_status.ERL === 0.U) {
-      cpr_status.EXL := io.exu.ex.et =/= ET_Eret
-    } .elsewhen (io.exu.ex.et === ET_Eret) {
+      cpr_status.EXL := io.ehu.ex.et =/= ET_Eret
+    } .elsewhen (io.ehu.ex.et === ET_Eret) {
       cpr_status.ERL := 0.U
     }
 
-    when (io.exu.ex.et === ET_ADDR_ERR) {
-      cpr_badvaddr := io.exu.ex.addr
-    } .elsewhen(io.exu.ex.et === ET_TLB_Inv ||
-      io.exu.ex.et === ET_TLB_Mod ||
-      io.exu.ex.et === ET_TLB_REFILL) {
-      cpr_badvaddr := io.exu.ex.addr
-      cpr_context.badvpn2 := io.exu.ex.addr >> 13
-      cpr_entry_hi.vpn := io.exu.ex.addr >> 13
-      cpr_entry_hi.asid := io.exu.ex.asid
+    when (io.ehu.ex.et === ET_ADDR_ERR) {
+      cpr_badvaddr := io.ehu.ex.addr
+    } .elsewhen(io.ehu.ex.et === ET_TLB_Inv ||
+      io.ehu.ex.et === ET_TLB_Mod ||
+      io.ehu.ex.et === ET_TLB_REFILL) {
+      cpr_badvaddr := io.ehu.ex.addr
+      cpr_context.badvpn2 := io.ehu.ex.addr >> 13
+      cpr_entry_hi.vpn := io.ehu.ex.addr >> 13
+      cpr_entry_hi.asid := io.ehu.ex.asid
     }
   }
   val offset = MuxCase(0x180.U, Array(
     cpr_status.EXL -> 0x180.U,
-    (io.exu.ex.et === ET_TLB_REFILL) -> 0x000.U,
+    (io.ehu.ex.et === ET_TLB_REFILL) -> 0x000.U,
     (intr_valid && cpr_cause.IV.asBool) -> 0x200.U))
   io.ex_flush.bits.br_target := Mux(
-    io.exu.ex.et === ET_Eret, cpr_epc,
+    io.ehu.ex.et === ET_Eret, cpr_epc,
     Mux(cpr_status.BEV === 1.U, "hbfc00200".U + offset,
       "h80000000".U + offset))
 
@@ -190,7 +188,7 @@ class CP0 extends CPRS with LSUConsts {
       printv(io.tlbp_port, "CP0.tlbp_port")
     }
     printv(io.status, "CP0.status")
-    printv(io.exu, "CP0.exu")
+    printv(io.ehu, "CP0.ehu")
     printv(io.ex_flush, "CP0.ex_flush")
   }
 }

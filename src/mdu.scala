@@ -16,7 +16,7 @@ class MDUOp extends Bundle
 
 class MDU extends Module with MDUConsts {
   val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new EXU_LSMDU_IO))
+    val fu_in = Flipped(DecoupledIO(new EHU_LSMDU_IO))
     val fu_out = ValidIO(new WriteBackIO)
     val working = Output(Bool())
     val can_log_now = Input(Bool())

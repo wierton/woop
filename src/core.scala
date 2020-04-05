@@ -58,7 +58,6 @@ class Core extends Module {
   isu.io.rfio <> rf.io.rfio
 
   /* cp0 */
-  exu.io.cp0 <> cp0.io.exu
   exu.io.cp0_rport <> cp0.io.rport
   exu.io.cp0_wport <> cp0.io.wport
 
@@ -86,6 +85,7 @@ class Core extends Module {
   ifu.io.ex_flush <> cp0.io.ex_flush
   idu.io.ex_flush <> cp0.io.ex_flush
   exu.io.ex_flush <> cp0.io.ex_flush
+  ehu.io.ex_flush <> cp0.io.ex_flush
   rf.io.ex_flush <> cp0.io.ex_flush
   tlb.io.br_flush <> isu.io.br_flush
   tlb.io.ex_flush <> cp0.io.ex_flush

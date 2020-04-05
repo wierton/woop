@@ -10,20 +10,27 @@ import woop.utils._
 
 class EHU extends Module {
   val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new EXU_LSMDU_IO))
-    val fu_out = DecoupledIO(new EXU_LSMDU_IO)
-    val cp0 = Flipped(new CP0_EHU_IO)
+    val fu_in = Flipped(DecoupledIO(new EXU_EHU_IO))
+    val fu_out = DecoupledIO(new EHU_LSMDU_IO)
+    val cp0 = new EHU_CP0_IO
+    val ex_flush = Flipped(ValidIO(new FlushIO))
     val can_log_now = Input(Bool())
   })
 
   val fu_valid = RegInit(N)
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
-  io.fu_in.ready := !fu_valid || (io.fu_out.ready && !io.cp0.intr)
+  io.fu_in.ready := (!fu_valid || io.fu_out.ready) && !io.ex_flush.valid
 
   io.fu_out.valid := fu_valid
-  io.fu_out.bits := fu_in
+  io.fu_out.bits.wb := fu_in.wb
+  io.fu_out.bits.ops := fu_in.ops
+  io.fu_out.bits.is_cached := fu_in.is_cached
   io.fu_out.bits.wb.ip7 := io.cp0.ip7
-  io.cp0.valid := fu_valid
+
+  /* cp0 */
+  io.cp0.valid := io.fu_out.fire()
+  io.cp0.wb := io.fu_out.bits.wb
+  io.cp0.ex := fu_in.ex
 
   when (!io.fu_in.fire() && io.fu_out.fire()) {
     fu_valid := N

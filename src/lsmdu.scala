@@ -42,7 +42,7 @@ class LSMDUPipelineStage extends Module {
 
 class LSMDU extends Module {
   val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new EXU_LSMDU_IO))
+    val fu_in = Flipped(DecoupledIO(new EHU_LSMDU_IO))
     val wb = ValidIO(new WriteBackIO)
     val dmem = new MemIO
     val can_log_now = Input(Bool())

@@ -161,10 +161,14 @@ class ISU_EXU_IO extends Bundle {
   val ex = Output(new CP0Exception)
 }
 
-class EXU_LSMDU_IO extends Bundle {
+class EHU_LSMDU_IO extends Bundle {
   val wb = new WriteBackIO
   val ops = new EXU_OPS
   val is_cached = Output(Bool())
+}
+
+class EXU_EHU_IO extends EHU_LSMDU_IO {
+  val ex = Output(new CP0Exception)
 }
 
 class EXU_OUT extends Bundle {
@@ -226,15 +230,9 @@ class CP0_TLBP_PORT extends Bundle {
   val index = Output(new CP0Index)
 }
 
-class EXU_CP0_IO extends Bundle {
+class EHU_CP0_IO extends Bundle {
   val valid = Output(Bool())
-  val fire = Output(Bool())
+  val ip7 = Input(Bool())
   val ex = Output(new CP0Exception)
   val wb = Output(new WriteBackIO)
-}
-
-class CP0_EHU_IO extends Bundle {
-  val ip7 = Output(Bool())
-  val intr = Output(Bool())
-  val valid = Input(Bool())
 }

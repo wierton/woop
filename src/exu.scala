@@ -11,9 +11,8 @@ import woop.utils._
 class EXU extends Module {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new ISU_EXU_IO))
-    val fu_out = DecoupledIO(new EXU_LSMDU_IO)
+    val fu_out = DecoupledIO(new EXU_EHU_IO)
 
-    val cp0 = new EXU_CP0_IO
     val cp0_rport = new CPR_RPORT
     val cp0_wport = ValidIO(new CPR_WPORT)
     val cp0_tlbr_port = new CP0_TLBR_PORT
@@ -106,11 +105,8 @@ class EXU extends Module {
     PRU_SYSCALL -> EC_Sys,
     PRU_BREAK   -> EC_Bp))
 
-  /* cp0 */
-  io.cp0.valid := io.fu_out.valid
-  io.cp0.fire := io.fu_out.fire()
-  io.cp0.wb := io.fu_out.bits.wb
-  io.cp0.ex := MuxLookup(fu_type, fu_in.ex, Array(
+  /* exception */
+  io.fu_out.bits.ex := MuxLookup(fu_type, fu_in.ex, Array(
     FU_ALU -> alu_ex, FU_LSU -> lsu_ex, FU_PRU -> pru_ex))
 
   /* fu_out */
@@ -208,7 +204,6 @@ class EXU extends Module {
     printv(io.fu_in, "EXU.fu_in")
     printv(io.fu_out, "EXU.fu_out")
 
-    printv(io.cp0, "EXU.cp0")
     printv(io.cp0_rport, "EXU.cp0_rport")
     printv(io.cp0_wport, "EXU.cp0_wport")
 

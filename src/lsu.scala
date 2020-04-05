@@ -78,7 +78,7 @@ object AddrLen2Strb {
 class LSU extends Module with LSUConsts {
   val io = IO(new Bundle {
     val dmem = new MemIO
-    val fu_in = Flipped(DecoupledIO(new EXU_LSMDU_IO))
+    val fu_in = Flipped(DecoupledIO(new EHU_LSMDU_IO))
     val fu_out = ValidIO(new WriteBackIO)
     val working = Output(Bool())
     val can_log_now = Input(Bool())
@@ -89,7 +89,7 @@ class LSU extends Module with LSUConsts {
   /* stage 2: send memory request */
   val s2_in = io.fu_in.bits
   val s2_in_op = s2_in.ops.fu_op.asTypeOf(new LSUOp)
-  val s2_datas = Module(new Queue(new EXU_LSMDU_IO, conf.mio_cycles))
+  val s2_datas = Module(new Queue(new EHU_LSMDU_IO, conf.mio_cycles))
   s2_datas.io.enq.valid := io.dmem.req.fire()
   s2_datas.io.enq.bits := s2_in
   s2_datas.io.deq.ready := io.dmem.resp.fire()
