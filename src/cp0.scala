@@ -8,7 +8,6 @@ import woop.configs._
 import woop.utils._
 
 
-
 abstract class CPRS extends Module {
   val cpr_index     = Reg(new CP0Index)
   val cpr_entry_lo0 = Reg(new CP0EntryLO)
@@ -54,6 +53,7 @@ class CP0 extends CPRS with LSUConsts {
     val status = Output(new CP0Status)
     val exu = Flipped(new EXU_CP0_IO)
     val ex_flush = ValidIO(new FlushIO)
+    val intru = new CP0_INTRU_IO
     val can_log_now = Input(Bool())
   })
 
@@ -130,25 +130,21 @@ class CP0 extends CPRS with LSUConsts {
 
   /* process exception */
   val ip = WireInit(VecInit(for (i <- 0 until 8) yield N))
-  val is_mtc0_cause = io.wport.valid && io.wport.bits.addr === CPR_CAUSE
-  val cpr_wcause = io.wport.bits.data.asTypeOf(new CP0Cause)
   val intr_enable = !cpr_status.ERL && !cpr_status.EXL && cpr_status.IE
-  val intr_valid = (ip.asUInt & cpr_status.IM.asUInt).orR &&
+  val intr_valid = (cpr_cause.IP.asUInt & cpr_status.IM.asUInt).orR &&
     intr_enable && io.exu.ex.et === ET_None
-  io.exu.intr := intr_valid && ip(7)
-  ip(0) := is_mtc0_cause && cpr_wcause.IP(0)
-  ip(1) := is_mtc0_cause && cpr_wcause.IP(1)
-  ip(7) := cpr_cause.IP(7)
-  io.ex_flush.valid := io.exu.valid && (
-    io.exu.ex.et =/= ET_None || intr_valid)
+  val intr_flush = io.exu.valid && io.intru.valid && intr_valid
+  val ex_flush = io.exu.fire && io.exu.ex.et =/= ET_None
+  io.intru.ip7 := cpr_cause.IP(7)
+  io.intru.intr := intr_flush
+  io.ex_flush.valid := intr_flush || ex_flush
   when (io.ex_flush.valid) {
     when (cpr_status.EXL === 0.U) {
       val is_br = io.exu.wb.is_br
       val is_ds = io.exu.wb.is_ds
-      cpr_cause.BD := (intr_valid && is_br) || is_ds
+      cpr_cause.BD := is_ds
       cpr_epc := MuxCase(io.exu.wb.pc, Array(
-        (intr_valid && !is_br) -> io.exu.wb.npc,
-        (!intr_valid && is_ds) -> (io.exu.wb.pc - 4.U)))
+        is_ds -> (io.exu.wb.pc - 4.U)))
     }
     cpr_cause.ExcCode := Mux(io.exu.ex.et === ET_None,
       EC_Int, io.exu.ex.code)

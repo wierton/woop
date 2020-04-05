@@ -27,17 +27,14 @@ class EXU extends Module {
 
     val wb = Flipped(ValidIO(new WriteBackIO))
     val bp = ValidIO(new BypassIO)
+    val ex_flush = Flipped(ValidIO(new FlushIO))
     val can_log_now = Input(Bool())
   })
 
-  val wait_wb = RegInit(N)
-  val wait_id = RegInit(0.U(conf.INSTR_ID_SZ.W))
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
   val fu_valid = RegInit(N)
 
-  io.fu_in.ready := (io.fu_out.ready || !fu_valid) &&
-    !wait_wb && !(io.cp0.valid && io.cp0.intr) &&
-    !(io.cp0.valid && io.cp0.ex.et =/= ET_None)
+  io.fu_in.ready := (io.fu_out.ready || !fu_valid) && !io.ex_flush.valid
 
   val fu_type = fu_in.ops.fu_type
   val fu_op   = fu_in.ops.fu_op
@@ -110,17 +107,11 @@ class EXU extends Module {
     PRU_BREAK   -> EC_Bp))
 
   /* cp0 */
-  io.cp0.valid := io.fu_out.fire()
+  io.cp0.valid := io.fu_out.valid
+  io.cp0.fire := io.fu_out.fire()
   io.cp0.wb := io.fu_out.bits.wb
   io.cp0.ex := MuxLookup(fu_type, fu_in.ex, Array(
     FU_ALU -> alu_ex, FU_LSU -> lsu_ex, FU_PRU -> pru_ex))
-  when (io.cp0.valid && io.cp0.intr) {
-    wait_wb := Y
-    wait_id := io.fu_out.bits.wb.id
-  }
-  when (io.wb.valid && io.wb.bits.id === wait_id) {
-    wait_wb := N
-  }
 
   /* fu_out */
   io.fu_out.valid := fu_valid
@@ -132,7 +123,6 @@ class EXU extends Module {
   io.fu_out.bits.wb.v := wb_info(33)
   io.fu_out.bits.wb.wen := wb_info(32)
   io.fu_out.bits.wb.data := wb_info(31, 0)
-  io.fu_out.bits.wb.ip7 := io.cp0.intr
   io.fu_out.bits.ops := fu_in.ops
   io.fu_out.bits.ops.op1 := Mux(fu_in.ops.fu_type === FU_LSU, 
     io.daddr.resp.bits.paddr, fu_in.ops.op1)
@@ -203,9 +193,9 @@ class EXU extends Module {
   io.cp0_tlbp_port.bits.index := io.tlb_pport.index
 
   /* pipeline logic */
-  when (!io.fu_in.fire() && io.fu_out.fire()) {
+  when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
     fu_valid := N
-  } .elsewhen(io.fu_in.fire()) {
+  } .elsewhen(!io.ex_flush.valid && io.fu_in.fire()) {
     fu_valid := Y
   }
 

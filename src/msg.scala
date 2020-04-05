@@ -228,7 +228,13 @@ class CP0_TLBP_PORT extends Bundle {
 
 class EXU_CP0_IO extends Bundle {
   val valid = Output(Bool())
+  val fire = Output(Bool())
   val ex = Output(new CP0Exception)
   val wb = Output(new WriteBackIO)
-  val intr = Input(Bool())
+}
+
+class CP0_INTRU_IO extends Bundle {
+  val ip7 = Output(Bool())
+  val intr = Output(Bool())
+  val valid = Input(Bool())
 }

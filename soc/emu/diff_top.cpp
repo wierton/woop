@@ -112,7 +112,7 @@ void DiffTop::cycle_epilogue() {
   silent_cycles = 0;
 
   /* launch timer interrupt */
-  if (dut_ptr->io_commit_ip7) { nemu_ptr->set_irq(7, 1); }
+  nemu_ptr->set_irq(7, dut_ptr->io_commit_ip7);
 
   /* nemu executes one cycle */
   nemu_ptr->exec(1);

@@ -44,6 +44,7 @@ object conf {
   val log_LSU = true
   val log_MDU = true
   val log_CP0 = true
+  val log_INTRU = true
   val log_TLB = true
   val log_LSMDU = true
 }
