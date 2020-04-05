@@ -106,6 +106,18 @@ class IDU extends Module with LSUConsts with MDUConsts {
      TLBR    -> List(Y, FU_PRU,  PRU_TLBR,   OP1_X,    OP2_X,   OPD_X),
      TLBWI   -> List(Y, FU_PRU,  PRU_TLBWI,  OP1_X,    OP2_X,   OPD_X),
      TLBWR   -> List(Y, FU_PRU,  PRU_TLBWR,  OP1_X,    OP2_X,   OPD_X),
+     TGE     -> List(Y, FU_PRU,  PRU_TGE,    OP1_RS,   OP2_RT,  OPD_X),
+     TGEU    -> List(Y, FU_PRU,  PRU_TGEU,   OP1_RS,   OP2_RT,  OPD_X),
+     TLT     -> List(Y, FU_PRU,  PRU_TLT,    OP1_RS,   OP2_RT,  OPD_X),
+     TLTU    -> List(Y, FU_PRU,  PRU_TLTU,   OP1_RS,   OP2_RT,  OPD_X),
+     TEQ     -> List(Y, FU_PRU,  PRU_TEQ,    OP1_RS,   OP2_RT,  OPD_X),
+     TNE     -> List(Y, FU_PRU,  PRU_TNE,    OP1_RS,   OP2_RT,  OPD_X),
+     TGEI    -> List(Y, FU_PRU,  PRU_TGEI,   OP1_RS,   OP2_IMI, OPD_X),
+     TGEIU   -> List(Y, FU_PRU,  PRU_TGEIU,  OP1_RS,   OP2_IMI, OPD_X),
+     TLTI    -> List(Y, FU_PRU,  PRU_TLTI,   OP1_RS,   OP2_IMI, OPD_X),
+     TLTIU   -> List(Y, FU_PRU,  PRU_TLTIU,  OP1_RS,   OP2_IMI, OPD_X),
+     TEQI    -> List(Y, FU_PRU,  PRU_TEQI,   OP1_RS,   OP2_IMI, OPD_X),
+     TNEI    -> List(Y, FU_PRU,  PRU_TNEI,   OP1_RS,   OP2_IMI, OPD_X),
   ))
 
   val (valid: Bool) :: fu_type_ :: fu_op_ :: op1_sel_ :: op2_sel_ :: opd_sel_ :: Nil = csignals

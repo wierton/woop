@@ -96,14 +96,32 @@ class EXU extends Module {
 
   /* pru */
   val pru_ex = WireInit(0.U.asTypeOf(new CP0Exception))
-  pru_ex := fu_in.ex
-  pru_ex.et := MuxLookup(fu_op, fu_in.ex.et, Array(
+  val pru_trap = MuxLookup(fu_op, 0.U, Array(
+    PRU_TGE   -> Cat(Y, op1.asSInt >= op2.asSInt),
+    PRU_TGEU  -> Cat(Y, op1 >= op2),
+    PRU_TLT   -> Cat(Y, op1.asSInt < op2.asSInt),
+    PRU_TLTU  -> Cat(Y, op1 < op2),
+    PRU_TEQ   -> Cat(Y, op1 === op2),
+    PRU_TNE   -> Cat(Y, op1 =/= op2),
+    PRU_TGEI  -> Cat(Y, op1.asSInt >= op2.asSInt),
+    PRU_TGEIU -> Cat(Y, op1 >= op2),
+    PRU_TLTI  -> Cat(Y, op1.asSInt < op2.asSInt),
+    PRU_TLTIU -> Cat(Y, op1 < op2),
+    PRU_TEQI  -> Cat(Y, op1 === op2),
+    PRU_TNEI  -> Cat(Y, op1 =/= op2),
+  ))
+  val pru_normal_et = MuxLookup(fu_op, fu_in.ex.et, Array(
     PRU_SYSCALL -> ET_Sys,
     PRU_BREAK   -> ET_Bp,
     PRU_ERET    -> ET_Eret))
-  pru_ex.code := MuxLookup(fu_op, fu_in.ex.code, Array(
+  val pru_normal_code = MuxLookup(fu_op, fu_in.ex.code, Array(
     PRU_SYSCALL -> EC_Sys,
     PRU_BREAK   -> EC_Bp))
+  pru_ex := fu_in.ex
+  pru_ex.et := Mux(pru_trap(1), Mux(pru_trap(0), ET_Tr,
+    ET_None), pru_normal_et)
+  pru_ex.code := Mux(pru_trap(1), Mux(pru_trap(0), EC_Tr,
+    0.U), pru_normal_code)
 
   /* exception */
   io.fu_out.bits.ex := MuxLookup(fu_type, fu_in.ex, Array(

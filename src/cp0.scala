@@ -134,9 +134,6 @@ class CP0 extends CPRS with LSUConsts {
   val intr_flush = io.ehu.valid && intr_valid
   val ex_flush = io.ehu.valid && io.ehu.ex.et =/= ET_None
   val is_intr_ex = intr_flush && !ex_flush
-  when (is_intr_ex) {
-    printf("%d: intr ex %x %x\n", GTimer(), io.ehu.wb.pc, io.ehu.wb.npc)
-  }
   io.ehu.ip7 := cpr_cause.IP(7)
   io.ex_flush.valid := intr_flush || ex_flush
   when (io.ex_flush.valid) {
