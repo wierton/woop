@@ -17,6 +17,11 @@
 #define MX_RD 0
 #define MX_WR 1
 #define GPIO_TRAP 0x10000000
+#define ULITE_BASE 0x1fe50000
+#define ULITE_Rx 0x0
+#define ULITE_Tx 0x4
+#define ULITE_STAT 0x8
+#define ULITE_CTRL 0xC
 
 class NEMU_MIPS32;
 struct device_t;
@@ -72,7 +77,7 @@ class DiffTop {
 
   bool can_log_now() const {
     // return cycles >= 246227 - 1000 - 80;
-    return false;
+    return cycles <= 20;
   }
 
 public:

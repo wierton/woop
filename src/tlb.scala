@@ -216,5 +216,10 @@ class TLB extends Module {
     printv(io.status, "TLB.status")
     printv(io.br_flush, "TLB.br_flush")
     printv(io.ex_flush, "TLB.ex_flush")
+    if (conf.log_TLB_ENTRY) {
+      for (i <- 0 until conf.tlbsz) {
+        printv(tlb_entries(i), "TLB.entry."+i)
+      }
+    }
   }
 }

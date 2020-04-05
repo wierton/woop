@@ -22,16 +22,12 @@ class SOC_EMU_TOP extends Module {
   })
 
   val core = Module(new Core)
-  val imux = Module(new MemMux("imux"))
-  val dmux = Module(new MemMux("dmux"))
   val dev = Module(new SimDev)
-  val crossbar = Module(new CrossbarNx1(4))
+  val crossbar = Module(new CrossbarNx1(2))
   // val icache = Module(new SimICache)
   val icache = Module(new IMemCistern(conf.icache_stages))
 
   core.io.can_log_now := io.can_log_now
-  imux.io.can_log_now := io.can_log_now
-  dmux.io.can_log_now := io.can_log_now
   crossbar.io.can_log_now := io.can_log_now
   icache.io.can_log_now := io.can_log_now
 
@@ -42,13 +38,9 @@ class SOC_EMU_TOP extends Module {
   icache.io.ex_flush := core.io.ex_flush
 
   icache.io.in <> core.io.imem
-  imux.io.in <> icache.io.out
-  dmux.io.in <> core.io.dmem
 
-  imux.io.cached   <> crossbar.io.in(0)
-  imux.io.uncached <> crossbar.io.in(1)
-  dmux.io.cached   <> crossbar.io.in(2)
-  dmux.io.uncached <> crossbar.io.in(3)
+  icache.io.out <> crossbar.io.in(0)
+  core.io.dmem  <> crossbar.io.in(1)
 
   crossbar.io.out <> dev.io.in
 

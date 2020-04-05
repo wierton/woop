@@ -19,6 +19,8 @@ public:
   static void *map(
       const char *name, unsigned addr, unsigned size);
   static bool is_mapped(unsigned addr);
+  static uint64_t get_ms();
+  static void dump_tlb();
 };
 
 #endif

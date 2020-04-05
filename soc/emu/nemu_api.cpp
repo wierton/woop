@@ -4,8 +4,10 @@ extern "C" {
 #include "cpu.h"
 #include "device.h"
 #include "memory.h"
+#include "mmu.h"
 
 extern work_mode_t work_mode;
+extern tlb_entry_t tlb[NR_TLB_ENTRY];
 
 /* APIs exported by nemu-mips32 */
 extern CPU_state cpu;
@@ -18,6 +20,7 @@ extern void init_sdl(void);
 extern void init_mmio(void);
 extern void init_events(void);
 extern uint32_t paddr_peek(paddr_t addr, int len);
+extern uint64_t get_current_time();
 extern uint32_t get_current_pc();
 extern uint32_t get_current_instr();
 extern device_t *get_device_list_head();
@@ -73,4 +76,19 @@ void *NEMU_MIPS32::map(
 
 uint32_t NEMU_MIPS32::paddr_peek(uint32_t addr, int len) {
   return ::paddr_peek(addr, len);
+}
+
+uint64_t NEMU_MIPS32::get_ms() {
+  return ::get_current_time();
+}
+
+void NEMU_MIPS32::dump_tlb() {
+  for (int i = 0; i < 32; i++) {
+    fprintf(stderr,
+        "tlb[%d]: asid=%02x g=%d, p0={c=%d d=%d pfn=%06x "
+        "v=%d} p1={c=%d d=%d pfn=%06x v=%d}\n",
+        i, tlb[i].asid, tlb[i].g, tlb[i].p0.c, tlb[i].p0.d,
+        tlb[i].p0.pfn, tlb[i].p0.v, tlb[i].p1.c,
+        tlb[i].p1.d, tlb[i].p1.pfn, tlb[i].p1.v);
+  }
 }
