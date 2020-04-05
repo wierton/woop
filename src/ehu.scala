@@ -8,11 +8,11 @@ import woop.configs._
 
 import woop.utils._
 
-class INTRU extends Module {
+class EHU extends Module {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new EXU_LSMDU_IO))
     val fu_out = DecoupledIO(new EXU_LSMDU_IO)
-    val cp0 = Flipped(new CP0_INTRU_IO)
+    val cp0 = Flipped(new CP0_EHU_IO)
     val can_log_now = Input(Bool())
   })
 
@@ -31,11 +31,11 @@ class INTRU extends Module {
     fu_valid := Y
   }
 
-  if (conf.log_INTRU) {
+  if (conf.log_EHU) {
     when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {
-    printv(this, "INTRU")
+    printv(this, "EHU")
   }
 }

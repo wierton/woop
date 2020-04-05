@@ -211,15 +211,19 @@ class EXU extends Module {
     printv(io.cp0, "EXU.cp0")
     printv(io.cp0_rport, "EXU.cp0_rport")
     printv(io.cp0_wport, "EXU.cp0_wport")
-    printv(io.cp0_tlbr_port, "EXU.cp0_tlbr_port")
-    printv(io.cp0_tlbw_port, "EXU.cp0_tlbw_port")
-    printv(io.cp0_tlbp_port, "EXU.cp0_tlbp_port")
 
-    printv(io.daddr, "EXU.daddr")
-    printv(io.tlb_rport, "EXU.tlb_rport")
-    printv(io.tlb_wport, "EXU.tlb_wport")
-    printv(io.tlb_pport, "EXU.tlb_pport")
+    if (conf.log_TLB) {
+      printv(io.cp0_tlbr_port, "EXU.cp0_tlbr_port")
+      printv(io.cp0_tlbw_port, "EXU.cp0_tlbw_port")
+      printv(io.cp0_tlbp_port, "EXU.cp0_tlbp_port")
 
+      printv(io.daddr, "EXU.daddr")
+      printv(io.tlb_rport, "EXU.tlb_rport")
+      printv(io.tlb_wport, "EXU.tlb_wport")
+      printv(io.tlb_pport, "EXU.tlb_pport")
+    }
+
+    printv(io.ex_flush, "EXU.ex_flush")
     printv(io.wb, "EXU.wb")
     printv(io.bp, "EXU.bp")
   }

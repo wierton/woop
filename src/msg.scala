@@ -233,7 +233,7 @@ class EXU_CP0_IO extends Bundle {
   val wb = Output(new WriteBackIO)
 }
 
-class CP0_INTRU_IO extends Bundle {
+class CP0_EHU_IO extends Bundle {
   val ip7 = Output(Bool())
   val intr = Output(Bool())
   val valid = Input(Bool())

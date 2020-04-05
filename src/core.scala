@@ -24,7 +24,7 @@ class Core extends Module {
   val isu = Module(new ISU)
   val bru = Module(new BRU)
   val exu = Module(new EXU)
-  val intru = Module(new INTRU)
+  val ehu = Module(new EHU)
   val cp0 = Module(new CP0)
   val tlb = Module(new TLB)
   val lsmdu = Module(new LSMDU)
@@ -38,18 +38,18 @@ class Core extends Module {
   exu.io.can_log_now := io.can_log_now
   cp0.io.can_log_now := io.can_log_now
   tlb.io.can_log_now := io.can_log_now
-  intru.io.can_log_now := io.can_log_now
+  ehu.io.can_log_now := io.can_log_now
   lsmdu.io.can_log_now := io.can_log_now
 
   /* pipeline */
   ifu.io.fu_out <> idu.io.fu_in
   idu.io.fu_out <> isu.io.fu_in
   isu.io.fu_out <> exu.io.fu_in
-  exu.io.fu_out <> intru.io.fu_in
-  intru.io.fu_out <> lsmdu.io.fu_in
+  exu.io.fu_out <> ehu.io.fu_in
+  ehu.io.fu_out <> lsmdu.io.fu_in
 
   /* time intr */
-  intru.io.cp0 <> cp0.io.intru
+  ehu.io.cp0 <> cp0.io.ehu
 
   /* writeback and bypass */
   lsmdu.io.wb <> rf.io.wb

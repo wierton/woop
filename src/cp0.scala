@@ -53,7 +53,7 @@ class CP0 extends CPRS with LSUConsts {
     val status = Output(new CP0Status)
     val exu = Flipped(new EXU_CP0_IO)
     val ex_flush = ValidIO(new FlushIO)
-    val intru = new CP0_INTRU_IO
+    val ehu = new CP0_EHU_IO
     val can_log_now = Input(Bool())
   })
 
@@ -131,12 +131,11 @@ class CP0 extends CPRS with LSUConsts {
   /* process exception */
   val ip = WireInit(VecInit(for (i <- 0 until 8) yield N))
   val intr_enable = !cpr_status.ERL && !cpr_status.EXL && cpr_status.IE
-  val intr_valid = (cpr_cause.IP.asUInt & cpr_status.IM.asUInt).orR &&
-    intr_enable && io.exu.ex.et === ET_None
-  val intr_flush = io.exu.valid && io.intru.valid && intr_valid
+  val intr_valid = (cpr_cause.IP.asUInt & cpr_status.IM.asUInt).orR && intr_enable
+  val intr_flush = io.exu.valid && io.ehu.valid && intr_valid
   val ex_flush = io.exu.fire && io.exu.ex.et =/= ET_None
-  io.intru.ip7 := cpr_cause.IP(7)
-  io.intru.intr := intr_flush
+  io.ehu.ip7 := cpr_cause.IP(7)
+  io.ehu.intr := intr_flush
   io.ex_flush.valid := intr_flush || ex_flush
   when (io.ex_flush.valid) {
     when (cpr_status.EXL === 0.U) {
@@ -185,9 +184,11 @@ class CP0 extends CPRS with LSUConsts {
     printv(this, "CP0")
     printv(io.rport, "CP0.rport")
     printv(io.wport, "CP0.wport")
-    printv(io.tlbr_port, "CP0.tlbr_port")
-    printv(io.tlbw_port, "CP0.tlbw_port")
-    printv(io.tlbp_port, "CP0.tlbp_port")
+    if (conf.log_TLB) {
+      printv(io.tlbr_port, "CP0.tlbr_port")
+      printv(io.tlbw_port, "CP0.tlbw_port")
+      printv(io.tlbp_port, "CP0.tlbp_port")
+    }
     printv(io.status, "CP0.status")
     printv(io.exu, "CP0.exu")
     printv(io.ex_flush, "CP0.ex_flush")
