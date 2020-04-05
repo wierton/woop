@@ -133,6 +133,10 @@ class CP0 extends CPRS with LSUConsts {
   val intr_valid = (cpr_cause.IP.asUInt & cpr_status.IM.asUInt).orR && intr_enable
   val intr_flush = io.ehu.valid && intr_valid
   val ex_flush = io.ehu.valid && io.ehu.ex.et =/= ET_None
+  val is_intr_ex = intr_flush && !ex_flush
+  when (is_intr_ex) {
+    printf("%d: intr ex %x %x\n", GTimer(), io.ehu.wb.pc, io.ehu.wb.npc)
+  }
   io.ehu.ip7 := cpr_cause.IP(7)
   io.ex_flush.valid := intr_flush || ex_flush
   when (io.ex_flush.valid) {
@@ -140,9 +144,10 @@ class CP0 extends CPRS with LSUConsts {
       when (cpr_status.EXL === 0.U) {
         val is_br = io.ehu.wb.is_br
         val is_ds = io.ehu.wb.is_ds
-        cpr_cause.BD := is_ds
+        cpr_cause.BD := Mux(is_intr_ex, is_br, is_ds)
         cpr_epc := MuxCase(io.ehu.wb.pc, Array(
-          (intr_flush && !ex_flush) -> io.ehu.wb.npc,
+          (is_intr_ex && is_br) -> io.ehu.wb.pc,
+          (is_intr_ex && !is_br) -> io.ehu.wb.npc,
           is_ds -> (io.ehu.wb.pc - 4.U)))
       }
 
@@ -164,13 +169,15 @@ class CP0 extends CPRS with LSUConsts {
       cpr_badvaddr := io.ehu.ex.addr
       cpr_context.badvpn2 := io.ehu.ex.addr >> 13
       cpr_entry_hi.vpn := io.ehu.ex.addr >> 13
-      cpr_entry_hi.asid := io.ehu.ex.asid
+      when (io.ehu.ex.et =/= ET_TLB_REFILL) {
+        cpr_entry_hi.asid := io.ehu.ex.asid
+      }
     }
   }
   val offset = MuxCase(0x180.U, Array(
     cpr_status.EXL -> 0x180.U,
     (io.ehu.ex.et === ET_TLB_REFILL) -> 0x000.U,
-    (intr_flush && !ex_flush && cpr_cause.IV.asBool) -> 0x200.U))
+    (is_intr_ex && cpr_cause.IV.asBool) -> 0x200.U))
   io.ex_flush.bits.br_target := Mux(
     io.ehu.ex.et === ET_Eret, cpr_epc,
     Mux(cpr_status.BEV === 1.U, "hbfc00200".U + offset,

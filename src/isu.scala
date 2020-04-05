@@ -74,7 +74,7 @@ class ISU extends Module {
     is_delayslot := Y
     br_target := Mux(io.br_flush.valid,
       io.br_flush.bits.br_target,
-      io.fu_out.bits.wb.pc + 4.U)
+      io.fu_out.bits.wb.pc + 8.U)
   } .elsewhen (io.fu_out.fire()) {  is_delayslot := N  }
   exu_wb := 0.U.asTypeOf(new WriteBackIO)
   exu_wb.pc := io.fu_in.bits.pc

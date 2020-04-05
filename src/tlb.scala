@@ -76,7 +76,7 @@ class TLB extends Module {
     res
   }
 
-  def tlb_translate(vaddr:UInt, rwbit:UInt) = {
+  def tlb_translate(name:String, vaddr:UInt, rwbit:UInt) = {
     val tlb_rports = for (i <- 0 until conf.tlbsz) yield tlb_entries(i)
     val matches = Reverse(Cat(for (i <- 0 until conf.tlbsz) yield
       tlb_entry_match(vaddr(31, 13), tlb_rports(i))))
@@ -88,13 +88,24 @@ class TLB extends Module {
     miss_res.ex.code := Mux(rwbit === MX_RD, EC_TLBL, EC_TLBS)
     miss_res.ex.addr := vaddr
     miss_res.paddr := 0.U
+
+    if (conf.log_TLB) {
+      when (io.can_log_now) {
+        printv(name+".tlt", Array[(String,Data)](
+          ("matches", matches),
+          ("miss", miss),
+          ("hit_res", hit_res),
+          ("miss_res", miss_res)))
+      }
+    }
+
     Mux(miss, miss_res, hit_res)
   }
 
   def is_cached(vaddr:UInt) = vaddr(31, 29) =/= "b101".U
   def ioremap(addr:UInt) = Cat("b000".U, addr(28, 0))
   def vaddr2paddr(name:String, vaddr:UInt, rwbit:UInt) = {
-    val mmu_res = tlb_translate(vaddr, rwbit)
+    val mmu_res = tlb_translate(name, vaddr, rwbit)
     val vid = vaddr(31, 29)
     val paddr = Mux1H(Array(
       (vid === 4.U || vid === 5.U) -> ioremap(vaddr),
@@ -110,6 +121,7 @@ class TLB extends Module {
     val res = WireInit(0.U.asTypeOf(new MMURes))
     res.ex.et := et
     res.ex.code := mmu_res.ex.code
+    res.ex.asid := mmu_res.ex.asid
     res.ex.addr := vaddr
     res.paddr := paddr
 
