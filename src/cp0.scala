@@ -136,15 +136,19 @@ class CP0 extends CPRS with LSUConsts {
   io.ehu.ip7 := cpr_cause.IP(7)
   io.ex_flush.valid := intr_flush || ex_flush
   when (io.ex_flush.valid) {
-    when (cpr_status.EXL === 0.U) {
-      val is_br = io.ehu.wb.is_br
-      val is_ds = io.ehu.wb.is_ds
-      cpr_cause.BD := is_ds
-      cpr_epc := MuxCase(io.ehu.wb.pc, Array(
-        is_ds -> (io.ehu.wb.pc - 4.U)))
+    when (io.ehu.ex.et =/= ET_Eret) {
+      when (cpr_status.EXL === 0.U) {
+        val is_br = io.ehu.wb.is_br
+        val is_ds = io.ehu.wb.is_ds
+        cpr_cause.BD := is_ds
+        cpr_epc := MuxCase(io.ehu.wb.pc, Array(
+          (intr_flush && !ex_flush) -> io.ehu.wb.npc,
+          is_ds -> (io.ehu.wb.pc - 4.U)))
+      }
+
+      cpr_cause.ExcCode := Mux(io.ehu.ex.et === ET_None,
+        EC_Int, io.ehu.ex.code)
     }
-    cpr_cause.ExcCode := Mux(io.ehu.ex.et === ET_None,
-      EC_Int, io.ehu.ex.code)
 
     when (cpr_status.ERL === 0.U) {
       cpr_status.EXL := io.ehu.ex.et =/= ET_Eret
@@ -166,7 +170,7 @@ class CP0 extends CPRS with LSUConsts {
   val offset = MuxCase(0x180.U, Array(
     cpr_status.EXL -> 0x180.U,
     (io.ehu.ex.et === ET_TLB_REFILL) -> 0x000.U,
-    (intr_valid && cpr_cause.IV.asBool) -> 0x200.U))
+    (intr_flush && !ex_flush && cpr_cause.IV.asBool) -> 0x200.U))
   io.ex_flush.bits.br_target := Mux(
     io.ehu.ex.et === ET_Eret, cpr_epc,
     Mux(cpr_status.BEV === 1.U, "hbfc00200".U + offset,
