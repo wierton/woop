@@ -196,7 +196,7 @@ class EXU extends Module {
   io.tlb_wport.bits.entry.p1.c := io.cp0_tlbr_port.entry_lo1.c
   io.tlb_wport.bits.entry.p1.d := io.cp0_tlbr_port.entry_lo1.d
   io.tlb_wport.bits.entry.p1.v := io.cp0_tlbr_port.entry_lo1.v
-  when (io.tlb_wport.valid && fu_op === PRU_TLBWR) {
+  when (io.tlb_wport.valid && fu_op === PRU_TLBWR && !io.ex_flush.valid) {
     cpr_random.index := cpr_random.index + 1.U
   }
 
