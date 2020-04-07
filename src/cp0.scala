@@ -120,7 +120,7 @@ class CP0 extends CPRS with LSUConsts {
     cpr_entry_lo1.write(wdata.entry_lo1.asUInt)
   }
 
-  when (io.tlbp_port.valid) {
+  when (io.tlbp_port.valid && !io.ex_flush.valid) {
     cpr_index.p := io.tlbp_port.bits.index.p
     when (!io.tlbp_port.bits.index.p.asBool) {
       cpr_index.index := io.tlbp_port.bits.index.index
