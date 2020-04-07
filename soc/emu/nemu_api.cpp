@@ -86,9 +86,10 @@ void NEMU_MIPS32::dump_tlb() {
   for (int i = 0; i < 32; i++) {
     fprintf(stderr,
         "tlb[%d]: asid=%02x g=%d, p0={c=%d d=%d pfn=%06x "
-        "v=%d} p1={c=%d d=%d pfn=%06x v=%d}\n",
+        "v=%d} p1={c=%d d=%d pfn=%06x v=%d} pagemask=%04x vpn=%05x\n",
         i, tlb[i].asid, tlb[i].g, tlb[i].p0.c, tlb[i].p0.d,
         tlb[i].p0.pfn, tlb[i].p0.v, tlb[i].p1.c,
-        tlb[i].p1.d, tlb[i].p1.pfn, tlb[i].p1.v);
+        tlb[i].p1.d, tlb[i].p1.pfn, tlb[i].p1.v,
+        tlb[i].pagemask, tlb[i].vpn);
   }
 }

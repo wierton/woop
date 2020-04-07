@@ -60,24 +60,24 @@ class CP0 extends CPRS with LSUConsts {
 
   /* cpr io */
   val cpr_raddr = io.rport.addr
-  io.rport.data := Mux1H(Array(
-    (cpr_raddr === CPR_INDEX)     -> cpr_index.asUInt,
-    (cpr_raddr === CPR_ENTRY_LO0) -> cpr_entry_lo0.asUInt,
-    (cpr_raddr === CPR_ENTRY_LO1) -> cpr_entry_lo1.asUInt,
-    (cpr_raddr === CPR_CONTEXT)   -> cpr_context.asUInt,
-    (cpr_raddr === CPR_PAGEMASK)  -> cpr_pagemask.asUInt,
-    (cpr_raddr === CPR_WIRED)     -> cpr_wired.asUInt,
-    (cpr_raddr === CPR_BAD_VADDR) -> cpr_badvaddr.asUInt,
-    (cpr_raddr === CPR_COUNT)     -> cpr_count.asUInt,
-    (cpr_raddr === CPR_ENTRY_HI)  -> cpr_entry_hi.asUInt,
-    (cpr_raddr === CPR_COMPARE)   -> cpr_compare.asUInt,
-    (cpr_raddr === CPR_STATUS)    -> cpr_status.asUInt,
-    (cpr_raddr === CPR_CAUSE)     -> cpr_cause.asUInt,
-    (cpr_raddr === CPR_EPC)       -> cpr_epc.asUInt,
-    (cpr_raddr === CPR_PRID)      -> cpr_prid.asUInt,
-    (cpr_raddr === CPR_EBASE)     -> cpr_ebase.asUInt,
-    (cpr_raddr === CPR_CONFIG)    -> cpr_config.asUInt,
-    (cpr_raddr === CPR_CONFIG1)   -> cpr_config1.asUInt,
+  io.rport.data := MuxLookup(cpr_raddr, 0.U, Array(
+    CPR_INDEX     -> cpr_index.asUInt,
+    CPR_ENTRY_LO0 -> cpr_entry_lo0.asUInt,
+    CPR_ENTRY_LO1 -> cpr_entry_lo1.asUInt,
+    CPR_CONTEXT   -> cpr_context.asUInt,
+    CPR_PAGEMASK  -> cpr_pagemask.asUInt,
+    CPR_WIRED     -> cpr_wired.asUInt,
+    CPR_BAD_VADDR -> cpr_badvaddr.asUInt,
+    CPR_COUNT     -> cpr_count.asUInt,
+    CPR_ENTRY_HI  -> cpr_entry_hi.asUInt,
+    CPR_COMPARE   -> cpr_compare.asUInt,
+    CPR_STATUS    -> cpr_status.asUInt,
+    CPR_CAUSE     -> cpr_cause.asUInt,
+    CPR_EPC       -> cpr_epc.asUInt,
+    CPR_PRID      -> cpr_prid.asUInt,
+    CPR_EBASE     -> cpr_ebase.asUInt,
+    CPR_CONFIG    -> cpr_config.asUInt,
+    CPR_CONFIG1   -> cpr_config1.asUInt,
   ))
 
   val cpr_wdata = io.wport.bits.data
