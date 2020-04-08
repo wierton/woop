@@ -111,6 +111,9 @@ class CommitIO extends Bundle {
   val instr = Output(UInt(conf.xprlen.W))
   val ip7 = Output(Bool())
   val gpr = Output(Vec(32, UInt(conf.xprlen.W)))
+  val rd_idx = Output(UInt(REG_SZ.W))
+  val wdata = Output(UInt(conf.xprlen.W))
+  val wen = Output(Bool())
 }
 
 class FlushIO extends Bundle {
@@ -257,4 +260,14 @@ class EHU_CP0_IO extends Bundle {
   val ip7 = Input(Bool())
   val ex = Output(new CP0Exception)
   val wb = Output(new WriteBackIO)
+}
+
+class NSCSCCCommitIO extends Bundle {
+  val ninstr = Output(UInt(32.W))
+  val wb_pc = Output(UInt(conf.xprlen.W))
+  val wb_instr = Output(UInt(conf.xprlen.W))
+  val wb_rf_wdata = Output(UInt(conf.xprlen.W))
+  val wb_rf_wen = Output(Bool())
+  val wb_rf_wnum = Output(UInt(5.W))
+  val wb_valid = Output(Bool())
 }

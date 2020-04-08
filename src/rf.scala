@@ -71,6 +71,9 @@ class RegFile extends Module {
   io.commit.pc := io.wb.bits.pc
   io.commit.instr := io.wb.bits.instr.asUInt
   io.commit.ip7 := io.wb.bits.ip7
+  io.commit.wen := io.wb.bits.v && io.wb.bits.wen
+  io.commit.wdata := io.wb.bits.data
+  io.commit.rd_idx := io.wb.bits.rd_idx
   for (i <- 0 until 32) {
     io.commit.gpr(i) := Mux(io.wb.valid && io.wb.bits.wen && io.wb.bits.rd_idx === i.U, io.wb.bits.data, wb_rf(i))
   }

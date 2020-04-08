@@ -41,6 +41,7 @@ $$($(1)_LS_TOP_V): $$(LOONGSON_TOP_V)
 
 $$($(1)_LS_XPR):
 	rm -rf $$(NSCSCC_OBJDIR)/soc_axi_$(1)
+	mkdir -p $$(NSCSCC_OBJDIR)
 	cp -r soc/loongson/soc_axi_$(1) $$(NSCSCC_OBJDIR)
 
 nscscc-$(1)-prj: $$($(1)_LS_XPR) $$($(1)_LS_TOP_V) $(2)

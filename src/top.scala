@@ -137,7 +137,7 @@ class LOONGSON_TOP extends Module {
     val dmem = new AXI4IO(conf.xprlen)
     val divider = new DividerIO
     val multiplier = new MultiplierIO
-    val commit = new CommitIO
+    val commit = new NSCSCCCommitIO
   })
 
   val core = Module(new Core)
@@ -152,7 +152,13 @@ class LOONGSON_TOP extends Module {
   core.io.multiplier <> io.multiplier
   imem2axi.io.out <> io.imem
   dmem2axi.io.out <> io.dmem
-  core.io.commit <> io.commit
+
+  io.commit.ninstr := 0.U
+  io.commit.wb_pc := core.io.commit.pc
+  io.commit.wb_instr := core.io.commit.instr
+  io.commit.wb_rf_wdata := core.io.commit.wdata
+  io.commit.wb_rf_wen := core.io.commit.wen
+  io.commit.wb_valid := core.io.commit.valid
 }
 
 object Main {
