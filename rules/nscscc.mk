@@ -23,7 +23,7 @@ $(U_BOOT_COE): $(U_BOOT_BIN)
 $(LOONGSON_TOP_V): $(SCALA_FILES)
 	@mkdir -p $(@D)
 	@sbt "run LOONGSON_TOP -td $(@D) --output-file $(@F)"
-	@sed -i '/ bram /a`undef RANDOMIZE_MEM_INIT' $@
+	@sed -i "s/_\(aw\|ar\|r\|w\|b\)_/_\1/g" $@
 
 clean-nscscc:
 	rm -rf $(NSCSCC_OBJDIR)

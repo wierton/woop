@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="36" Path="/home/wierton/nju-mips/noop-lo/output/nscscc-submit/soc_axi_func/run_vivado/mycpu/mycpu.xpr">
+<Project Version="7" Minor="36">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="f0cdd91c0ad24052860dc07990f16e46"/>
@@ -21,7 +21,7 @@
     <Option Name="ActiveSimSet" Val="sim_1"/>
     <Option Name="DefaultLib" Val="xil_defaultlib"/>
     <Option Name="ProjectType" Val="Default"/>
-    <Option Name="IPOutputRepo" Val="/home/wierton/nju-mips/noop-lo/output/nscscc-submit/soc_axi_func/run_vivado/E:/nscscc2018/lab3/ucas_CDE_v0.2/mycpu_verify/run_vivado/mycpu_prj1/mycpu.cache/ip"/>
+    <Option Name="IPOutputRepo" Val="$PPRDIR/mycpu.cache/ip"/>
     <Option Name="IPCachePermission" Val="disable"/>
     <Option Name="EnableCoreContainer" Val="FALSE"/>
     <Option Name="XPMLibraries" Val="XPM_CDC"/>
