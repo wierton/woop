@@ -16,6 +16,8 @@ class Core extends Module {
     val commit = new CommitIO
     val br_flush = Output(Bool())
     val ex_flush = Output(Bool())
+    val multiplier = new MultiplierIO
+    val divider = new DividerIO
     val can_log_now = Input(Bool())
   })
 
@@ -94,6 +96,9 @@ class Core extends Module {
   isu.io.bru.fu_in <> bru.io.fu_in
   isu.io.bru.fu_out <> bru.io.fu_out
   tlb.io.status := cp0.io.status
+
+  lsmdu.io.multiplier <> io.multiplier
+  lsmdu.io.divider <> io.divider
 
   io.icache_control <> exu.io.icache_control
 }

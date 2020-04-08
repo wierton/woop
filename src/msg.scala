@@ -44,6 +44,23 @@ class RegFileIO extends Bundle {
   val rt_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
 }
 
+class DividerIO extends Bundle {
+  val data_dividend_valid = Output(Bool())
+  val data_divisor_valid = Output(Bool())
+  val data_dout_valid = Input(Bool())
+  val data_dividend_ready = Input(Bool())
+  val data_divisor_ready = Input(Bool())
+  val data_dividend_bits = Output(UInt(40.W))
+  val data_divisor_bits = Output(UInt(40.W))
+  val data_dout_bits = Input(UInt(80.W))
+}
+
+class MultiplierIO extends Bundle {
+  val data_a = Output(UInt(33.W))
+  val data_b = Output(UInt(33.W))
+  val data_dout = Input(UInt(66.W))
+}
+
 class TLBReq extends Bundle {
   val func = Output(Bool()) // 1: load, 0:store
   val vaddr = Output(UInt(conf.xprlen.W))

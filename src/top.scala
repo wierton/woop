@@ -15,6 +15,31 @@ class SimDev extends BlackBox {
   })
 }
 
+class Divider extends Module {
+  val io = IO(Flipped(new DividerIO))
+  val dividend = io.data_dividend_bits.asSInt
+  val divisor = io.data_divisor_bits.asSInt
+  val quotient = (dividend / divisor).asUInt
+  val remainder = (dividend % divisor).asUInt
+  require(quotient.getWidth == 40)
+  require(remainder.getWidth == 40)
+  val pipe = Pipe(Y, Cat(quotient, remainder), conf.mdu_stages)
+
+  io.data_dividend_ready := Y
+  io.data_divisor_ready := Y
+  io.data_dout_valid := pipe.valid
+  io.data_dout_bits := pipe.bits
+}
+
+class Multiplier extends Module {
+  val io = IO(Flipped(new MultiplierIO))
+  val a = io.data_a.asSInt
+  val b = io.data_b.asSInt
+  val pipe = Pipe(Y, (a * b).asUInt, conf.mdu_stages)
+
+  io.data_dout := pipe.bits
+}
+
 class SOC_EMU_TOP extends Module {
   val io = IO(new Bundle {
     val commit = new CommitIO
@@ -25,6 +50,8 @@ class SOC_EMU_TOP extends Module {
   val dev = Module(new SimDev)
   val crossbar = Module(new CrossbarNx1(2))
   val icache = Module(new SimICache)
+  val divider = Module(new Divider)
+  val multiplier = Module(new Multiplier)
   // val icache = Module(new IMemCistern(conf.icache_stages))
 
   core.io.can_log_now := io.can_log_now
@@ -36,6 +63,9 @@ class SOC_EMU_TOP extends Module {
 
   icache.io.br_flush := core.io.br_flush
   icache.io.ex_flush := core.io.ex_flush
+
+  divider.io <> core.io.divider
+  multiplier.io <> core.io.multiplier
 
   icache.io.in <> core.io.imem
 

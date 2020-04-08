@@ -44,6 +44,8 @@ class LSMDU extends Module {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new EHU_LSMDU_IO))
     val wb = ValidIO(new WriteBackIO)
+    val divider = new DividerIO
+    val multiplier = new MultiplierIO
     val dmem = new MemIO
     val can_log_now = Input(Bool())
   })
@@ -65,6 +67,8 @@ class LSMDU extends Module {
     io.fu_in.bits.ops.fu_type === FU_MDU
   mdu.io.fu_in.valid := io.fu_in.valid && to_mdu
   mdu.io.fu_in.bits := io.fu_in.bits
+  mdu.io.divider <> io.divider
+  mdu.io.multiplier <> io.multiplier
   mdu.io.can_log_now := io.can_log_now
 
   /* pipeline stage for ALU,BRU,PRU */
