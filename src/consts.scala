@@ -354,6 +354,33 @@ trait MDUConsts extends ISUConsts {
   val MDU_MSUBU = Cat("b1100".U(4.W), WB_HL)
 }
 
+trait CacheConsts {
+  val CACHE_OP_SZ = 3
+
+  val I_INDEX_INVALIDATE = "b000".U(CACHE_OP_SZ.W)
+  val I_INDEX_LOAD_TAG   = "b001".U(CACHE_OP_SZ.W)
+  val I_INDEX_STORE_TAG  = "b010".U(CACHE_OP_SZ.W)
+  val I_HIT_INVALIDATE   = "b100".U(CACHE_OP_SZ.W)
+  val I_FILL             = "b101".U(CACHE_OP_SZ.W)
+  val I_FETCH_AND_LOCK   = "b111".U(CACHE_OP_SZ.W)
+
+  val D_INDEX_WB_INV     = "b000".U(CACHE_OP_SZ.W)
+  val D_INDEX_LOAD_TAG   = "b001".U(CACHE_OP_SZ.W)
+  val D_INDEX_STORE_TAG  = "b010".U(CACHE_OP_SZ.W)
+  val D_HIT_INVALIDATE   = "b100".U(CACHE_OP_SZ.W)
+  val D_HIT_WB_INV       = "b101".U(CACHE_OP_SZ.W)
+  val D_WB               = "b110".U(CACHE_OP_SZ.W)
+  val D_FETCH_AND_LOCK   = "b111".U(CACHE_OP_SZ.W)
+
+  val S_INDEX_WB_INV     = "b000".U(CACHE_OP_SZ.W)
+  val S_INDEX_LOAD_TAG   = "b001".U(CACHE_OP_SZ.W)
+  val S_INDEX_STORE_TAG  = "b010".U(CACHE_OP_SZ.W)
+  val S_HIT_INVALIDATE   = "b100".U(CACHE_OP_SZ.W)
+  val S_HIT_WB_INV       = "b101".U(CACHE_OP_SZ.W)
+  val S_WB               = "b110".U(CACHE_OP_SZ.W)
+  val S_FETCH_AND_LOCK   = "b111".U(CACHE_OP_SZ.W)
+}
+
 object consts extends InstrPattern
   with MemConsts
   with CP0Consts
@@ -364,5 +391,6 @@ object consts extends InstrPattern
   // with MDUConsts
   with ALUConsts
   with InstrConsts
+  with CacheConsts
 {
 }

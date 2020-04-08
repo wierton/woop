@@ -24,8 +24,8 @@ class SOC_EMU_TOP extends Module {
   val core = Module(new Core)
   val dev = Module(new SimDev)
   val crossbar = Module(new CrossbarNx1(2))
-  // val icache = Module(new SimICache)
-  val icache = Module(new IMemCistern(conf.icache_stages))
+  val icache = Module(new SimICache)
+  // val icache = Module(new IMemCistern(conf.icache_stages))
 
   core.io.can_log_now := io.can_log_now
   crossbar.io.can_log_now := io.can_log_now
@@ -41,6 +41,8 @@ class SOC_EMU_TOP extends Module {
 
   icache.io.out <> crossbar.io.in(0)
   core.io.dmem  <> crossbar.io.in(1)
+
+  icache.io.control <> core.io.icache_control
 
   crossbar.io.out <> dev.io.in
 

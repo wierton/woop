@@ -21,6 +21,11 @@ class Instr extends Bundle {
   def sel    = func(2, 0)
 }
 
+class CacheControl extends Bundle {
+  val op = UInt(CACHE_OP_SZ.W)
+  val addr = UInt(32.W)
+}
+
 class CP0Exception extends Bundle {
   val et = UInt(ET_WIDTH.W)
   val code = UInt(EC_WIDTH.W)

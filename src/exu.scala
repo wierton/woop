@@ -24,6 +24,8 @@ class EXU extends Module {
     val tlb_wport = ValidIO(new TLB_WPORT)
     val tlb_pport = new TLB_PPORT
 
+    val icache_control = ValidIO(new CacheControl)
+
     val wb = Flipped(ValidIO(new WriteBackIO))
     val bp = ValidIO(new BypassIO)
     val ex_flush = Flipped(ValidIO(new FlushIO))
@@ -150,6 +152,12 @@ class EXU extends Module {
   io.bp.bits.rd_idx := io.fu_out.bits.wb.rd_idx
   io.bp.bits.wen := io.fu_out.bits.wb.wen
   io.bp.bits.data := io.fu_out.bits.wb.data
+
+  /* icache_control */
+  io.icache_control.valid := io.fu_out.fire() &&
+    fu_type === FU_PRU && fu_op === PRU_CACHE
+  io.icache_control.bits.op := fu_in.ops.op2
+  io.icache_control.bits.addr := fu_in.ops.op1
 
   /* tlbr */
   val tlbr_mask = io.tlb_rport.entry.pagemask.asTypeOf(UInt(32.W))

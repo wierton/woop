@@ -12,6 +12,7 @@ class Core extends Module {
   val io = IO(new Bundle {
     val imem = new MemIO
     val dmem = new MemIO
+    val icache_control = ValidIO(new CacheControl)
     val commit = new CommitIO
     val br_flush = Output(Bool())
     val ex_flush = Output(Bool())
@@ -93,4 +94,6 @@ class Core extends Module {
   isu.io.bru.fu_in <> bru.io.fu_in
   isu.io.bru.fu_out <> bru.io.fu_out
   tlb.io.status := cp0.io.status
+
+  io.icache_control <> exu.io.icache_control
 }

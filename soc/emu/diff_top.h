@@ -57,6 +57,7 @@ class DiffTop {
   std::unique_ptr<NEMU_MIPS32> nemu_ptr;
 
   uint32_t seed;
+  uint64_t ninstr = 0;
   uint64_t cycles = 0, silent_cycles = 0;
 
   bool finished = false;
@@ -76,7 +77,7 @@ class DiffTop {
   void reset_ncycles(unsigned n);
 
   bool can_log_now() const {
-    // return cycles >= 568993 - 1000;
+    return cycles >= 117036529 - 1000;
     return false;
   }
 

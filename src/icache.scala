@@ -113,23 +113,42 @@ class ICache extends Module {
   io.out <> DontCare
 }
 
+class SimICacheEntry extends Bundle {
+  val v = Bool()
+  val tag = UInt((32 - log2Ceil(conf.nSimICacheEntries)).W)
+  val data = UInt(conf.xprlen.W)
+}
+
 class SimICache extends Module {
   val io = IO(new Bundle {
     val in = Flipped(new MemIO)
     val out = new MemIO
     val br_flush = Input(Bool())
     val ex_flush = Input(Bool())
+    val control = Flipped(ValidIO(new CacheControl))
     val can_log_now = Input(Bool())
   })
 
-  val entries = 4096
-  def idxOf(addr:UInt) = addr(log2Ceil(entries) - 1, 0)
-  def tagOf(addr:UInt) = addr(31, log2Ceil(entries))
-  val cache = Mem(entries, new Bundle {
-    val v = Bool()
-    val tag = UInt((32 - log2Ceil(entries)).W)
-    val data = UInt(conf.xprlen.W)
-  })
+  val nEntryBits = log2Ceil(conf.nSimICacheEntries)
+  def idxOf(addr:UInt) = addr(nEntryBits - 1, 0)
+  def tagOf(addr:UInt) = addr(31, nEntryBits)
+  val cache = Mem(conf.nSimICacheEntries, new SimICacheEntry)
+
+  when (io.control.valid && !io.ex_flush) {
+    val idx = idxOf(io.control.bits.addr)
+    switch(io.control.bits.op) {
+    is(I_INDEX_INVALIDATE) {
+      cache(idx).v := N
+    }
+    is(I_HIT_INVALIDATE) {
+      cache(idx).v := N
+    }
+    is(I_INDEX_LOAD_TAG) { /* do nothing */ }
+    is(I_INDEX_STORE_TAG){ /* do nothing */ }
+    is(I_FILL)           { /* do nothing */ }
+    is(I_FETCH_AND_LOCK) { /* do nothing */ }
+    }
+  }
 
   val flush = io.br_flush || io.ex_flush
 
