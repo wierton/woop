@@ -135,6 +135,8 @@ class LOONGSON_TOP extends Module {
   val io = IO(new Bundle {
     val imem = new AXI4IO(conf.xprlen)
     val dmem = new AXI4IO(conf.xprlen)
+    val divider = new DividerIO
+    val multiplier = new MultiplierIO
     val commit = new CommitIO
   })
 
@@ -142,8 +144,12 @@ class LOONGSON_TOP extends Module {
   val imem2axi = Module(new MemIO2AXI(conf.xprlen))
   val dmem2axi = Module(new MemIO2AXI(conf.xprlen))
 
+  core.io.can_log_now := N
+
   core.io.imem <> imem2axi.io.in
   core.io.dmem <> dmem2axi.io.in
+  core.io.divider <> io.divider
+  core.io.multiplier <> io.multiplier
   imem2axi.io.out <> io.imem
   dmem2axi.io.out <> io.dmem
   core.io.commit <> io.commit

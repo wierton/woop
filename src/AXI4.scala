@@ -50,18 +50,18 @@ class AXI4ChannelW(data_width: Int) extends HandShakeIO
 
 class AXI4ChannelB extends HandShakeIO
 {
-  val id = Input(UInt(4.W))
-  val resp = Input(UInt(2.W))
+  val id = Output(UInt(4.W))
+  val resp = Output(UInt(2.W))
   val user = Output(UInt(5.W))
 }
 
 // read data channel signals
 class AXI4ChannelR(data_width: Int) extends HandShakeIO
 {
-  val id = Input(UInt(4.W))
-  val data = Input(UInt(data_width.W))
-  val resp = Input(UInt(2.W))
-  val last = Input(Bool())
+  val id = Output(UInt(4.W))
+  val data = Output(UInt(data_width.W))
+  val resp = Output(UInt(2.W))
+  val last = Output(Bool())
   val user = Output(UInt(5.W))
 
   override def cloneType = { new AXI4ChannelR(data_width).asInstanceOf[this.type] }

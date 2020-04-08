@@ -41,7 +41,7 @@ $$($(1)_LS_TOP_V): $$(LOONGSON_TOP_V)
 
 $$($(1)_LS_XPR):
 	rm -rf $$(NSCSCC_OBJDIR)/soc_axi_$(1)
-	cp -r nscscc/soc_axi_$(1) $$(NSCSCC_OBJDIR)
+	cp -r soc/loongson/soc_axi_$(1) $$(NSCSCC_OBJDIR)
 
 nscscc-$(1)-prj: $$($(1)_LS_XPR) $$($(1)_LS_TOP_V) $(2)
 
@@ -49,7 +49,7 @@ nscscc-sync-$(1): $$($(1)_LS_TOP_V)
 
 nscscc-$(1)-bit: $$($(1)_LS_XPR)
 	SOC_XPR=mycpu.xpr SOC_DIR=$$(dir $$($(1)_LS_XPR)) \
-	  $(VIVADO_18) $(VIVADO_FLAG) -mode batch -source nscscc/mk.tcl
+	  $(VIVADO_18) $(VIVADO_FLAG) -mode batch -source soc/loongson/mk.tcl
 
 nscscc-$(1)-vivado: $$($(1)_LS_XPR)
 	cd $$(<D) && nohup $$(VIVADO_18) $$< &>/dev/null &

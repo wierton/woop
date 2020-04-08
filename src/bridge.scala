@@ -28,6 +28,7 @@ class MemIO2AXI(dw:Int) extends Module {
 
   io.out.aw.valid := io.in.req.valid && io.in.req.bits.func === MX_WR
   io.out.aw.addr := io.in.req.bits.addr
+  io.out.aw.id := 0.U
   io.out.aw.len := 0.U
   io.out.aw.size := "b10".U
   io.out.aw.burst := 0.U
@@ -47,6 +48,7 @@ class MemIO2AXI(dw:Int) extends Module {
 
   io.out.ar.valid := io.in.req.valid && io.in.req.bits.func === MX_RD
   io.out.ar.addr := io.in.req.bits.addr
+  io.out.ar.id := 0.U
   io.out.ar.len := 0.U
   io.out.ar.size := "b10".U
   io.out.ar.burst := 0.U
@@ -60,6 +62,8 @@ class MemIO2AXI(dw:Int) extends Module {
   io.out.r.ready := io.in.resp.ready
   io.out.b.ready := io.in.resp.ready
 
+  io.in.req.ready := io.out.w.ready && io.out.aw.ready &&
+    io.out.ar.ready
   io.in.resp.valid := io.out.r.valid || io.out.b.valid
   io.in.resp.bits.data := io.out.r.data
 }
