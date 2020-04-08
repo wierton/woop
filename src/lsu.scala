@@ -112,10 +112,10 @@ class LSU extends Module with LSUConsts {
       0.U(32.W), s3_in.ops.op2))
   /* io.fu_out.bits.wb.data */
   io.fu_out.valid := io.dmem.resp.valid
-  io.fu_out.bits.v := s3_in_op.func === MX_RD
+  io.fu_out.bits.v := s3_in_op.func === MX_RD || s3_in_op.asUInt === LSU_SC
   io.fu_out.bits.pc := s3_in.wb.pc
   io.fu_out.bits.id := s3_in.wb.id
-  io.fu_out.bits.wen := s3_in_op.func === MX_RD
+  io.fu_out.bits.wen := s3_in_op.func === MX_RD || s3_in_op.asUInt === LSU_SC
   io.fu_out.bits.rd_idx := s3_in.wb.rd_idx
   io.fu_out.bits.instr := s3_in.wb.instr
   io.fu_out.bits.is_ds := N
@@ -123,6 +123,7 @@ class LSU extends Module with LSUConsts {
   io.fu_out.bits.is_br := s3_in.wb.is_br
   io.fu_out.bits.npc := s3_in.wb.npc
   io.fu_out.bits.data := MuxCase(ze_data, Array(
+    (s3_in_op.asUInt === LSU_SC) -> 1.U,
     (s3_in_op.asUInt === LSU_LB) -> io.dmem.resp.bits.data(7, 0).asTypeOf(SInt(32.W)).asUInt,
     (s3_in_op.asUInt === LSU_LH) -> io.dmem.resp.bits.data(15, 0).asTypeOf(SInt(32.W)).asUInt))
 

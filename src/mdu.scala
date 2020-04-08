@@ -43,6 +43,7 @@ class MDU extends Module with MDUConsts {
   val s_mod = (op1.asSInt % op2.asSInt).asUInt
   val u_div = op1.asUInt / op2.asUInt
   val u_mod = op1.asUInt % op2.asUInt
+  val hilo = Cat(hi, lo)
 
   when (fu_valid && wb_hilo) {
     hi := Mux1H(Array(
@@ -51,14 +52,22 @@ class MDU extends Module with MDUConsts {
       (fu_op === MDU_MULT)  -> s_mul(63, 32),
       (fu_op === MDU_MULTU) -> u_mul(63, 32),
       (fu_op === MDU_DIV)   -> s_mod,
-      (fu_op === MDU_DIVU)  -> u_mod))
+      (fu_op === MDU_DIVU)  -> u_mod,
+      (fu_op === MDU_MADD)  -> (hilo + s_mul)(63, 32),
+      (fu_op === MDU_MADDU) -> (hilo + u_mul)(63, 32),
+      (fu_op === MDU_MSUB)  -> (hilo - s_mul)(63, 32),
+      (fu_op === MDU_MSUBU) -> (hilo - u_mul)(63, 32)))
     lo := Mux1H(Array(
       (fu_op === MDU_MTHI)  -> lo,
       (fu_op === MDU_MTLO)  -> fu_in.ops.op1,
       (fu_op === MDU_MULT)  -> s_mul(31, 0),
       (fu_op === MDU_MULTU) -> u_mul(31, 0),
       (fu_op === MDU_DIV)   -> s_div,
-      (fu_op === MDU_DIVU)  -> u_div))
+      (fu_op === MDU_DIVU)  -> u_div,
+      (fu_op === MDU_MADD)  -> (hilo + s_mul)(31, 0),
+      (fu_op === MDU_MADDU) -> (hilo + u_mul)(31, 0),
+      (fu_op === MDU_MSUB)  -> (hilo - s_mul)(31, 0),
+      (fu_op === MDU_MSUBU) -> (hilo - u_mul)(31, 0)))
   }
 
   io.fu_in.ready := Y

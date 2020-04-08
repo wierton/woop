@@ -78,6 +78,10 @@ class IDU extends Module with LSUConsts with MDUConsts {
      MULTU   -> List(Y, FU_MDU,  MDU_MULTU,  OP1_RS,   OP2_RT,  OPD_HL),
      DIV     -> List(Y, FU_MDU,  MDU_DIV,    OP1_RS,   OP2_RT,  OPD_HL),
      DIVU    -> List(Y, FU_MDU,  MDU_DIVU,   OP1_RS,   OP2_RT,  OPD_HL),
+     MADD    -> List(Y, FU_MDU,  MDU_MADD,   OP1_RS,   OP2_RT,  OPD_HL),
+     MADDU   -> List(Y, FU_MDU,  MDU_MADDU,  OP1_RS,   OP2_RT,  OPD_HL),
+     MSUB    -> List(Y, FU_MDU,  MDU_MSUB,   OP1_RS,   OP2_RT,  OPD_HL),
+     MSUBU   -> List(Y, FU_MDU,  MDU_MSUBU,  OP1_RS,   OP2_RT,  OPD_HL),
 
      // LSU instructions
      LW      -> List(Y, FU_LSU,  LSU_LW,     OP1_RSO,  OP2_X,   OPD_RT),
@@ -92,6 +96,8 @@ class IDU extends Module with LSUConsts with MDUConsts {
      SB      -> List(Y, FU_LSU,  LSU_SB,     OP1_RSO,  OP2_RT,  OPD_X),
      SWL     -> List(Y, FU_LSU,  LSU_SWL,    OP1_RSO,  OP2_RT,  OPD_X),
      SWR     -> List(Y, FU_LSU,  LSU_SWR,    OP1_RSO,  OP2_RT,  OPD_X),
+     LL      -> List(Y, FU_LSU,  LSU_LL,     OP1_RSO,  OP2_X,   OPD_RT),
+     SC      -> List(Y, FU_LSU,  LSU_SC,     OP1_RSO,  OP2_RT,  OPD_RT),
 
      // PRU instructions
      SYSCALL -> List(Y, FU_PRU,  PRU_SYSCALL,OP1_X,    OP2_X,   OPD_X),
