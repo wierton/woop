@@ -154,9 +154,12 @@ class EXU extends Module {
   io.bp.bits.data := io.fu_out.bits.wb.data
 
   /* icache_control */
+  val cache_control_target = fu_in.ops.op2(1, 0)
+  val cache_control_op = fu_in.ops.op2(4, 2)
   io.icache_control.valid := io.fu_out.fire() &&
-    fu_type === FU_PRU && fu_op === PRU_CACHE
-  io.icache_control.bits.op := fu_in.ops.op2
+    fu_type === FU_PRU && fu_op === PRU_CACHE &&
+    cache_control_target === CONTROL_ICACHE
+  io.icache_control.bits.op := cache_control_op
   io.icache_control.bits.addr := fu_in.ops.op1
 
   /* tlbr */

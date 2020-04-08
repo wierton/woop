@@ -65,6 +65,7 @@ class ISU extends Module {
     (io.fu_in.bits.op2_sel === OP2_IMU) -> ue_imm,
     (io.fu_in.bits.op2_sel === OP2_IMZ) -> ze_imm,
     (io.fu_in.bits.op2_sel === OP2_SA)  -> shamt_ext,
+    (io.fu_in.bits.op2_sel === OP2_COP) -> instr.rt_idx,
   )).asUInt
 
   val is_delayslot = RegInit(N)

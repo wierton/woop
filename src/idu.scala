@@ -105,7 +105,7 @@ class IDU extends Module with LSUConsts with MDUConsts {
      ERET    -> List(Y, FU_PRU,  PRU_ERET,   OP1_X,    OP2_X,   OPD_X),
      MFC0    -> List(Y, FU_PRU,  PRU_MFC0,   OP1_X,    OP2_X,   OPD_RT),
      MTC0    -> List(Y, FU_PRU,  PRU_MTC0,   OP1_RT,   OP2_X,   OPD_X),
-     CACHE   -> List(Y, FU_PRU,  PRU_CACHE,  OP1_RSO,  OP2_RT,  OPD_X),
+     CACHE   -> List(Y, FU_PRU,  PRU_CACHE,  OP1_RSO,  OP2_COP, OPD_X),
      SYNC    -> List(Y, FU_PRU,  PRU_SYNC,   OP1_X,    OP2_X,   OPD_X),
      PREF    -> List(Y, FU_PRU,  PRU_PREF,   OP1_X,    OP2_X,   OPD_X),
      TLBP    -> List(Y, FU_PRU,  PRU_TLBP,   OP1_X,    OP2_X,   OPD_X),

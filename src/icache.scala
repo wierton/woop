@@ -136,10 +136,10 @@ class SimICache extends Module {
 
   when (io.control.valid && !io.ex_flush) {
     val idx = io.control.bits.addr(log2Ceil(conf.nICacheSets) - 1, 0)
+    val n = conf.nSimICacheEntries / conf.nICacheSets
+    require(n > 0)
     when (io.control.bits.op === I_INDEX_INVALIDATE ||
       io.control.bits.op === I_HIT_INVALIDATE) {
-      val n = conf.nSimICacheEntries / conf.nICacheSets
-      require(n > 0)
       for (i <- 0 until n) {
         cache(Cat(i.U, idx)).v := N
       }

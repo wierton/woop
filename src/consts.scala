@@ -207,6 +207,7 @@ trait ISUConsts
   val OP2_IMU = 4.U(OP2_SEL_SZ.W) // immediate, U-type
   val OP2_IMZ = 5.U(OP2_SEL_SZ.W) // zero-extended immediate, I-type
   val OP2_SA  = 6.U(OP2_SEL_SZ.W) // shift amount
+  val OP2_COP = 7.U(OP2_SEL_SZ.W) // shift amount
 
   // REG Dest Select Signal
   val OPD_SEL_SZ = 2
@@ -379,6 +380,11 @@ trait CacheConsts {
   val S_HIT_WB_INV       = "b101".U(CACHE_OP_SZ.W)
   val S_WB               = "b110".U(CACHE_OP_SZ.W)
   val S_FETCH_AND_LOCK   = "b111".U(CACHE_OP_SZ.W)
+
+  val CONTROL_ICACHE = "b00".U(2.W)
+  val CONTROL_DCACHE = "b01".U(2.W)
+  val CONTROL_SCACHE = "b10".U(2.W)
+  val CONTROL_TCACHE = "b11".U(2.W)
 }
 
 object consts extends InstrPattern
