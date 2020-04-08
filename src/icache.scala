@@ -105,7 +105,7 @@ class ICacheMemIO extends Module {
 class ICache extends Module {
   val io = IO(new Bundle {
     val in = Flipped(new MemIO)
-    val out = new AXI4IO(4, conf.xprlen)
+    val out = new AXI4IO(conf.xprlen)
     val flush = Input(Bool())
   })
 

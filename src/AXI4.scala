@@ -7,10 +7,16 @@ import woop.consts._
 import woop.configs._
 import woop.utils._
 
-// address channel signals
-abstract class AXI4ChannelA(id_width: Int) extends Bundle
+class HandShakeIO extends Bundle {
+  val valid = Output(Bool())
+  val ready = Input(Bool())
+
+  def fire() = valid && ready
+}
+
+abstract class AXI4ChannelA extends HandShakeIO
 {
-  val id = Output(UInt(id_width.W))
+  val id = Output(UInt(4.W))
   val addr = Output(UInt(32.W))
   val len = Output(UInt(8.W))
   val size = Output(UInt(3.W))
@@ -23,104 +29,51 @@ abstract class AXI4ChannelA(id_width: Int) extends Bundle
   val user = Output(UInt(5.W))
 }
 
-// write address channel signals
-class AXI4ChannelAW(id_width: Int) extends AXI4ChannelA(id_width)
+class AXI4ChannelAW extends AXI4ChannelA
 {
-  def dump() = {
-    printf("time %d: Channel AW id = %d addr = %x len = %d  size = %d burst = %x\n", GTimer(), id, addr, len, size, burst)
-  }
-  override def cloneType = { new AXI4ChannelAW(id_width).asInstanceOf[this.type] }
 }
 
-// read address channel signals
-class AXI4ChannelAR(id_width: Int) extends AXI4ChannelA(id_width)
+class AXI4ChannelAR extends AXI4ChannelA
 {
-  def dump() = {
-    printf("time %d: Channel AR id = %d addr = %x len = %d  size = %d burst = %x\n", GTimer(), id, addr, len, size, burst)
-  }
-  override def cloneType = { new AXI4ChannelAR(id_width).asInstanceOf[this.type] }
 }
 
-// write data channel signals
-class AXI4ChannelW(id_width: Int, data_width: Int) extends Bundle
+class AXI4ChannelW(data_width: Int) extends HandShakeIO
 {
-  // write data channel signals
-  val id = Output(UInt(id_width.W))
+  val id = Output(UInt(4.W))
   val data = Output(UInt(data_width.W))
   val strb = Output(UInt((data_width / 8).W))
   val last = Output(Bool())
   val user = Output(UInt(5.W))
-  def dump() = {
-    printf("time %d: Channel W id = %d data = %x wstrb = %x last = %d\n", GTimer(), id, data, strb, last)
-  }
-  override def cloneType = { new AXI4ChannelW(id_width, data_width).asInstanceOf[this.type] }
+
+  override def cloneType = { new AXI4ChannelW(data_width).asInstanceOf[this.type] }
 }
 
-// write response channel signals
-class AXI4ChannelB(id_width: Int) extends Bundle
+class AXI4ChannelB extends HandShakeIO
 {
-  val id = Input(UInt(id_width.W))
+  val id = Input(UInt(4.W))
   val resp = Input(UInt(2.W))
   val user = Output(UInt(5.W))
-  def dump() = {
-    printf("time %d: Channel B id = %d\n", GTimer(), id)
-  }
-  override def cloneType = { new AXI4ChannelB(id_width).asInstanceOf[this.type] }
 }
 
 // read data channel signals
-class AXI4ChannelR(id_width: Int, data_width: Int) extends Bundle
+class AXI4ChannelR(data_width: Int) extends HandShakeIO
 {
-  val id = Input(UInt(id_width.W))
+  val id = Input(UInt(4.W))
   val data = Input(UInt(data_width.W))
   val resp = Input(UInt(2.W))
   val last = Input(Bool())
   val user = Output(UInt(5.W))
-  def dump() = {
-    printf("time %d: Channel R id = %d, last = %d, data = %x\n", GTimer(), id, last, data)
-  }
-  override def cloneType = { new AXI4ChannelR(id_width, data_width).asInstanceOf[this.type] }
+
+  override def cloneType = { new AXI4ChannelR(data_width).asInstanceOf[this.type] }
 }
 
-class AXI4IO(id_width: Int, data_width: Int) extends Bundle
+class AXI4IO(data_width: Int) extends Bundle 
 {
-  val aw = DecoupledIO(new AXI4ChannelAW(id_width))
-  val w = DecoupledIO(new AXI4ChannelW(id_width, data_width))
-  val b = Flipped(DecoupledIO(new AXI4ChannelB(id_width)))
-  val ar = DecoupledIO(new AXI4ChannelAR(id_width))
-  val r = Flipped(DecoupledIO(new AXI4ChannelR(id_width, data_width)))
+  val aw = new AXI4ChannelAW
+  val w = new AXI4ChannelW(data_width)
+  val b = Flipped(new AXI4ChannelB)
+  val ar = new AXI4ChannelAR
+  val r = Flipped(new AXI4ChannelR(data_width))
 
-  def dump(s: String = "") = {
-    aw match { case x => {
-      when (x.fire()) {
-        printf(s)
-        x.bits.dump()
-      }
-    }}
-    w match { case x => {
-      when (x.fire()) {
-        printf(s)
-        x.bits.dump()
-      }
-    }}
-    b match { case x => {
-      when (x.fire()) {
-        printf(s)
-        x.bits.dump()
-      }
-    }}
-    ar match { case x => {
-      when (x.fire()) {
-        printf(s)
-        x.bits.dump()
-      }
-    }}
-    r match { case x => {
-      when (x.fire()) {
-        printf(s)
-        x.bits.dump()
-      }
-    }}
-  }
-  override def cloneType = { new AXI4IO(id_width, data_width).asInstanceOf[this.type] }
+  override def cloneType = { new AXI4IO(data_width).asInstanceOf[this.type] }
 }

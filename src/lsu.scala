@@ -97,7 +97,8 @@ class LSU extends Module with LSUConsts {
   io.dmem.req.valid := io.fu_in.valid
   io.dmem.req.bits.is_cached  := s2_in.is_cached
   io.dmem.req.bits.is_aligned := s2_in_op.align
-  io.dmem.req.bits.addr  := Mux(s2_in_op.align, s2_in.ops.op1, s2_in.ops.op1 & ~(3.U(32.W)))
+  io.dmem.req.bits.addr  := Mux(s2_in_op.align,
+    s2_in.ops.op1, s2_in.ops.op1 & ~(3.U(32.W)))
   io.dmem.req.bits.len   := s2_in_op.len
   io.dmem.req.bits.func  := s2_in_op.func
   io.dmem.req.bits.data  := s2_in_op.memReqDataOf(s2_in.ops.op1, s2_in.ops.op2)

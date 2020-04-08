@@ -15,9 +15,53 @@ class AddrSpace(start:UInt, end:UInt) {
 
 class AXI42SRAM extends Module {
   val io = IO(new Bundle {
-    val in = Flipped(new AXI4IO(4, conf.xprlen))
+    val in = Flipped(new AXI4IO(conf.xprlen))
     val out = new MemIO
   })
+}
+
+class MemIO2AXI(dw:Int) extends Module {
+  val io = IO(new Bundle {
+    val in = Flipped(new MemIO)
+    val out = new AXI4IO(dw)
+  })
+
+  io.out.aw.valid := io.in.req.valid && io.in.req.bits.func === MX_WR
+  io.out.aw.addr := io.in.req.bits.addr
+  io.out.aw.len := 0.U
+  io.out.aw.size := "b10".U
+  io.out.aw.burst := 0.U
+  io.out.aw.lock := 0.U
+  io.out.aw.cache := 0.U
+  io.out.aw.prot := 0.U
+  io.out.aw.region := 0.U
+  io.out.aw.qos := 0.U
+  io.out.aw.user := 0.U
+
+  io.out.w.valid := io.in.req.valid && io.in.req.bits.func === MX_WR
+  io.out.w.id := 0.U
+  io.out.w.data := io.in.req.bits.data
+  io.out.w.strb := io.in.req.bits.strb
+  io.out.w.last := Y
+  io.out.w.user := 0.U
+
+  io.out.ar.valid := io.in.req.valid && io.in.req.bits.func === MX_RD
+  io.out.ar.addr := io.in.req.bits.addr
+  io.out.ar.len := 0.U
+  io.out.ar.size := "b10".U
+  io.out.ar.burst := 0.U
+  io.out.ar.lock := 0.U
+  io.out.ar.cache := 0.U
+  io.out.ar.prot := 0.U
+  io.out.ar.region := 0.U
+  io.out.ar.qos := 0.U
+  io.out.ar.user := 0.U
+
+  io.out.r.ready := io.in.resp.ready
+  io.out.b.ready := io.in.resp.ready
+
+  io.in.resp.valid := io.out.r.valid || io.out.b.valid
+  io.in.resp.bits.data := io.out.r.data
 }
 
 class MemMux(name:String) extends Module {

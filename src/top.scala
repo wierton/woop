@@ -133,8 +133,20 @@ class ZEDBOARD_TOP extends Module {
 
 class LOONGSON_TOP extends Module {
   val io = IO(new Bundle {
-    val in = new MemIO
+    val imem = new AXI4IO(conf.xprlen)
+    val dmem = new AXI4IO(conf.xprlen)
+    val commit = new CommitIO
   })
+
+  val core = Module(new Core)
+  val imem2axi = Module(new MemIO2AXI(conf.xprlen))
+  val dmem2axi = Module(new MemIO2AXI(conf.xprlen))
+
+  core.io.imem <> imem2axi.io.in
+  core.io.dmem <> dmem2axi.io.in
+  imem2axi.io.out <> io.imem
+  dmem2axi.io.out <> io.dmem
+  core.io.commit <> io.commit
 }
 
 object Main {
