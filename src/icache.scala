@@ -135,18 +135,14 @@ class SimICache extends Module {
   val cache = Mem(conf.nSimICacheEntries, new SimICacheEntry)
 
   when (io.control.valid && !io.ex_flush) {
-    val idx = idxOf(io.control.bits.addr)
-    switch(io.control.bits.op) {
-    is(I_INDEX_INVALIDATE) {
-      cache(idx).v := N
-    }
-    is(I_HIT_INVALIDATE) {
-      cache(idx).v := N
-    }
-    is(I_INDEX_LOAD_TAG) { /* do nothing */ }
-    is(I_INDEX_STORE_TAG){ /* do nothing */ }
-    is(I_FILL)           { /* do nothing */ }
-    is(I_FETCH_AND_LOCK) { /* do nothing */ }
+    val idx = io.control.bits.addr(log2Ceil(conf.nICacheSets) - 1, 0)
+    when (io.control.bits.op === I_INDEX_INVALIDATE ||
+      io.control.bits.op === I_HIT_INVALIDATE) {
+      val n = conf.nSimICacheEntries / conf.nICacheSets
+      require(n > 0)
+      for (i <- 0 until n) {
+        cache(Cat(i.U, idx)).v := N
+      }
     }
   }
 
