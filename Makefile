@@ -29,3 +29,4 @@ include rules/emu.mk
 include rules/test.mk
 include rules/linux.mk
 include rules/loongson.mk
+include rules/zedboard.mk

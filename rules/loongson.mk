@@ -56,7 +56,8 @@ loongson-$(1)-bit: loongson-$(1)-prj
 	  -source soc/loongson/mk.tcl
 
 loongson-$(1)-vivado: loongson-$(1)-prj
-	@cd $$(<D) && nohup $$(VIVADO_18) $$($(1)_LS_XPR) &
+	@cd $$(dir $$($(1)_LS_XPR)) && \
+	  nohup $$(VIVADO_18) $$($(1)_LS_XPR) &
 
 clean-loongson-$(1):
 	@cd $$(LOONGSON_OBJDIR) && rm -rf soc_axi_$(1)

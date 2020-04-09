@@ -125,12 +125,6 @@ class AXI4_EMU_TOP extends Module {
   core.io.commit <> io.commit
 }
 
-class ZEDBOARD_TOP extends Module {
-  val io = IO(new Bundle {
-    val in = new MemIO
-  })
-}
-
 class LOONGSON_TOP extends Module {
   val io = IO(new Bundle {
     val imem = new AXI4IO(conf.xprlen)
@@ -160,6 +154,9 @@ class LOONGSON_TOP extends Module {
   io.commit.wb_rf_wen := core.io.commit.wen
   io.commit.wb_rf_wnum := core.io.commit.rd_idx
   io.commit.wb_valid := core.io.commit.valid
+}
+
+class ZEDBOARD_TOP extends LOONGSON_TOP {
 }
 
 object Main {
