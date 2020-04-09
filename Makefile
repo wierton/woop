@@ -28,4 +28,4 @@ minicom:
 include rules/emu.mk
 include rules/test.mk
 include rules/linux.mk
-include rules/nscscc.mk
+include rules/loongson.mk

@@ -158,6 +158,7 @@ class LOONGSON_TOP extends Module {
   io.commit.wb_instr := core.io.commit.instr
   io.commit.wb_rf_wdata := core.io.commit.wdata
   io.commit.wb_rf_wen := core.io.commit.wen
+  io.commit.wb_rf_wnum := core.io.commit.rd_idx
   io.commit.wb_valid := core.io.commit.valid
 }
 
