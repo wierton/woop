@@ -51,5 +51,5 @@ object conf {
   val log_EHU = false
   val log_TLB = false
   val log_TLB_ENTRY = false
-  val log_LSMDU = false
+  val log_MSU = false
 }

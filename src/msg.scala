@@ -189,13 +189,13 @@ class ISU_EXU_IO extends Bundle {
   val ex = Output(new CP0Exception)
 }
 
-class EHU_LSMDU_IO extends Bundle {
+class EHU_MSU_IO extends Bundle {
   val wb = new WriteBackIO
   val ops = new EXU_OPS
   val is_cached = Output(Bool())
 }
 
-class EXU_EHU_IO extends EHU_LSMDU_IO {
+class EXU_EHU_IO extends EHU_MSU_IO {
   val ex = Output(new CP0Exception)
 }
 

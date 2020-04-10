@@ -11,7 +11,7 @@ import woop.utils._
 class EHU extends Module {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new EXU_EHU_IO))
-    val fu_out = DecoupledIO(new EHU_LSMDU_IO)
+    val fu_out = DecoupledIO(new EHU_MSU_IO)
     val cp0 = new EHU_CP0_IO
     val ex_flush = Flipped(ValidIO(new FlushIO))
     val can_log_now = Input(Bool())

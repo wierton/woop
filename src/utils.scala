@@ -33,17 +33,21 @@ class ROB[T<:Data](gen:T, idw:Int, nEnq:Int=1) extends Module {
 
   io.deq.valid := q_head.valid
   io.deq.bits := q_head.bits
-  when (io.deq.fire()) { head := head + 1.U }
+  when (io.deq.fire()) {
+    q_head.valid := false.B
+    head := head + 1.U
+  }
 
   for (i <- 0 until nEnq) {
     when (io.enq(i).valid) {
-      val q_out = queue(io.enq(i).bits.id)
-      q_out.valid := true.B
-      q_out.bits := io.enq(i).bits.data
+      val q_in = queue(io.enq(i).bits.id)
+      q_in.valid := true.B
+      q_in.bits := io.enq(i).bits.data
     }
   }
 
   when (io.flush) {
+    head := 0.U
     for (i <- 0 until entries) { queue(i).valid := false.B }
   }
 }

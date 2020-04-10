@@ -133,7 +133,7 @@ void DiffTop::cycle_epilogue() {
 
   last_instr_is_store = false;
 
-  if (can_log_now()) { nemu_ptr->dump_tlb(); }
+  // if (can_log_now()) { nemu_ptr->dump_tlb(); }
 }
 
 void DiffTop::single_cycle() {

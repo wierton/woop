@@ -9,7 +9,7 @@ import woop.configs._
 import woop.utils._
 
 
-class LSMDUPipelineStage extends Module {
+class MSUPipelineStage extends Module {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new Bundle {
       val wb = new WriteBackIO
@@ -30,19 +30,20 @@ class LSMDUPipelineStage extends Module {
     fu_valid := Y
   }
 
-  if (conf.log_LSMDU) {
+  if (conf.log_MSU) {
     when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {
-    printf("%d: LSMDU.psu.io.fu_in: fu_valid=%b, io.fu_in[%b,%b]={fu_type=%d}\n", GTimer(), fu_valid, io.fu_in.valid, io.fu_in.ready, io.fu_in.bits.fu_type)
+    printf("%d: MSU.psu.io.fu_in: fu_valid=%b, io.fu_in[%b,%b]={fu_type=%d}\n", GTimer(), fu_valid, io.fu_in.valid, io.fu_in.ready, io.fu_in.bits.fu_type)
     printv(io.fu_out, "LSMD-PSU.fu_out")
   }
 }
 
-class LSMDU extends Module {
+/* multiple stage unit */
+class MSU extends Module {
   val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new EHU_LSMDU_IO))
+    val fu_in = Flipped(DecoupledIO(new EHU_MSU_IO))
     val wb = ValidIO(new WriteBackIO)
     val divider = new DividerIO
     val multiplier = new MultiplierIO
@@ -52,7 +53,7 @@ class LSMDU extends Module {
 
   val lsu = Module(new LSU)
   val mdu = Module(new MDU)
-  val psu = Module(new LSMDUPipelineStage)
+  val psu = Module(new MSUPipelineStage)
 
   /* LSU IO */
   val to_lsu = !mdu.io.working &&
@@ -83,7 +84,7 @@ class LSMDU extends Module {
   psu.io.fu_in.bits.fu_type := io.fu_in.bits.ops.fu_type
   psu.io.can_log_now := io.can_log_now
 
-  /* LSMDU IO */
+  /* MSU IO */
   io.fu_in.ready := (to_lsu && lsu.io.fu_in.ready) ||
     (to_mdu && mdu.io.fu_in.ready) ||
     (to_psu && psu.io.fu_in.ready)
@@ -93,16 +94,18 @@ class LSMDU extends Module {
     mdu.io.fu_out.valid -> mdu.io.fu_out.bits,
     psu.io.fu_out.valid -> psu.io.fu_out.bits))
 
-  if (conf.log_LSMDU) {
+  if (conf.log_MSU) {
     when (io.can_log_now) { dump() }
   }
 
   def dump():Unit = {
-    printv(this, "LSMDU")
-    printv(lsu.io.fu_in, "LSMDU.lsu_in")
-    printv(lsu.io.fu_out, "LSMDU.lsu_out")
-    printv(io.wb, "LSMDU.wb")
-    printv(io.fu_in, "LSMDU.fu_in")
+    printv(this, "MSU")
+    printv(lsu.io.fu_in, "MSU.lsu_in")
+    printv(lsu.io.fu_out, "MSU.lsu_out")
+    printv(io.wb, "MSU.wb")
+    printv(io.fu_in, "MSU.fu_in")
   }
-  assert (AtMost1H(lsu.io.fu_out.valid, mdu.io.fu_out.valid, psu.io.fu_out.valid))
+  assert (RegNext(AtMost1H(lsu.io.fu_out.valid,
+    mdu.io.fu_out.valid, psu.io.fu_out.valid)),
+    "cycles: %d", GTimer())
 }

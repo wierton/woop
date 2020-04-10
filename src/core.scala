@@ -30,7 +30,7 @@ class Core extends Module {
   val ehu = Module(new EHU)
   val cp0 = Module(new CP0)
   val tlb = Module(new TLB)
-  val lsmdu = Module(new LSMDU)
+  val msu = Module(new MSU)
 
   /* log */
   rf.io.can_log_now := io.can_log_now
@@ -42,21 +42,21 @@ class Core extends Module {
   cp0.io.can_log_now := io.can_log_now
   tlb.io.can_log_now := io.can_log_now
   ehu.io.can_log_now := io.can_log_now
-  lsmdu.io.can_log_now := io.can_log_now
+  msu.io.can_log_now := io.can_log_now
 
   /* pipeline */
   ifu.io.fu_out <> idu.io.fu_in
   idu.io.fu_out <> isu.io.fu_in
   isu.io.fu_out <> exu.io.fu_in
   exu.io.fu_out <> ehu.io.fu_in
-  ehu.io.fu_out <> lsmdu.io.fu_in
+  ehu.io.fu_out <> msu.io.fu_in
 
   /* time intr */
   ehu.io.cp0 <> cp0.io.ehu
 
   /* writeback and bypass */
-  lsmdu.io.wb <> rf.io.wb
-  lsmdu.io.wb <> exu.io.wb
+  msu.io.wb <> rf.io.wb
+  msu.io.wb <> exu.io.wb
   exu.io.bp <> rf.io.bp
   isu.io.rfio <> rf.io.rfio
 
@@ -76,7 +76,7 @@ class Core extends Module {
 
   /* mem */
   ifu.io.imem <> io.imem
-  lsmdu.io.dmem <> io.dmem
+  msu.io.dmem <> io.dmem
 
   /* commit */
   io.commit <> rf.io.commit
@@ -97,8 +97,8 @@ class Core extends Module {
   isu.io.bru.fu_out <> bru.io.fu_out
   tlb.io.status := cp0.io.status
 
-  lsmdu.io.multiplier <> io.multiplier
-  lsmdu.io.divider <> io.divider
+  msu.io.multiplier <> io.multiplier
+  msu.io.divider <> io.divider
 
   io.icache_control <> exu.io.icache_control
 }

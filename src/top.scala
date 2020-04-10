@@ -23,7 +23,8 @@ class Divider extends Module {
   val remainder = (dividend % divisor).asUInt
   require(quotient.getWidth == 40)
   require(remainder.getWidth == 40)
-  val pipe = Pipe(Y, Cat(quotient, remainder), conf.div_stages)
+  val pipe = Pipe(io.data_dividend_valid && io.data_divisor_valid,
+    Cat(quotient, remainder), conf.div_stages)
 
   io.data_dividend_ready := Y
   io.data_divisor_ready := Y
