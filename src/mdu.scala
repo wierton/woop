@@ -95,28 +95,28 @@ class MDU_Divider extends Module with MDUConsts {
   queue.io.enq.bits.op1 := io.fu_in.bits.op1
   queue.io.enq.bits.fu_op := io.fu_in.bits.fu_op
   queue.io.enq.bits.wb := io.fu_in.bits.wb
-  queue.io.deq.ready := io.divider.data_dout_valid
+  queue.io.deq.ready := io.divider.data_dout_tvalid
 
   val op1 = io.fu_in.bits.op1
   val op2 = io.fu_in.bits.op2
   val fu_op = io.fu_in.bits.fu_op
-  io.divider.data_dividend_valid := io.fu_in.valid
-  io.divider.data_divisor_valid := io.fu_in.valid
-  io.divider.data_dividend_bits := Mux(fu_op === MDU_DIV,
+  io.divider.data_dividend_tvalid := io.fu_in.valid
+  io.divider.data_divisor_tvalid := io.fu_in.valid
+  io.divider.data_dividend_tdata := Mux(fu_op === MDU_DIV,
     op1.asTypeOf(SInt(40.W)).asUInt,
     op1.asTypeOf(UInt(40.W)))
-  io.divider.data_divisor_bits := Mux(fu_op === MDU_DIV,
+  io.divider.data_divisor_tdata := Mux(fu_op === MDU_DIV,
     op2.asTypeOf(SInt(40.W)).asUInt,
     op2.asTypeOf(UInt(40.W)))
 
-  io.fu_in.ready := io.divider.data_dividend_ready && io.divider.data_divisor_ready
-  io.fu_out.valid := io.divider.data_dout_valid
+  io.fu_in.ready := io.divider.data_dividend_tready && io.divider.data_divisor_tready
+  io.fu_out.valid := io.divider.data_dout_tvalid
   io.fu_out.bits.wb := queue.io.deq.bits.wb
   io.fu_out.bits.fu_op := queue.io.deq.bits.fu_op
   io.fu_out.bits.id := queue.io.deq.bits.id
   io.fu_out.bits.op1 := queue.io.deq.bits.op1
-  io.fu_out.bits.hi := io.divider.data_dout_bits(31, 0)
-  io.fu_out.bits.lo := io.divider.data_dout_bits(71, 40)
+  io.fu_out.bits.hi := io.divider.data_dout_tdata(31, 0)
+  io.fu_out.bits.lo := io.divider.data_dout_tdata(71, 40)
 
   if (conf.log_MDU) {
     when (io.can_log_now) { dump() }

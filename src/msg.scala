@@ -45,17 +45,17 @@ class RegFileIO extends Bundle {
 }
 
 class DividerIO extends Bundle {
-  val data_dividend_valid = Output(Bool())
-  val data_divisor_valid = Output(Bool())
-  val data_dout_valid = Input(Bool())
-  val data_dividend_ready = Input(Bool())
-  val data_divisor_ready = Input(Bool())
-  val data_dividend_bits = Output(UInt(40.W))
-  val data_divisor_bits = Output(UInt(40.W))
-  val data_dout_bits = Input(UInt(80.W))
+  val data_dividend_tvalid = Output(Bool())
+  val data_divisor_tvalid = Output(Bool())
+  val data_dout_tvalid = Input(Bool())
+  val data_dividend_tready = Input(Bool())
+  val data_divisor_tready = Input(Bool())
+  val data_dividend_tdata = Output(UInt(40.W))
+  val data_divisor_tdata = Output(UInt(40.W))
+  val data_dout_tdata = Input(UInt(80.W))
 
-  def dividend_fire() = data_dividend_valid && data_dividend_ready
-  def divisor_fire() = data_divisor_valid && data_divisor_ready
+  def dividend_fire() = data_dividend_tvalid && data_dividend_tready
+  def divisor_fire() = data_divisor_tvalid && data_divisor_tready
 }
 
 class MultiplierIO extends Bundle {

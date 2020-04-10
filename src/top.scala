@@ -17,19 +17,19 @@ class SimDev extends BlackBox {
 
 class Divider extends Module {
   val io = IO(Flipped(new DividerIO))
-  val dividend = io.data_dividend_bits.asSInt
-  val divisor = io.data_divisor_bits.asSInt
+  val dividend = io.data_dividend_tdata.asSInt
+  val divisor = io.data_divisor_tdata.asSInt
   val quotient = (dividend / divisor).asUInt
   val remainder = (dividend % divisor).asUInt
   require(quotient.getWidth == 40)
   require(remainder.getWidth == 40)
-  val pipe = Pipe(io.data_dividend_valid && io.data_divisor_valid,
+  val pipe = Pipe(io.data_dividend_tvalid && io.data_divisor_tvalid,
     Cat(quotient, remainder), conf.div_stages)
 
-  io.data_dividend_ready := Y
-  io.data_divisor_ready := Y
-  io.data_dout_valid := pipe.valid
-  io.data_dout_bits := pipe.bits
+  io.data_dividend_tready := Y
+  io.data_divisor_tready := Y
+  io.data_dout_tvalid := pipe.valid
+  io.data_dout_tdata := pipe.bits
 }
 
 class Multiplier extends Module {
