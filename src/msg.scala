@@ -53,6 +53,9 @@ class DividerIO extends Bundle {
   val data_dividend_bits = Output(UInt(40.W))
   val data_divisor_bits = Output(UInt(40.W))
   val data_dout_bits = Input(UInt(80.W))
+
+  def dividend_fire() = data_dividend_valid && data_dividend_ready
+  def divisor_fire() = data_divisor_valid && data_divisor_ready
 }
 
 class MultiplierIO extends Bundle {

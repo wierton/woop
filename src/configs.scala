@@ -13,7 +13,8 @@ object conf {
   val axi_id_width = 4
   val mio_cycles = 3
   val icache_stages = 2
-  val mdu_stages = 3
+  val mul_stages = 10
+  val div_stages = 45
   val INSTR_ID_SZ = 8
 
   val nICacheSets = 256

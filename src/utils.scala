@@ -14,12 +14,14 @@ object GTimer {
   }
 }
 
-class ROB[T<:Data](gen:T, idw:Int) extends Module {
+class ROB[T<:Data](gen:T, idw:Int, nEnq:Int=1) extends Module {
+  class ROBEnq extends Bundle {
+    val id = Output(UInt(idw.W))
+    val data = Output(gen)
+  }
+
   val io = IO(new Bundle {
-    val enq = Flipped(DecoupledIO(new Bundle {
-      val data = gen
-      val id = Output(UInt(idw.W))
-    }))
+    val enq = Vec(nEnq, Flipped(ValidIO(new ROBEnq)))
     val deq = DecoupledIO(gen)
     val flush = Input(Bool())
   })
@@ -33,11 +35,12 @@ class ROB[T<:Data](gen:T, idw:Int) extends Module {
   io.deq.bits := q_head.bits
   when (io.deq.fire()) { head := head + 1.U }
 
-  io.enq.ready := true.B
-  when (io.enq.fire()) {
-    val q_out = queue(io.enq.bits.id)
-    q_out.valid := true.B
-    q_out.bits := io.enq.bits.data
+  for (i <- 0 until nEnq) {
+    when (io.enq(i).valid) {
+      val q_out = queue(io.enq(i).bits.id)
+      q_out.valid := true.B
+      q_out.bits := io.enq(i).bits.data
+    }
   }
 
   when (io.flush) {
