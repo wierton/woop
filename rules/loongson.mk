@@ -70,6 +70,6 @@ clean-loongson-$(1):
 	@cd $$(LOONGSON_OBJDIR) && rm -rf soc_axi_$(1)
 endef
 
-$(eval $(call loongson_template,func,$(FUNC_COE)))
+$(eval $(call loongson_template,func,$(FUNC_COE) $(GOLDEN_TRACE)))
 $(eval $(call loongson_template,perf,$(PERF_COE)))
 $(eval $(call loongson_template,final,$(U_BOOT_COE)))
