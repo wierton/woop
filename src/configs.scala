@@ -10,7 +10,7 @@ object conf {
   val xprbyte = xprlen / 8
   val start_addr = "hbfc00000".U
   val axi_data_width = 32
-  val axi_id_width = 4
+  val axi_id_width = 3
   val mio_cycles = 3
   val icache_stages = 2
   val mul_stages = 7

@@ -110,6 +110,7 @@ class TLB extends Module {
     val paddr = Mux1H(Array(
       (vid === 4.U || vid === 5.U) -> ioremap(vaddr),
       (vid === 6.U) -> ioremap(mmu_res.paddr),
+      (vid === 7.U) -> vaddr, // shit nscscc
       (vid(2) === 0.U) -> Mux(io.status.ERL,
         vaddr, ioremap(mmu_res.paddr)),
     ))
