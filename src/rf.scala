@@ -24,6 +24,15 @@ class RegFile extends Module {
   val rf_dirtys = Mem(32, Bool())
   val bp_readys = Mem(32, Bool())
 
+  when (reset.toBool) {
+    for (i <- 0 until 32) {
+      wbids(i) := 0.U
+      rf_dirtys(i) := 0.U
+      bp_readys(i) := 0.U
+      wb_rf(i) := 0.U
+    }
+  }
+
   def bypass_match(idx:UInt) = io.bp.valid && io.bp.bits.v && io.bp.bits.wen && io.bp.bits.rd_idx === idx
   def rf_data_ready(idx:UInt) = !rf_dirtys(idx) || bp_readys(idx) || bypass_match(idx) || idx === 0.U
   def rf_data_bits(idx:UInt) = MuxCase(0.U, Array(

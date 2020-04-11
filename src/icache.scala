@@ -73,7 +73,7 @@ class ICacheMemIO extends Module {
   /* memory request */
   val lowWidth = s2_addr.off.getWidth + s2_addr.l2bits.getWidth
   val s2_req_valid = RegInit(N)
-  val s2_req_addr = RegEnable(Cat(s2_addr.tag, s2_addr.setno, 0.U(lowWidth.W)), enable=s2_req_valid)
+  val s2_req_addr = RegEnable(Cat(s2_addr.tag, s2_addr.setno, 0.U(lowWidth.W)), enable=s2_req_valid, init=0.U(32.W))
   val s2_req_addr_end = s2_req_addr + Cat(1.U, 0.U(lowWidth.W))
   val s2_req_addr_off = s2_req_addr.asTypeOf(new ICacheAddr).off
   io.in.resp.valid := s2_match
@@ -155,7 +155,7 @@ class SimICache extends Module {
   val flush = io.br_flush || io.ex_flush
 
   val s0_valid = RegInit(N)
-  val s0_in = RegEnable(next=io.in.req.bits, enable=io.in.req.fire())
+  val s0_in = RegEnable(next=io.in.req.bits, enable=io.in.req.fire(), init=0.U.asTypeOf(io.in.req.bits))
   val s0_out_ready = WireInit(N)
   val s0_out_fire = s0_valid && s0_out_ready
   io.in.req.ready := s0_out_ready || !s0_valid
@@ -167,11 +167,12 @@ class SimICache extends Module {
 
   val s1_in_fire = s0_out_fire
   val s1_valid = RegInit(N)
-  val s1_in = RegEnable(next=s0_in, enable=s1_in_fire)
+  val s1_in = RegEnable(next=s0_in, enable=s1_in_fire, init=0.U.asTypeOf(s0_in))
   val s1_tag = tagOf(s1_in.addr)
   val s1_entry = cache(idxOf(s1_in.addr))
   val s1_hit = s1_tag === s1_entry.tag && s1_entry.v
   val s1_req = RegInit(N)
+  val s1_resp = RegInit(N)
   s0_out_ready := (io.in.resp.ready && s1_hit) || !s1_valid
   io.in.resp.valid := s1_valid && s1_hit
   io.in.resp.bits.data := s1_entry.data
@@ -182,9 +183,13 @@ class SimICache extends Module {
     s1_valid := Y
   }
 
-  when (s1_valid && !s1_hit) { s1_req := Y }
-  when (s1_req && io.out.resp.fire()) {
+  when (s1_valid && !s1_hit && !s1_resp) { s1_req := Y }
+  when (s1_req && io.out.req.fire()) {
     s1_req := N
+    s1_resp := Y
+  }
+  when (s1_resp && io.out.resp.fire()) {
+    s1_resp := N
     s1_entry.v := Y
     s1_entry.tag := s1_tag
     s1_entry.data := io.out.resp.bits.data

@@ -30,6 +30,12 @@ class IMemPipe[T<:Data:ru.TypeTag](gen:T, entries:Int) extends Module {
   val q_head = queue(head)
   val clear_all = io.ex_flush.valid || io.deq.fire()
 
+  when (reset.toBool) {
+    for (i <- 0 until entries) {
+      queue(i) := 0.U.asTypeOf(queue(i))
+    }
+  }
+
   io.enq.ready := !is_full || io.deq.ready
   io.deq.valid := !is_empty
   io.deq.bits := queue(tail)

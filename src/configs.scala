@@ -30,7 +30,7 @@ object conf {
   val tlbsz = (1 << TLB_BITS)
   val PABITS = 32
 
-  val log_Top = true
+  val log_Top = false
   val log_MemMux = false
   val log_IMemCistern = false
   val log_CrossbarNx1 = false
@@ -46,7 +46,7 @@ object conf {
   val log_PRU = false
   val log_ALU = false
   val log_LSU = false
-  val log_MDU = true
+  val log_MDU = false
   val log_CP0 = false
   val log_EHU = false
   val log_TLB = false
