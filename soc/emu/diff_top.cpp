@@ -1,13 +1,6 @@
 #include "common.h"
 #include "diff_top.h"
 
-#if 1
-extern "C" {
-#  undef eprintf
-#  include "cpu.h"
-}
-#endif
-
 /* clang-format off */
 #define GPRS(X) \
   X(0)  X(1)  X(2)  X(3)  X(4)  X(5)  X(6)  X(7)  \
@@ -25,30 +18,30 @@ void DiffTop::abort_prologue() {
 void DiffTop::check_states() {
 #define check_eq(a, b, ...) \
   if ((a) != (b)) {         \
-    nemu_ptr->dump();       \
+    napi_dump_states();     \
     eprintf(__VA_ARGS__);   \
     abort_prologue();       \
     abort();                \
   }
 
-  check_eq(nemu_ptr->pc(), dut_ptr->io_commit_pc,
+  check_eq(napi_get_pc(), dut_ptr->io_commit_pc,
       "cycle %lu: pc: nemu:%08x <> dut:%08x\n", cycles,
-      nemu_ptr->pc(), dut_ptr->io_commit_pc);
-  check_eq(nemu_ptr->get_instr(), dut_ptr->io_commit_instr,
+      napi_get_pc(), dut_ptr->io_commit_pc);
+  check_eq(napi_get_instr(), dut_ptr->io_commit_instr,
       "cycle %lu: instr: nemu:%08x <> dut:%08x\n", cycles,
-      nemu_ptr->get_instr(), dut_ptr->io_commit_instr);
+      napi_get_instr(), dut_ptr->io_commit_instr);
 
   if (last_instr_is_store) {
-    uint32_t nemu_mc = nemu_ptr->paddr_peek(ls_addr, 4);
+    uint32_t nemu_mc = napi_mmio_peek(ls_addr, 4);
     check_eq(nemu_mc, ls_data,
         "cycle %lu: M[%08x]: nemu:%08x <> dut:%08x\n",
         cycles, ls_addr, nemu_mc, ls_data);
   }
 
-#define GPR_TEST(i)                                      \
-  check_eq(nemu_ptr->gpr(i), dut_ptr->io_commit_gpr_##i, \
-      "cycle %lu: gpr[%d]: nemu:%08x <> dut:%08x\n",     \
-      cycles, i, nemu_ptr->gpr(i),                       \
+#define GPR_TEST(i)                                     \
+  check_eq(napi_get_gpr(i), dut_ptr->io_commit_gpr_##i, \
+      "cycle %lu: gpr[%d]: nemu:%08x <> dut:%08x\n",    \
+      cycles, i, napi_get_gpr(i),                       \
       dut_ptr->io_commit_gpr_##i);
   GPRS(GPR_TEST);
 #undef GPR_TEST
@@ -76,10 +69,10 @@ DiffTop::DiffTop(int argc, const char *argv[]) {
   Verilated::randReset(seed);
 
   /* init nemu */
-  nemu_ptr.reset(new NEMU_MIPS32(argc, argv));
+  napi_init(argc, argv);
 
   /* init ddr */
-  void *nemu_ddr_map = nemu_ptr->map("ddr", 0, ddr_size);
+  void *nemu_ddr_map = napi_map_dev("ddr", 0, ddr_size);
   memcpy(ddr, nemu_ddr_map, ddr_size);
 
   /* reset n cycles */
@@ -114,17 +107,17 @@ void DiffTop::cycle_epilogue() {
   silent_cycles = 0;
 
   /* launch timer interrupt */
-  nemu_ptr->set_irq(7, dut_ptr->io_commit_ip7);
+  napi_set_irq(7, dut_ptr->io_commit_ip7);
 
   /* nemu executes one cycle */
-  nemu_ptr->exec(1);
+  napi_exec(1);
 
   /* keep consistency when execute mfc0 count */
-  mips_instr_t instr = nemu_ptr->get_instr();
+  mips_instr_t instr = napi_get_instr();
   if (instr.is_mfc0_count()) {
     uint32_t r = instr.get_rt();
     uint32_t count0 = get_dut_gpr(r);
-    nemu_ptr->gpr(r) = count0;
+    napi_set_gpr(r, count0);
   }
 
   /* don't check eret and syscall instr */
@@ -132,8 +125,6 @@ void DiffTop::cycle_epilogue() {
     check_states();
 
   last_instr_is_store = false;
-
-  // if (can_log_now()) { nemu_ptr->dump_tlb(); }
 }
 
 void DiffTop::single_cycle() {
@@ -164,10 +155,10 @@ void DiffTop::device_io(unsigned char is_aligned, int addr,
   if (!(0 <= addr && addr < 0x08000000)) {
     /* deal with dev_io */
     if (func == MX_RD) {
-      if (nemu_ptr->is_mapped(addr)) {
-        *resp = nemu_ptr->paddr_peek(addr, len + 1);
+      if (napi_addr_is_valid(addr)) {
+        *resp = napi_mmio_peek(addr, len + 1);
       } else {
-        nemu_ptr->dump();
+        napi_dump_states();
         eprintf(
             "bad addr 0x%08x received from SOC\n", addr);
         abort();
@@ -179,13 +170,6 @@ void DiffTop::device_io(unsigned char is_aligned, int addr,
         printf(
             "cycles: %ld, ninstr: %ld\n", cycles, ninstr);
       } else if (addr == ULITE_BASE + ULITE_Tx) {
-#if 0
-        if ((char)data == '[') {
-          uint64_t ms = nemu_ptr->get_ms();
-          printf("%4ld.%06ld: ", ms / 1000000,
-              ms % 1000000);
-        }
-#endif
       }
     }
     return;

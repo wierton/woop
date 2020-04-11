@@ -7,7 +7,6 @@
 #include <iomanip>
 #include <memory>
 #include <string.h>
-#include <syscalls.h>
 #include <sys/syscall.h>
 
 #include "common.h"
