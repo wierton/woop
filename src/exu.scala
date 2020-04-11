@@ -32,7 +32,7 @@ class EXU extends Module {
     val can_log_now = Input(Bool())
   })
 
-  val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
+  val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire(), init=0.U.asTypeOf(io.fu_in.bits))
   val fu_valid = RegInit(N)
 
   io.fu_in.ready := (io.fu_out.ready || !fu_valid) && !io.ex_flush.valid

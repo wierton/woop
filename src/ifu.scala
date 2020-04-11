@@ -129,7 +129,7 @@ class IFU extends Module {
 
   /* stage 2: blocking */
   val s1_in = WireInit(0.U.asTypeOf(new IMemPipeData))
-  s1_in.pc := RegEnable(next=pc, enable=io.iaddr.req.fire())
+  s1_in.pc := RegEnable(next=pc, enable=io.iaddr.req.fire(), init=0.U.asTypeOf(pc))
   s1_in.ex := io.iaddr.resp.bits.ex
 
   val s1_datas = Module(new IMemPipe(new IMemPipeData, conf.icache_stages))

@@ -49,7 +49,7 @@ class ICacheMemIO extends Module {
   // s1_out_ready = s2_match
   val s1_valid = RegInit(N)
   val s1_set_vntags = vntag_array.read(s0_addr.setno, !seqmem_wen)
-  val s1_addr = RegEnable(s0_addr, enable=io.in.req.fire())
+  val s1_addr = RegEnable(s0_addr, enable=io.in.req.fire(), init=0.U.asTypeOf(s0_addr))
   val s1_match_res = Cat(for (i <- 0 until conf.nICacheWays) yield (s1_set_vntags(i).v && s1_set_vntags(i).tag === s1_addr.tag))
   val s1_match = s1_match_res.orR
   val s1_way_idx = Mux1H(for (i <- 0 until conf.nICacheWays) yield s1_match_res(i) -> i.U)
@@ -65,7 +65,7 @@ class ICacheMemIO extends Module {
   // s2_in_ready = s2_match
   val s2_valid = RegInit(N)
   val s2_match = RegInit(N)
-  val s2_addr = RegEnable(s1_addr, enable=s1_valid && s2_match)
+  val s2_addr = RegEnable(s1_addr, enable=s1_valid && s2_match, init=0.U.asTypeOf(s1_addr))
   val s2_way_data = data_array.read(s1_data_array_idx, !seqmem_wen)
   val s2_way_res = s2_way_data(s2_addr.off)
   when (s1_valid && s2_match) { s2_match := s1_match }
@@ -143,6 +143,12 @@ class SimICache extends Module {
       for (i <- 0 until n) {
         cache(Cat(i.U, idx)).v := N
       }
+    }
+  }
+
+  when (reset.toBool) {
+    for (i <- 0 until conf.nSimICacheEntries) {
+      cache(i).v := N
     }
   }
 

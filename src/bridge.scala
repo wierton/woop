@@ -170,12 +170,12 @@ class MemCrossbar(m:Int, nAddrSpace:Array[AddrSpace]) extends Module {
   val resping = RegInit(N)
   val working = reqing || resping
 
-  val cached_in_valids_1H = RegEnable(next=in_valids_1H, enable=has_req)
-  val cached_in_req = RegEnable(next=Mux1H(for (i <- 0 until m) yield in_valids_1H(i) -> io.in(i).req.bits), enable=has_req)
+  val cached_in_valids_1H = RegEnable(next=in_valids_1H, enable=has_req, init=0.U.asTypeOf(in_valids_1H))
+  val cached_in_req = RegEnable(next=Mux1H(for (i <- 0 until m) yield in_valids_1H(i) -> io.in(i).req.bits), enable=has_req, init=0.U.asTypeOf(new MemReq))
   val cached_out_valids = RegEnable(next=Reverse(Cat(for (i <- 0 until n) yield
       nAddrSpace(i).st <= cached_in_req.addr &&
       cached_in_req.addr < nAddrSpace(i).ed
-    )), enable=has_req)
+    )), enable=has_req, init=0.U(n.W))
 
   val has_resp = Cat(for (i <- 0 until n) yield io.out(i).resp.valid).orR
 

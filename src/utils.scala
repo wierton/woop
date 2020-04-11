@@ -50,6 +50,10 @@ class ROB[T<:Data](gen:T, idw:Int, nEnq:Int=1) extends Module {
     head := 0.U
     for (i <- 0 until entries) { queue(i).valid := false.B }
   }
+
+  when (reset.toBool) {
+    for (i <- 0 until entries) { queue(i).valid := false.B }
+  }
 }
 
 class Cistern[T<:Data](gen:T, entries:Int) extends Module {

@@ -18,7 +18,7 @@ class EHU extends Module {
   })
 
   val fu_valid = RegInit(N)
-  val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
+  val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire(), init=0.U.asTypeOf(io.fu_in.bits))
   io.fu_in.ready := (!fu_valid || io.fu_out.ready) && !io.ex_flush.valid
 
   io.fu_out.valid := fu_valid

@@ -141,7 +141,7 @@ class TLB extends Module {
 
   def process_request(name:String, rio:TLBTransaction, flush:Bool) = {
     /* handle memory translate request, a pipeline stage */
-    val tlbreq_in = RegEnable(rio.req.bits, enable=rio.req.fire())
+    val tlbreq_in = RegEnable(rio.req.bits, enable=rio.req.fire(), init=0.U.asTypeOf(rio.req.bits))
     val tlbreq_valid = RegInit(N)
     val tlbreq_res = vaddr2paddr(name, tlbreq_in.vaddr, tlbreq_in.func)
     val addr_l2b = Mux(tlbreq_in.is_aligned,

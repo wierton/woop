@@ -16,7 +16,7 @@ class IDU extends Module with LSUConsts with MDUConsts {
     val can_log_now = Input(Bool())
   })
 
-  val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
+  val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire(), init=0.U.asTypeOf(io.fu_in.bits))
   val fu_valid = RegInit(N)
 
   io.fu_in.ready := !fu_valid || io.fu_out.ready

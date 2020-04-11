@@ -19,7 +19,7 @@ class MSUPipelineStage extends Module {
     val can_log_now = Input(Bool())
   })
 
-  val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire())
+  val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire(), init=0.U.asTypeOf(io.fu_in.bits))
   val fu_valid = RegInit(N)
   io.fu_in.ready := Y
   io.fu_out.valid := fu_valid

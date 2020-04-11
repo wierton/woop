@@ -64,7 +64,7 @@ abstract class PiplineUnit1Cycle extends Module {
     val flush = Input(Bool())
   })
 
-  val fu_in = RegEnable(next=io.in.bits, enable=io.in.fire())
+  val fu_in = RegEnable(next=io.in.bits, enable=io.in.fire(), init=0.U.asTypeOf(io.in.bits))
   val fu_valid = RegInit(N)
 
   io.in.ready := io.out.ready || !fu_valid
@@ -88,7 +88,7 @@ abstract class PiplineUnitNCycles extends Module {
   })
 
   val ncycles = 12
-  val fu_in = RegEnable(next=io.in.bits, enable=io.in.fire())
+  val fu_in = RegEnable(next=io.in.bits, enable=io.in.fire(), init=0.U.asTypeOf(io.in.bits))
   val fu_valids = RegInit(0.U(ncycles.W))
 
   io.in.ready := io.out.ready || !fu_valids(0)
@@ -138,7 +138,7 @@ abstract class PiplineUnit1CycleWithData extends Module {
   })
 
   val m = Module(new AtLeastNCyclesModule(1))
-  val fu_data = RegEnable(next=0.U.asTypeOf(new FU_IN), enable=m.io.in.fire())
+  val fu_data = RegEnable(next=0.U.asTypeOf(new FU_IN), enable=m.io.in.fire(), init=0.U.asTypeOf(new FU_IN))
 
   io.in.ready := m.io.in.ready
 
