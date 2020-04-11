@@ -26,7 +26,7 @@ def javacOptionsVersion(scalaVersion: String): Seq[String] = {
 
 name := "njumips"
 
-version := "3.2.0"
+version := "3.3.0"
 
 scalaVersion := "2.12.10"
 

@@ -11,9 +11,8 @@ export NANOS_HOME       := $(PWD)/../nanos
 
 .DEFAULT_GOAL=emu
 
-VIVADO := vivado
-VIVADO_18 := vivado
-VIVADO_FLAG := -nolog -nojournal -notrace
+VIVADO := vivado -nolog -nojournal -notrace
+SBT := sbt -mem 1000
 
 OBJ_DIR := output
 

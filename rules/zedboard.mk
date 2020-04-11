@@ -6,7 +6,7 @@ ZEDBOARD_XPR     := $(ZEDBOARD_OBJDIR)/zedboard.xpr
 
 $(ZEDBOARD_TOP_V): $(SCALA_FILES)
 	@mkdir -p $(@D)
-	@sbt "run ZEDBOARD_TOP -td $(@D) --output-file $(@F)"
+	@$(SBT) "run ZEDBOARD_TOP -td $(@D) --output-file $(@F)"
 	@sed -i "s/_\(aw\|ar\|r\|w\|b\)_/_\1/g" $@
 
 .PHONY: zedboard clean-zedboard zedboard-sync
@@ -22,12 +22,11 @@ zedboard-sync: $(ZEDBOARD_TOP_V)
 
 zedboard-bit: zedboard-prj
 	@SOC_XPR=mycpu.xpr SOC_DIR=$(dir $(ZEDBOARD_XPR)) \
-	  $(VIVADO_18) $(VIVADO_FLAG) -mode batch \
-	  -source soc/zedboard/mk.tcl
+	  $(VIVADO) -mode batch -source soc/zedboard/mk.tcl
 
 zedboard-vivado: zedboard-prj
 	@cd $(dir $(ZEDBOARD_XPR)) && \
-	  nohup $(VIVADO_18) $(ZEDBOARD_XPR) &
+	  nohup $(VIVADO) $(ZEDBOARD_XPR) &
 
 clean-zedboard:
 	rm -rf $(ZEDBOARD_OBJDIR)

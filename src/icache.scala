@@ -145,7 +145,7 @@ class SimICache extends Module {
       }
     }
   }
-
+  
   when (reset.toBool) {
     for (i <- 0 until conf.nSimICacheEntries) {
       cache(i).v := N

@@ -24,7 +24,7 @@ object conf {
   val nDCacheWays = 4
   val nDCacheWayBytes = 16
 
-  val nSimICacheEntries = 4096
+  val nSimICacheEntries = 256
 
   val TLB_BITS = 5
   val tlbsz = (1 << TLB_BITS)

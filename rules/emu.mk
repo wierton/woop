@@ -27,8 +27,7 @@ EMU_LDFLAGS := $(MIPS32_NEMU_LIB) -lpthread -lreadline -lSDL $(ASAN_LDFLAGS)
 
 $(EMU_TOP_V): $(SCALA_FILES)
 	@mkdir -p $(@D)
-	@sbt "run $(EMU_TOP_MODULE) -td $(@D) --output-file $(@F)"
-	@sed -i '/ bram /a`undef RANDOMIZE_MEM_INIT' $@
+	@$(SBT) "run $(EMU_TOP_MODULE) -td $(@D) --output-file $(@F)"
 
 $(EMU_MK): $(EMU_TOP_V) $(EMU_CXXFILES) $(EMU_LIB_V)
 	@mkdir -p $(@D)

@@ -31,7 +31,7 @@ $(U_BOOT_COE): $(U_BOOT_BIN)
 
 $(LOONGSON_TOP_V): $(SCALA_FILES)
 	@mkdir -p $(@D)
-	@sbt "run LOONGSON_TOP -td $(@D) --output-file $(@F)"
+	@$(SBT) "run LOONGSON_TOP -td $(@D) --output-file $(@F)"
 	@sed -i "s/_\(aw\|ar\|r\|w\|b\)_/_\1/g" $@
 
 clean-loongson:
@@ -60,12 +60,11 @@ loongson-sync-$(1): $$($(1)_LS_TOP_V)
 
 loongson-$(1)-bit: loongson-$(1)-prj
 	@SOC_XPR=mycpu.xpr SOC_DIR=$$(dir $$($(1)_LS_XPR)) \
-	  $(VIVADO_18) $(VIVADO_FLAG) -mode batch \
-	  -source soc/loongson/mk.tcl
+	  $(VIVADO) -mode batch -source soc/loongson/mk.tcl
 
 loongson-$(1)-vivado: loongson-$(1)-prj
 	@cd $$(dir $$($(1)_LS_XPR)) && \
-	  nohup $$(VIVADO_18) $$($(1)_LS_XPR) &
+	  nohup $$(VIVADO) $$($(1)_LS_XPR) &
 
 clean-loongson-$(1):
 	@cd $$(LOONGSON_OBJDIR) && rm -rf soc_axi_$(1)
