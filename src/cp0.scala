@@ -29,6 +29,7 @@ abstract class CPRS extends Module {
   val cpr_config1   = Reg(new CP0Config1)
   when(reset.toBool) {
     cpr_index.init()
+    cpr_entry_hi.init()
     cpr_entry_lo0.init()
     cpr_entry_lo1.init()
     cpr_context.init()
