@@ -324,6 +324,7 @@ class CP0Random extends Bundle {
 
   def init(): Unit = {
     require(this.getWidth == 32)
+    this := 0.U.asTypeOf(this)
   }
 
   def write(value:UInt): Unit = {

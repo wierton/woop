@@ -29,12 +29,19 @@ class MemIO2AXI(dw:Int) extends Module {
   val is_req_wr = io.in.req.valid && io.in.req.bits.func === MX_WR
   val aw_fire = RegInit(N)
   val w_fire = RegInit(N)
+  val addr = Mux(io.in.req.bits.is_aligned,
+    io.in.req.bits.addr,
+    Cat(io.in.req.bits.addr(31, 2), 0.U(2.W)))
+  val alen = Mux1H(Array(
+    (io.in.req.bits.len === ML_1) -> "b00".U,
+    (io.in.req.bits.len === ML_2) -> "b01".U,
+    (io.in.req.bits.len === ML_4) -> "b10".U))
 
   io.out.aw.valid := is_req_wr
-  io.out.aw.addr := io.in.req.bits.addr
+  io.out.aw.addr := addr
   io.out.aw.id := 0.U
   io.out.aw.len := 0.U
-  io.out.aw.size := "b10".U
+  io.out.aw.size := alen
   io.out.aw.burst := 0.U
   io.out.aw.lock := 0.U
   io.out.aw.cache := 0.U
@@ -66,10 +73,10 @@ class MemIO2AXI(dw:Int) extends Module {
   }
 
   io.out.ar.valid := io.in.req.valid && io.in.req.bits.func === MX_RD
-  io.out.ar.addr := io.in.req.bits.addr
+  io.out.ar.addr := addr
   io.out.ar.id := 0.U
   io.out.ar.len := 0.U
-  io.out.ar.size := "b10".U
+  io.out.ar.size := alen
   io.out.ar.burst := 0.U
   io.out.ar.lock := 0.U
   io.out.ar.cache := 0.U

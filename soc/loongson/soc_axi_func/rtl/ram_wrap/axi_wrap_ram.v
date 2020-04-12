@@ -31,7 +31,7 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 --------------------------------------------------------------------------------
 ------------------------------------------------------------------------------*/
 //for func test, no define RUN_PERF_TEST
-`define _RUN_PERF_TEST
+// `define _RUN_PERF_TEST
 
 module axi_wrap_ram(
   input         aclk,

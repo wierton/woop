@@ -189,7 +189,7 @@ class EXU extends Module {
   io.cp0_tlbw_port.bits.entry_lo1._1 := 0.U
 
   /* tlbw */
-  val cpr_random = Reg(new CP0Random)
+  val cpr_random = RegInit(0.U.asTypeOf(new CP0Random))
   val tlbw_mask = ~io.cp0_tlbr_port.pagemask.mask.asTypeOf(UInt(32.W))
   io.tlb_wport.valid := io.fu_out.fire() &&
     fu_type === FU_PRU && (fu_op === PRU_TLBWI ||
