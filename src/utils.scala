@@ -56,6 +56,20 @@ class ROB[T<:Data](gen:T, idw:Int, nEnq:Int=1) extends Module {
   }
 }
 
+class SeqMemAccessor[T<:Data](n:Int, gen:T) extends Module {
+  val io = IO(new Bundle {
+    val wen = Input(Bool())
+    val raddr = Input(UInt(log2Ceil(n).W))
+    val rdata = Output(gen)
+    val waddr = Input(UInt(log2Ceil(n).W))
+    val wdata = Input(gen)
+  })
+
+  val mem = SyncReadMem(n, gen)
+  when (io.wen) { mem.write(io.waddr, io.wdata) }
+  io.rdata := mem.read(io.raddr, !io.wen)
+}
+
 class Cistern[T<:Data](gen:T, entries:Int) extends Module {
   val io = IO(new Bundle {
     val enq = Flipped(DecoupledIO(gen))

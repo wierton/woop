@@ -113,7 +113,8 @@ class AXI4_EMU_TOP extends Module {
   dmux.io.cached <> dcache.io.in
   dcache.io.out <> d2sram.io.in
 
-  icache.io.flush := core.io.br_flush
+  icache.io.br_flush := core.io.br_flush
+  icache.io.ex_flush := core.io.ex_flush
   dcache.io.flush := core.io.br_flush
 
   i2sram.io.out    <> crossbar.io.in(0)
