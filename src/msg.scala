@@ -19,6 +19,8 @@ class Instr extends Bundle {
   def uimm   = imm.asTypeOf(UInt(32.W))
   def addr   = Cat(rs_idx, rt_idx, imm)
   def sel    = func(2, 0)
+  def lsb    = shamt
+  def msb    = rd_idx
 }
 
 class CacheControl extends Bundle {

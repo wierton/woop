@@ -43,6 +43,20 @@ class EXU extends Module {
   val op2     = fu_in.ops.op2
   val op2_sa  = op2(REG_SZ - 1, 0).asUInt
 
+  def ins(op1:UInt, op2:UInt, lsb:UInt, msb:UInt) = {
+    val len = (msb - lsb) + 1.U(6.W)
+    val mask = (1.U << len) - 1.U
+    val res = (op2 & ~(mask << lsb)) | ((op1 & mask) << lsb)
+    res(31, 0)
+  }
+
+  def ext(op1:UInt, op2:UInt, lsb:UInt, msb:UInt) = {
+    val size = msb + 1.U(6.W)
+    val mask = (1.U << size) - 1.U
+    val res = ((op1 & (mask << lsb)) >> lsb)
+    res(31, 0)
+  }
+
   val alu_wdata = Mux1H(Array(
     (fu_op === ALU_ADD)  -> (op1 + op2).asUInt,
     (fu_op === ALU_SUB)  -> (op1 - op2).asUInt,
@@ -61,6 +75,11 @@ class EXU extends Module {
     (fu_op === ALU_ADD_OV) -> (op1 + op2).asUInt,
     (fu_op === ALU_SUB_OV) -> (op1 - op2).asUInt,
     (fu_op === ALU_CLZ)  -> CLZ_32(op1),
+    (fu_op === ALU_SEB)  -> op1(7, 0).asTypeOf(SInt(32.W)).asUInt,
+    (fu_op === ALU_SEH)  -> op1(15, 0).asTypeOf(SInt(32.W)).asUInt,
+    (fu_op === ALU_WSBH) -> Cat(op1(23, 16), op1(31, 24), op1(7, 0), op1(15, 8)),
+    (fu_op === ALU_INS)  -> ins(op1, op2, fu_in.wb.instr.lsb, fu_in.wb.instr.msb),
+    (fu_op === ALU_EXT)  -> ext(op1, op2, fu_in.wb.instr.lsb, fu_in.wb.instr.msb),
   ))(31, 0)
   val alu_ov = Mux1H(Array(
     (fu_op === ALU_ADD_OV)  -> ((!op1(31) && !op2(31) && alu_wdata(31)) || (op1(31) && op2(31) && !alu_wdata(31))),

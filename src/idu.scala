@@ -54,6 +54,12 @@ class IDU extends Module with LSUConsts with MDUConsts {
      MOVZ    -> List(Y, FU_ALU,  ALU_MOVZ,   OP1_RS,   OP2_RT,  OPD_RD),
      CLZ     -> List(Y, FU_ALU,  ALU_CLZ,    OP1_RS,   OP2_X,   OPD_RD),
 
+     SEB     -> List(Y, FU_ALU,  ALU_SEB,    OP1_RT,   OP2_X,   OPD_RD),
+     SEH     -> List(Y, FU_ALU,  ALU_SEH,    OP1_RT,   OP2_X,   OPD_RD),
+     WSBH    -> List(Y, FU_ALU,  ALU_WSBH,   OP1_RT,   OP2_X,   OPD_RD),
+     INS     -> List(Y, FU_ALU,  ALU_INS,    OP1_RS,   OP2_RT,  OPD_RT),
+     EXT     -> List(Y, FU_ALU,  ALU_EXT,    OP1_RS,   OP2_X,   OPD_RT),
+
      // BRU instructions
      BEQ     -> List(Y, FU_BRU,  BR_EQ,      OP1_RS,   OP2_RT,  OPD_X),
      BNE     -> List(Y, FU_BRU,  BR_NE,      OP1_RS,   OP2_RT,  OPD_X),
