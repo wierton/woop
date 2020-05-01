@@ -15,6 +15,35 @@ class SimDev extends BlackBox {
   })
 }
 
+class DeviceAccessor extends Module {
+  val io = IO(new Bundle {
+    val clock = Input(Clock())
+    val reset = Input(Bool())
+    val in = Flipped(new MemIO)
+  })
+
+  val dev = Module(new SimDev)
+  dev.io.clock := io.clock
+  dev.io.reset := io.reset
+
+  val lfsr = LFSR16(io.in.asUInt.xorR)
+  val delay = RegInit(0.U(4.W))
+  if (conf.random_delay) {
+    io.in.req <> dev.io.in.req
+    when (io.in.req.fire()) { delay := lfsr }
+    .otherwise {
+      delay := Mux(delay === 0.U, 0.U, delay - 1.U)
+    }
+
+    val timeout = delay === 0.U
+    dev.io.in.resp.ready := io.in.resp.ready && timeout
+    io.in.resp.valid := dev.io.in.resp.valid && timeout
+    io.in.resp.bits := dev.io.in.resp.bits
+  } else {
+    io.in <> dev.io.in
+  }
+}
+
 class Divider extends Module {
   val io = IO(Flipped(new DividerIO))
   val dividend = io.data_dividend_tdata.asSInt
@@ -48,7 +77,7 @@ class SOC_EMU_TOP extends Module {
   })
 
   val core = Module(new Core)
-  val dev = Module(new SimDev)
+  val dev = Module(new DeviceAccessor)
   val crossbar = Module(new CrossbarNx1(2))
   val icache = Module(new SimICache)
   val divider = Module(new Divider)

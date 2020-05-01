@@ -15,6 +15,7 @@ object conf {
   val icache_stages = 2
   val mul_stages = 7
   val div_stages = 45
+  val random_delay = true
   val INSTR_ID_SZ = 8
 
   val nICacheSets = 256
