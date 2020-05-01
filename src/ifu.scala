@@ -150,7 +150,6 @@ class IFU extends Module {
   s1_datas.io.can_log_now := io.can_log_now
   io.imem.req.valid := io.iaddr.resp.valid && !io.ex_flush.valid && s1_in.ex.et === ET_None
   io.imem.req.bits.is_cached := io.iaddr.resp.bits.is_cached
-  io.imem.req.bits.is_aligned := Y
   io.imem.req.bits.addr  := io.iaddr.resp.bits.paddr
   io.imem.req.bits.len   := (conf.xprlen / 8 - 1).U
   io.imem.req.bits.func  := MX_RD

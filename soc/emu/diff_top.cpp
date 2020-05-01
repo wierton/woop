@@ -147,8 +147,8 @@ int DiffTop::execute(uint64_t n) {
   return n == 0 ? -1 : 0;
 }
 
-void DiffTop::device_io(unsigned char is_aligned, int addr,
-    int len, int data, char func, char strb, int *resp) {
+void DiffTop::device_io(int addr, int len, int data,
+    char func, char strb, int *resp) {
   assert(func == MX_RD || func == MX_WR);
   assert((addr & 3) == 0);
 

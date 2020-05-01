@@ -87,7 +87,6 @@ class TLBTransaction extends Bundle {
 
 class MemReq extends Bundle {
   val is_cached = Output(Bool())
-  val is_aligned = Output(Bool())
   val addr = Output(UInt(conf.xprlen.W))
   val len = Output(UInt(ML_SZ.W))              // aligned
   val strb = Output(UInt((conf.xprlen / 8).W)) // unaligned

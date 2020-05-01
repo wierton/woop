@@ -14,13 +14,11 @@
 
 static std::unique_ptr<DiffTop> diff_top;
 
-extern "C" void device_io(unsigned char valid,
-    unsigned char is_aligned, int addr, int len, int data,
-    char func, char wstrb, int *resp) {
+extern "C" void device_io(unsigned char valid, int addr,
+    int len, int data, char func, char wstrb, int *resp) {
   if (!valid) return;
 
-  diff_top->device_io(
-      is_aligned, addr, len, data, func, wstrb, resp);
+  diff_top->device_io(addr, len, data, func, wstrb, resp);
 }
 
 double sc_time_stamp() { return 0; }
