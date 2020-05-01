@@ -150,6 +150,7 @@ int DiffTop::execute(uint64_t n) {
 void DiffTop::device_io(unsigned char is_aligned, int addr,
     int len, int data, char func, char strb, int *resp) {
   assert(func == MX_RD || func == MX_WR);
+  assert((addr & 3) == 0);
 
   /* mmio */
   if (!(0 <= addr && addr < 0x08000000)) {
@@ -182,16 +183,10 @@ void DiffTop::device_io(unsigned char is_aligned, int addr,
     memcpy(resp, &ddr[addr], 4);
   } else {
     // MX_WR
-    if (is_aligned) {
-      int l2b = addr & 3;
-      assert(l2b + len < 4);
-      memcpy(&ddr[addr], &data, len + 1);
-    } else {
-      addr = addr & ~3;
-      for (int i = 0; i < 4; i++) {
-        if (strb & (1 << i))
-          ddr[addr + i] = (data >> (i * 8)) & 0xFF;
-      }
+    addr = addr & ~3;
+    for (int i = 0; i < 4; i++) {
+      if (strb & (1 << i))
+        ddr[addr + i] = (data >> (i * 8)) & 0xFF;
     }
 
     last_instr_is_store = true;

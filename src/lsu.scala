@@ -37,8 +37,11 @@ class LSUOp extends Bundle {
   //      1 1110 0xAABBCCDD | 0x11223344 -> 0x223344DD
   //      2 1100 0xAABBCCDD | 0x11223344 -> 0x3344CCDD
   //      3 1000 0xAABBCCDD | 0x11223344 -> 0x44BBCCDD
+  // B: strb: 0:0001 1:0010 2:0100 3:1000
+  // H: strb: 0:0011        2:1100
+  // W: strb: 0:1111
   def strbOf(addr:UInt) = Mux(align,
-    "b0001111".U >> (~len),
+    ("b0001111".U >> (~len)) << addr(1, 0),
     Mux(ext === LSUConsts.LSU_L,
       "b0001111".U >> (~addr(1, 0)),
       "b1111000".U >> (~addr(1, 0)))) (3, 0)
@@ -46,23 +49,23 @@ class LSUOp extends Bundle {
     val strb = strbOf(addr)
     Reverse(Cat(for (i <- 0 until 4) yield strb(i).asTypeOf(SInt(8.W))))
   }
-  def dataOf(addr:UInt, data:UInt, mask_data:UInt) = {
+  def memRespDataOf(addr:UInt, data:UInt, mdata:UInt) = {
     val l2b = addr(1, 0)
     val mask = maskOf(addr)
-    val rdata = Mux(align, data, Mux(ext === LSUConsts.LSU_L, data << ((~l2b) << 3), data >> (l2b << 3)))
-    val rmask = Mux(align, mask, Mux(ext === LSUConsts.LSU_L, mask << ((~l2b) << 3), mask >> (l2b << 3)))
+    val rdata = Mux(!align && ext === LSUConsts.LSU_L,
+      data << ((~l2b) << 3), data >> (l2b << 3))
+    val rmask = Mux(!align && ext === LSUConsts.LSU_L,
+      mask << ((~l2b) << 3), mask >> (l2b << 3))
 
     def dump():Unit = {
-        printf("%d: LSU.c: addr=%x, data=%x, mdata=%x, mask=%x, rdata=%x, rmask=%x\n", GTimer(), addr, data, mask_data, mask, rdata, rmask)
-      }
-    (rdata & rmask) | (mask_data & ~rmask)
+      printf("%d: LSU.c: addr=%x, data=%x, mdata=%x, mask=%x, rdata=%x, rmask=%x\n", GTimer(), addr, data, mdata, mask, rdata, rmask)
+    }
+    (rdata & rmask) | (mdata & ~rmask)
   }
   def memReqDataOf(addr:UInt, data:UInt) = {
     val l2b = addr(1, 0)
-    Mux(align, data,
-      Mux(ext === LSUConsts.LSU_L,
-        data >> (~l2b << 3),
-        data << (l2b << 3)))
+    Mux(!align && ext === LSUConsts.LSU_L,
+        data >> (~l2b << 3), data << (l2b << 3))
   }
 }
 
@@ -97,8 +100,7 @@ class LSU extends Module with LSUConsts {
   io.dmem.req.valid := io.fu_in.valid
   io.dmem.req.bits.is_cached  := s2_in.is_cached
   io.dmem.req.bits.is_aligned := s2_in_op.align
-  io.dmem.req.bits.addr  := Mux(s2_in_op.align,
-    s2_in.ops.op1, s2_in.ops.op1 & ~(3.U(32.W)))
+  io.dmem.req.bits.addr  := s2_in.ops.op1 & ~(3.U(32.W))
   io.dmem.req.bits.len   := s2_in_op.len
   io.dmem.req.bits.func  := s2_in_op.func
   io.dmem.req.bits.data  := s2_in_op.memReqDataOf(s2_in.ops.op1, s2_in.ops.op2)
@@ -107,8 +109,9 @@ class LSU extends Module with LSUConsts {
 
   /* stage 3: recv contents and commit */
   val s3_in = s2_datas.io.deq.bits
+  val s3_in_addr = s3_in.ops.op1
   val s3_in_op = s3_in.ops.fu_op.asTypeOf(new LSUOp)
-  val ze_data = s3_in_op.dataOf(s3_in.ops.op1,
+  val ret_data = s3_in_op.memRespDataOf(s3_in_addr,
     io.dmem.resp.bits.data, Mux(s3_in_op.align,
       0.U(32.W), s3_in.ops.op2))
   /* io.fu_out.bits.wb.data */
@@ -123,10 +126,10 @@ class LSU extends Module with LSUConsts {
   io.fu_out.bits.ip7 := s3_in.wb.ip7
   io.fu_out.bits.is_br := s3_in.wb.is_br
   io.fu_out.bits.npc := s3_in.wb.npc
-  io.fu_out.bits.data := MuxCase(ze_data, Array(
+  io.fu_out.bits.data := MuxCase(ret_data, Array(
     (s3_in_op.asUInt === LSU_SC) -> 1.U,
-    (s3_in_op.asUInt === LSU_LB) -> io.dmem.resp.bits.data(7, 0).asTypeOf(SInt(32.W)).asUInt,
-    (s3_in_op.asUInt === LSU_LH) -> io.dmem.resp.bits.data(15, 0).asTypeOf(SInt(32.W)).asUInt))
+    (s3_in_op.asUInt === LSU_LB) -> ret_data(7, 0).asTypeOf(SInt(32.W)).asUInt,
+    (s3_in_op.asUInt === LSU_LH) -> ret_data(15, 0).asTypeOf(SInt(32.W)).asUInt))
 
   if (conf.log_LSU) {
     when (io.can_log_now) { dump() }

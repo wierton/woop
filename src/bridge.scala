@@ -29,9 +29,7 @@ class MemIO2AXI(dw:Int) extends Module {
   val is_req_wr = io.in.req.valid && io.in.req.bits.func === MX_WR
   val aw_fire = RegInit(N)
   val w_fire = RegInit(N)
-  val addr = Mux(io.in.req.bits.is_aligned,
-    io.in.req.bits.addr,
-    Cat(io.in.req.bits.addr(31, 2), 0.U(2.W)))
+  val addr = io.in.req.bits.addr
   val alen = Mux1H(Array(
     (io.in.req.bits.len === ML_1) -> "b00".U,
     (io.in.req.bits.len === ML_2) -> "b01".U,
