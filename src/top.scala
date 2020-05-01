@@ -20,6 +20,7 @@ class DeviceAccessor extends Module {
     val clock = Input(Clock())
     val reset = Input(Bool())
     val in = Flipped(new MemIO)
+    val can_log_now = Input(Bool())
   })
 
   val dev = Module(new SimDev)
@@ -41,6 +42,15 @@ class DeviceAccessor extends Module {
     io.in.resp.bits := dev.io.in.resp.bits
   } else {
     io.in <> dev.io.in
+  }
+
+  if (conf.log_DeviceAccessor) {
+    when (io.can_log_now) { dump() }
+  }
+
+  def dump():Unit = {
+    printv(this, "DEV")
+    printv(io.in, "DEV.in")
   }
 }
 
@@ -84,6 +94,7 @@ class SOC_EMU_TOP extends Module {
   val multiplier = Module(new Multiplier)
   // val icache = Module(new IMemCistern(conf.icache_stages))
 
+  dev.io.can_log_now := io.can_log_now
   core.io.can_log_now := io.can_log_now
   crossbar.io.can_log_now := io.can_log_now
   icache.io.can_log_now := io.can_log_now

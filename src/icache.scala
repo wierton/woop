@@ -129,17 +129,21 @@ class SimICache extends Module {
   val s1_hit = s1_tag === s1_entry.tag && s1_entry.v
   val s1_req = RegInit(N)
   val s1_resp = RegInit(N)
+  val s1_ex_wait_en = io.ex_flush && (s1_req || s1_resp)
+  val s1_ex_wait = RegEnable(next=io.ex_flush, enable=s1_ex_wait_en, init=N)
+  val s1_ex_flush = (io.ex_flush && !s1_req && !s1_resp) ||
+    (s1_ex_wait && io.out.resp.fire())
   s0_out_ready := (io.in.resp.ready && s1_hit) || !s1_valid
-  io.in.resp.valid := s1_valid && s1_hit
+  io.in.resp.valid := s1_valid && s1_hit && !s1_ex_wait
   io.in.resp.bits.data := s1_entry.data
-  when (io.ex_flush || (!s1_in_fire && io.in.resp.fire()) ||
+  when (s1_ex_flush || (!s1_in_fire && io.in.resp.fire()) ||
     (io.br_flush && io.in.resp.fire())) {
     s1_valid := N
-  } .elsewhen(!io.ex_flush && s1_in_fire) {
+  } .elsewhen(!s1_ex_flush && s1_in_fire) {
     s1_valid := Y
   }
 
-  when (s1_valid && !s1_hit && !s1_resp) { s1_req := Y }
+  when (!io.ex_flush && s1_valid && !s1_hit && !s1_resp) { s1_req := Y }
   when (s1_req && io.out.req.fire()) {
     s1_req := N
     s1_resp := Y
@@ -149,6 +153,7 @@ class SimICache extends Module {
     s1_entry.v := Y
     s1_entry.tag := s1_tag
     s1_entry.data := io.out.resp.bits.data
+    s1_ex_wait := N
   }
   io.out.req.valid := s1_req
   io.out.req.bits := s1_in
