@@ -36,8 +36,8 @@ object conf {
   val log_IMemCistern = false
   val log_CrossbarNx1 = false
   val log_Cistern = false
-  val log_SimICache = true
-  val log_DeviceAccessor = true
+  val log_SimICache = false
+  val log_DeviceAccessor = false
   val log_rf = false
   val log_IFU = false
   val log_IMemPipe = false
