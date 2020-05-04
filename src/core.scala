@@ -24,8 +24,6 @@ class Core extends Module {
   val rf  = Module(new RegFile)
   val ifu = Module(new IFU)
   val idu = Module(new IDU)
-  val isu = Module(new ISU)
-  val bru = Module(new BRU)
   val exu = Module(new EXU)
   val ehu = Module(new EHU)
   val cp0 = Module(new CP0)
@@ -36,8 +34,6 @@ class Core extends Module {
   rf.io.can_log_now := io.can_log_now
   ifu.io.can_log_now := io.can_log_now
   idu.io.can_log_now := io.can_log_now
-  isu.io.can_log_now := io.can_log_now
-  bru.io.can_log_now := io.can_log_now
   exu.io.can_log_now := io.can_log_now
   cp0.io.can_log_now := io.can_log_now
   tlb.io.can_log_now := io.can_log_now
@@ -46,8 +42,7 @@ class Core extends Module {
 
   /* pipeline */
   ifu.io.fu_out <> idu.io.fu_in
-  idu.io.fu_out <> isu.io.fu_in
-  isu.io.fu_out <> exu.io.fu_in
+  idu.io.fu_out <> exu.io.fu_in
   exu.io.fu_out <> ehu.io.fu_in
   ehu.io.fu_out <> msu.io.fu_in
 
@@ -58,7 +53,7 @@ class Core extends Module {
   msu.io.wb <> rf.io.wb
   msu.io.wb <> exu.io.wb
   exu.io.bp <> rf.io.bp
-  isu.io.rfio <> rf.io.rfio
+  idu.io.rfio <> rf.io.rfio
 
   /* cp0 */
   exu.io.cp0_rport <> cp0.io.rport
@@ -82,19 +77,17 @@ class Core extends Module {
   io.commit <> rf.io.commit
 
   /* flush */
-  io.br_flush := isu.io.br_flush.valid
+  io.br_flush := idu.io.br_flush.valid
   io.ex_flush := cp0.io.ex_flush.valid
-  ifu.io.br_flush <> isu.io.br_flush
+  ifu.io.br_flush <> idu.io.br_flush
   ifu.io.ex_flush <> cp0.io.ex_flush
   idu.io.ex_flush <> cp0.io.ex_flush
   exu.io.ex_flush <> cp0.io.ex_flush
   ehu.io.ex_flush <> cp0.io.ex_flush
   rf.io.ex_flush <> cp0.io.ex_flush
-  tlb.io.br_flush <> isu.io.br_flush
+  tlb.io.br_flush <> idu.io.br_flush
   tlb.io.ex_flush <> cp0.io.ex_flush
 
-  isu.io.bru.fu_in <> bru.io.fu_in
-  isu.io.bru.fu_out <> bru.io.fu_out
   tlb.io.status := cp0.io.status
 
   msu.io.multiplier <> io.multiplier

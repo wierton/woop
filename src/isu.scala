@@ -14,11 +14,13 @@ class ISU extends Module {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new IDU_ISU_IO))
     val fu_out = DecoupledIO(new ISU_EXU_IO)
-    val bru = Flipped(new ISU_BRU_IO)
     val br_flush = ValidIO(Output(new FlushIO))
     val rfio = new RegFileIO
     val can_log_now = Input(Bool())
   })
+
+  val bru = Module(new BRU)
+  bru.io.can_log_now := io.can_log_now
 
   val instr = io.fu_in.bits.instr
   val instr_id = RegInit(0.U(conf.INSTR_ID_SZ.W))
@@ -89,7 +91,7 @@ class ISU extends Module {
   io.fu_out.bits.ops.op1 := op1_data
   io.fu_out.bits.ops.op2 := op2_data
   io.fu_out.bits.wb := Mux(io.fu_in.bits.fu_type === FU_BRU,
-    io.bru.fu_out.bits.wb, exu_wb)
+    bru.io.fu_out.bits.wb, exu_wb)
   io.fu_out.bits.wb.npc := Mux(is_delayslot, br_target,
     io.fu_out.bits.wb.pc + 4.U)
   io.fu_out.bits.wb.id := instr_id
@@ -97,12 +99,12 @@ class ISU extends Module {
   io.fu_out.bits.ex := io.fu_in.bits.ex
 
   /* branch */
-  io.bru.fu_in.valid := io.fu_in.valid && io.fu_in.bits.fu_type === FU_BRU
-  io.bru.fu_in.bits.wb := exu_wb
-  io.bru.fu_in.bits.ops := io.fu_out.bits.ops
+  bru.io.fu_in.valid := io.fu_in.valid && io.fu_in.bits.fu_type === FU_BRU
+  bru.io.fu_in.bits.wb := exu_wb
+  bru.io.fu_in.bits.ops := io.fu_out.bits.ops
 
-  io.br_flush.valid := io.bru.fu_out.valid && io.fu_out.fire()
-  io.br_flush.bits.br_target := io.bru.fu_out.bits.br_target
+  io.br_flush.valid := bru.io.fu_out.valid && io.fu_out.fire()
+  io.br_flush.bits.br_target := bru.io.fu_out.bits.br_target
 
   if (conf.log_ISU) {
     when (io.can_log_now) { dump() }
@@ -112,7 +114,6 @@ class ISU extends Module {
     printv(this, "ISU")
     printv(io.fu_in, "ISU.fu_in")
     printv(io.fu_out, "ISU.fu_out")
-    printv(io.bru, "ISU.bru")
     printv(io.br_flush, "ISU.br_flush")
     printv(io.rfio, "ISU.rfio")
   }

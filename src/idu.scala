@@ -11,15 +11,19 @@ import woop.utils._
 class IDU extends Module with LSUConsts with MDUConsts {
   val io = IO(new Bundle {
     val fu_in = Flipped(DecoupledIO(new IFU_IDU_IO))
-    val fu_out = DecoupledIO(new IDU_ISU_IO)
+    val fu_out = DecoupledIO(new ISU_EXU_IO)
+    val br_flush = ValidIO(Output(new FlushIO))
+    val rfio = new RegFileIO
     val ex_flush = Flipped(ValidIO(new FlushIO))
     val can_log_now = Input(Bool())
   })
 
+  val isu = Module(new ISU)
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire(), init=0.U.asTypeOf(io.fu_in.bits))
   val fu_valid = RegInit(N)
 
-  io.fu_in.ready := !fu_valid || io.fu_out.ready
+  isu.io.can_log_now := io.can_log_now
+  io.fu_in.ready := !fu_valid || isu.io.fu_in.ready
 
   // instruction decode stage
   val csignals = ListLookup(fu_in.instr,
@@ -152,20 +156,24 @@ class IDU extends Module with LSUConsts with MDUConsts {
   ri_ex.et := ET_RI
   ri_ex.code := EC_RI
 
-  io.fu_out.valid := fu_valid && !io.ex_flush.valid
-  io.fu_out.bits.fu_type := fu_type
-  io.fu_out.bits.fu_op := fu_op
-  io.fu_out.bits.op1_sel := op1_sel
-  io.fu_out.bits.op2_sel := op2_sel
-  io.fu_out.bits.opd_sel := opd_sel
-  io.fu_out.bits.instr := instr
-  io.fu_out.bits.pc := fu_in.pc
-  io.fu_out.bits.ex := MuxCase(
+  isu.io.fu_in.valid := fu_valid && !io.ex_flush.valid
+  isu.io.fu_in.bits.fu_type := fu_type
+  isu.io.fu_in.bits.fu_op := fu_op
+  isu.io.fu_in.bits.op1_sel := op1_sel
+  isu.io.fu_in.bits.op2_sel := op2_sel
+  isu.io.fu_in.bits.opd_sel := opd_sel
+  isu.io.fu_in.bits.instr := instr
+  isu.io.fu_in.bits.pc := fu_in.pc
+  isu.io.fu_in.bits.ex := MuxCase(
     0.U.asTypeOf(new CP0Exception), Array(
       (fu_in.ex.et =/= ET_None) -> fu_in.ex,
       (!valid) -> ri_ex))
+  isu.io.rfio <> io.rfio
+  isu.io.br_flush <> io.br_flush
 
-  when (io.ex_flush.valid || (!io.fu_in.fire() && io.fu_out.fire())) {
+  io.fu_out <> isu.io.fu_out
+
+  when (io.ex_flush.valid || (!io.fu_in.fire() && isu.io.fu_in.fire())) {
     fu_valid := N
   } .elsewhen(!io.ex_flush.valid && io.fu_in.fire()) {
     fu_valid := Y
