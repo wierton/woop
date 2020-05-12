@@ -2176,22 +2176,22 @@
       </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>loongson_top_0_io_debug_wb_pc</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wb_pc"/>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_pc"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_pc"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>loongson_top_0_io_debug_wb_rf_wen</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wb_rf_wen"/>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wen"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_rf_wen"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>loongson_top_0_io_debug_wb_rf_wdata</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wb_rf_wdata"/>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wdata"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_rf_wdata"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>loongson_top_0_io_debug_wb_rf_wnum</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wb_rf_wnum"/>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_rd_idx"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_rf_wnum"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
@@ -2206,17 +2206,16 @@
       </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>loongson_top_0_io_debug_ninstr</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_ninstr"/>
         <spirit:externalPortReference spirit:portRef="debug_ninstr"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>loongson_top_0_io_debug_instr</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wb_instr"/>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_instr"/>
         <spirit:externalPortReference spirit:portRef="debug_instr"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>loongson_top_0_io_debug_wb_valid</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wb_valid"/>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_valid"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_valid"/>
       </spirit:adHocConnection>
     </spirit:adHocConnections>

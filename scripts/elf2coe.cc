@@ -119,7 +119,7 @@ void as_realize(const std::vector<AddrSpace> &space) {
 
     uint32_t *ptr = (uint32_t *)&as.storage[0];
     unsigned nr_words = as.storage.size() / 4;
-    unsigned last_nonzero = 0;
+    unsigned last_nonzero = 1;
     for (int i = nr_words - 1; i >= 0; i--) {
       if (ptr[i] != 0) {
         last_nonzero = std::min((int)nr_words, i + 4);
