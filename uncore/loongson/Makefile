@@ -47,6 +47,8 @@ sim-%: $(ELF2COE) project compile-%
 		-s $(DDR_COE):0x80000000:1048576 \
 		-s $(BRAM_COE):0xbfc00000:1048576 \
 	@$(MIPS32_NEMU) -b -e $(subst sim-,,$@).elf -c 2> $(TRACE)
+	@SOC_XPR=mycpu.xpr SOC_DIR=$(dir $(LS_XPR)) \
+	  $(VIVADO) -mode batch -source $(UNCORE_DIR)/sim.tcl
 
 project: $(LS_XPR) $(LS_TOP_V) $(U_BOOT_COE) $(INST_COE) \
   $(DDR_COE) $(BRAM_COE) $(TRACE) $(TRAP_V) $(SIM_TOP_V)
