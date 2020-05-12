@@ -9,26 +9,22 @@ export U_BOOT_HOME      := $(PWD)/../u-boot
 export LINUX_HOME       := $(PWD)/../linux
 export NANOS_HOME       := $(PWD)/../nanos
 
-UNCORE          ?= verilator
-UNCORE_DIR      := uncore/$(UNCORE)
-VIVADO          := vivado -nolog -nojournal -notrace
-SBT             := sbt -mem 1000
-OBJ_DIR         := output
-MIPS32_NEMU     := $(MIPS32_NEMU_HOME)/build/nemu
-MIPS32_NEMU_LIB := $(MIPS32_NEMU_HOME)/build/nemu.so
-
-nemu: $(MIPS32_NEMU) $(MIPS32_NEMU_LIB)
-$(MIPS32_NEMU) $(MIPS32_NEMU_LIB): $(shell find $(MIPS32_NEMU_HOME) -name "*.c" -or -name "*.h")
-	@make -s -C $(MIPS32_NEMU_HOME) ARCH=mips32-npc
-
-minicom:
-	cd $(OBJ_DIR) && sudo minicom -D /dev/ttyUSB1 -b 115200 -c on -C cpu.log -S ../minicom.script
+UNCORE     ?= verilator
+UNCORE_DIR := uncore/$(UNCORE)
+VIVADO     := vivado -nolog -nojournal -notrace
+SBT        := sbt -mem 1000
+OBJ_DIR    := output
 
 include rules/core.mk
+include rules/nemu.mk
 include rules/testcases.mk
 include $(UNCORE_DIR)/Makefile
 
-.DEFAULT_GOAL := prj
+.DEFAULT_GOAL := project
+
+minicom:
+	@cd $(OBJ_DIR) && sudo minicom -D /dev/ttyUSB1 \
+	  -b 115200 -c on -C cpu.log -S ../minicom.script
 
 clean-all:
 	rm -Irf $(OBJ_DIR)

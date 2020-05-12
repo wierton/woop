@@ -173,7 +173,7 @@ class loongson_top extends Module {
     val dmem = new AXI4IO(conf.xprlen)
     val divider = new DividerIO
     val multiplier = new MultiplierIO
-    val commit = new NSCSCCCommitIO
+    val commit = new CommitIO
   })
 
   val core = Module(new Core)
@@ -196,13 +196,7 @@ class loongson_top extends Module {
   icache.io.ex_flush := core.io.ex_flush
   icache.io.br_flush := core.io.br_flush
 
-  io.commit.ninstr := 0.U
-  io.commit.wb_pc := core.io.commit.pc
-  io.commit.wb_instr := core.io.commit.instr
-  io.commit.wb_rf_wdata := core.io.commit.wdata
-  io.commit.wb_rf_wen := core.io.commit.wen
-  io.commit.wb_rf_wnum := core.io.commit.rd_idx
-  io.commit.wb_valid := core.io.commit.valid
+  io.commit <> core.io.commit
 }
 
 class zedboard_top extends loongson_top {

@@ -2,9 +2,9 @@ include rules/test-template.mk
 
 # for microbench
 ifeq ($(UNCORE),nemu)
-INPUT ?= REF
+export INPUT ?= REF
 else
-INPUT ?= TEST
+export INPUT ?= TEST
 endif
 
 AM_TESTS   != ls $(AM_HOME)/tests

@@ -35,7 +35,7 @@ class MemIO2AXI(dw:Int) extends Module {
     (io.in.req.bits.len === ML_2) -> "b01".U,
     (io.in.req.bits.len === ML_4) -> "b10".U))
 
-  io.out.aw.valid := is_req_wr
+  io.out.aw.valid := is_req_wr && !aw_fire
   io.out.aw.addr := addr
   io.out.aw.id := 0.U
   io.out.aw.len := 0.U
@@ -51,7 +51,7 @@ class MemIO2AXI(dw:Int) extends Module {
     aw_fire := Y
   }
 
-  io.out.w.valid := is_req_wr
+  io.out.w.valid := is_req_wr && !w_fire
   io.out.w.id := 0.U
   io.out.w.data := io.in.req.bits.data
   io.out.w.strb := io.in.req.bits.strb
