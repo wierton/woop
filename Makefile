@@ -17,7 +17,7 @@ OBJ_DIR    := output
 ELF2COE    := $(OBJ_DIR)/elf2coe
 
 $(ELF2COE): scripts/elf2coe.cc
-	g++ $< -o $@
+	@g++ $< -o $@
 
 include rules/core.mk
 include rules/nemu.mk
