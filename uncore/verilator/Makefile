@@ -1,15 +1,14 @@
 .PHONY: sim-% prj update clean
 
-EMU_OBJ_DIR := $(CORE_OBJ_DIR)
+EMU_OBJ_DIR    := $(CORE_OBJ_DIR)
 EMU_TOP_MODULE := $(CORE_TOP_MODULE)
-EMU_TOP_V := $(CORE_TOP_V)
-
-EMU_SRC_DIR := $(abspath uncore/$(UNCORE))
-EMU_PREFIX := $(UNCORE)_top
-EMU_MK := $(EMU_OBJ_DIR)/$(EMU_PREFIX).mk
-EMU_BIN := $(EMU_OBJ_DIR)/emulator
-EMU_LIB_V != find $(EMU_SRC_DIR) -name "*.v"
-EMU_CXXFILES != find $(EMU_SRC_DIR) -name "*.cpp"
+EMU_TOP_V      := $(CORE_TOP_V)
+EMU_SRC_DIR    := $(abspath uncore/$(UNCORE))
+EMU_PREFIX     := $(UNCORE)_top
+EMU_MK         := $(EMU_OBJ_DIR)/$(EMU_PREFIX).mk
+EMU_BIN        := $(EMU_OBJ_DIR)/emulator
+EMU_LIB_V      != find $(EMU_SRC_DIR) -name "*.v"
+EMU_CXXFILES   != find $(EMU_SRC_DIR) -name "*.cpp"
 
 ifeq ($(ASAN),1)
 ASAN_CFLAGS := -fsanitize=address,undefined -Wformat -Werror=format-security -Werror=array-bounds

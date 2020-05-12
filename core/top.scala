@@ -87,14 +87,14 @@ class verilator_top extends Module {
   })
 
   val core = Module(new Core)
-  val dev = Module(new DeviceAccessor)
+  val dev = Module(new SimDev)
   val crossbar = Module(new CrossbarNx1(2))
   val icache = Module(new SimICache)
   val divider = Module(new Divider)
   val multiplier = Module(new Multiplier)
   // val icache = Module(new IMemCistern(conf.icache_stages))
 
-  dev.io.can_log_now := io.can_log_now
+  // dev.io.can_log_now := io.can_log_now
   core.io.can_log_now := io.can_log_now
   crossbar.io.can_log_now := io.can_log_now
   icache.io.can_log_now := io.can_log_now
@@ -167,7 +167,7 @@ class AXI4_EMU_TOP extends Module {
   core.io.commit <> io.commit
 }
 
-class LOONGSON_TOP extends Module {
+class loongson_top extends Module {
   val io = IO(new Bundle {
     val imem = new AXI4IO(conf.xprlen)
     val dmem = new AXI4IO(conf.xprlen)
