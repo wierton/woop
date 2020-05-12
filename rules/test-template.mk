@@ -26,16 +26,6 @@ compile-$(2): $$($(2)_APP)-$(ARCH).elf \
 		rename -f 's/txt$$$$/S/g' *.txt && \
 		rename -f 's/-$(ARCH)//g' * \
 
-run-$(2): $(EMU_BIN) compile-$(2)
-	@cd $$($(2)_OBJDIR) && \
-	  ln -sf $(abspath $(EMU_BIN)) emulator && \
-	  ./emulator -b -e ./$(2).elf 2> npc.out
-
-run-nemu-$(2): $(MIPS32_NEMU) compile-$(2)
-	@cd $$($(2)_OBJDIR) && \
-	  ln -sf $(MIPS32_NEMU) nemu && \
-	  ./nemu -b -e ./$(2).elf
-
 clean-$(2):
 	@make -s -C $(1) ARCH=$(ARCH) clean
 endef

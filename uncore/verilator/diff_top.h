@@ -10,8 +10,8 @@
 #include <utility>
 #include <vector>
 
-#include "SOC_EMU_TOP.h"
-#include "SOC_EMU_TOP__Dpi.h"
+#include "verilator_top.h"
+#include "verilator_top__Dpi.h"
 extern "C" {
 #include "napis.h"
 }
@@ -55,7 +55,7 @@ public:
 };
 
 class DiffTop {
-  std::unique_ptr<SOC_EMU_TOP> dut_ptr;
+  std::unique_ptr<verilator_top> dut_ptr;
 
   uint32_t seed;
   uint64_t ninstr = 0;

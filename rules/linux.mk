@@ -1,5 +1,4 @@
-.PHONY: compile-linux
-.PHONY: run-nemu-linux run-linux run-cputests-linux
+.PHONY: compile-linux compile-u-boot
 
 LINUX_OBJDIR := $(OBJ_DIR)/linux
 LINUX_ELF    := $(LINUX_HOME)/vmlinux
@@ -14,15 +13,3 @@ compile-u-boot compile-linux:
 	@mkdir -p $(LINUX_OBJDIR)
 	@cd $(LINUX_OBJDIR) && ln -sf $^ . && \
 	  mips-linux-gnu-objdump -d $^ > $(<F).S
-
-run-linux: $(EMU_BIN) compile-linux
-	@mkdir -p $(LINUX_OBJDIR)
-	@cd $(LINUX_OBJDIR) && \
-	  ln -sf $(abspath $(EMU_BIN)) emulator && \
-	  ./emulator -b -e vmlinux 2>npc.out
-
-run-nemu-linux: $(MIPS32_NEMU) compile-linux
-	@mkdir -p $(LINUX_OBJDIR)
-	@cd $(LINUX_OBJDIR) && \
-	  ln -sf $(MIPS32_NEMU) nemu && \
-	  ./nemu -b -e vmlinux

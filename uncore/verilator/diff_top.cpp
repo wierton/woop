@@ -60,7 +60,7 @@ uint32_t DiffTop::get_dut_gpr(uint32_t r) {
 // argv decay to the secondary pointer
 DiffTop::DiffTop(int argc, const char *argv[]) {
   /* `soc_emu_top' must be created before srand */
-  dut_ptr.reset(new SOC_EMU_TOP);
+  dut_ptr.reset(new verilator_top);
 
   /* srand */
   seed = (unsigned)time(NULL) ^ (unsigned)getpid();

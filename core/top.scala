@@ -80,7 +80,7 @@ class Multiplier extends Module {
   io.data_dout := pipe.bits
 }
 
-class SOC_EMU_TOP extends Module {
+class verilator_top extends Module {
   val io = IO(new Bundle {
     val commit = new CommitIO
     val can_log_now = Input(Bool())
