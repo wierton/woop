@@ -205,7 +205,7 @@ class loongson_top extends Module {
   io.commit.wb_valid := core.io.commit.valid
 }
 
-class ZEDBOARD_TOP extends LOONGSON_TOP {
+class zedboard_top extends loongson_top {
 }
 
 object Main {

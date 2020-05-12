@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<bd:repository xmlns:bd="http://www.xilinx.com/bd" bd:BoundaryCRC="0xB82C58EE70EEEC56" bd:device="xc7a200tfbg676-2" bd:synthFlowMode="Hierarchical" bd:tool_version="2018.1" bd:top="noop_design" bd:version="1.00.a">
+<bd:repository xmlns:bd="http://www.xilinx.com/bd" bd:BoundaryCRC="0xB82C58EE70EEEC56" bd:device="xc7a200tfbg676-2" bd:isValidated="true" bd:synthFlowMode="Hierarchical" bd:tool_version="2018.1" bd:top="noop_design" bd:version="1.00.a">
 
   <spirit:component xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009">
     <spirit:vendor>xilinx.com</spirit:vendor>
@@ -18,7 +18,17 @@
         <spirit:master/>
         <spirit:busType spirit:library="interface" spirit:name="mdio" spirit:vendor="xilinx.com" spirit:version="1.0"/>
         <spirit:abstractionType spirit:library="interface" spirit:name="mdio_rtl" spirit:vendor="xilinx.com" spirit:version="1.0"/>
-        <spirit:parameters/>
+        <spirit:parameters>
+          <spirit:parameter>
+            <spirit:name>CAN_DEBUG</spirit:name>
+            <spirit:value>false</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+        </spirit:parameters>
       </spirit:busInterface>
       <spirit:busInterface>
         <spirit:name>MII</spirit:name>
@@ -35,26 +45,272 @@
           <spirit:parameter>
             <spirit:name>DATA_WIDTH</spirit:name>
             <spirit:value>32</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="user"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>PROTOCOL</spirit:name>
             <spirit:value>AXI4</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="user"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>FREQ_HZ</spirit:name>
             <spirit:value>50000000</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="user"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>ID_WIDTH</spirit:name>
+            <spirit:value>4</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="ip_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>ADDR_WIDTH</spirit:name>
             <spirit:value>32</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="user"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>AWUSER_WIDTH</spirit:name>
+            <spirit:value>5</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="ip_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>ARUSER_WIDTH</spirit:name>
+            <spirit:value>5</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="ip_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>WUSER_WIDTH</spirit:name>
+            <spirit:value>5</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="ip_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>RUSER_WIDTH</spirit:name>
+            <spirit:value>5</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="ip_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>BUSER_WIDTH</spirit:name>
+            <spirit:value>5</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="ip_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>READ_WRITE_MODE</spirit:name>
+            <spirit:value>READ_WRITE</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>HAS_BURST</spirit:name>
+            <spirit:value>1</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="const_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>HAS_LOCK</spirit:name>
+            <spirit:value>1</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="const_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>HAS_PROT</spirit:name>
+            <spirit:value>1</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="const_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>HAS_CACHE</spirit:name>
+            <spirit:value>1</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="const_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>HAS_QOS</spirit:name>
+            <spirit:value>1</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="const_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>HAS_REGION</spirit:name>
+            <spirit:value>0</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="const_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>HAS_WSTRB</spirit:name>
+            <spirit:value>1</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="const_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>HAS_BRESP</spirit:name>
+            <spirit:value>1</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="const_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>HAS_RRESP</spirit:name>
+            <spirit:value>1</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="const_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>SUPPORTS_NARROW_BURST</spirit:name>
+            <spirit:value>1</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="ip_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>NUM_READ_OUTSTANDING</spirit:name>
             <spirit:value>2</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="user"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>NUM_WRITE_OUTSTANDING</spirit:name>
             <spirit:value>2</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="user"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>MAX_BURST_LENGTH</spirit:name>
+            <spirit:value>256</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="ip_prop"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>PHASE</spirit:name>
+            <spirit:value>0.000</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>CLK_DOMAIN</spirit:name>
+            <spirit:value>noop_design_cpu_clk</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>NUM_READ_THREADS</spirit:name>
+            <spirit:value>1</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>NUM_WRITE_THREADS</spirit:name>
+            <spirit:value>1</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>RUSER_BITS_PER_BYTE</spirit:name>
+            <spirit:value>0</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>WUSER_BITS_PER_BYTE</spirit:name>
+            <spirit:value>0</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:busInterface>
@@ -91,6 +347,11 @@
           <spirit:parameter>
             <spirit:name>POLARITY</spirit:name>
             <spirit:value>ACTIVE_LOW</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="user"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:busInterface>
@@ -115,10 +376,47 @@
           <spirit:parameter>
             <spirit:name>FREQ_HZ</spirit:name>
             <spirit:value>50000000</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="user"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>PHASE</spirit:name>
+            <spirit:value>0.000</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>CLK_DOMAIN</spirit:name>
+            <spirit:value>noop_design_cpu_clk</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>ASSOCIATED_BUSIF</spirit:name>
             <spirit:value>ddr3</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="user"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>ASSOCIATED_RESET</spirit:name>
+            <spirit:value>aresetn</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:busInterface>
@@ -143,6 +441,29 @@
           <spirit:parameter>
             <spirit:name>FREQ_HZ</spirit:name>
             <spirit:value>100000000</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="user"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>PHASE</spirit:name>
+            <spirit:value>0.000</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>CLK_DOMAIN</spirit:name>
+            <spirit:value>noop_design_clk_100M</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:busInterface>
@@ -167,6 +488,29 @@
           <spirit:parameter>
             <spirit:name>FREQ_HZ</spirit:name>
             <spirit:value>50000000</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="user"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>PHASE</spirit:name>
+            <spirit:value>0.000</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
+          </spirit:parameter>
+          <spirit:parameter>
+            <spirit:name>CLK_DOMAIN</spirit:name>
+            <spirit:value>noop_design_vga_clk</spirit:value>
+            <spirit:vendorExtensions>
+              <bd:configElementInfos>
+                <bd:configElementInfo bd:valueSource="default"/>
+              </bd:configElementInfos>
+            </spirit:vendorExtensions>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:busInterface>
@@ -1362,7 +1706,7 @@
           <spirit:configurableElementValue spirit:referenceId="Memory_Type">True_Dual_Port_RAM</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="Enable_32bit_Address">true</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="Write_Width_A">32</spirit:configurableElementValue>
-          <spirit:configurableElementValue spirit:referenceId="Write_Depth_A">35366</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="Write_Depth_A">66000</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="Read_Width_A">32</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="Operating_Mode_A">READ_FIRST</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="Write_Width_B">32</spirit:configurableElementValue>
@@ -1822,7 +2166,23 @@
         <spirit:componentRef spirit:library="BlockDiagram/noop_design_imp/noop_imp/core_imp" spirit:name="loongsontop" spirit:vendor="xilinx.com" spirit:version="1.00.a"/>
       </spirit:componentInstance>
     </spirit:componentInstances>
-    <spirit:interconnections/>
+    <spirit:interconnections>
+      <spirit:interconnection>
+        <spirit:name>loongsontop_io_divider_data_dividend</spirit:name>
+        <spirit:activeInterface spirit:busRef="io_divider_data_dividend" spirit:componentRef="loongsontop"/>
+        <spirit:activeInterface spirit:busRef="S_AXIS_DIVIDEND" spirit:componentRef="div_gen_0"/>
+      </spirit:interconnection>
+      <spirit:interconnection>
+        <spirit:name>loongsontop_io_divider_data_divisor</spirit:name>
+        <spirit:activeInterface spirit:busRef="io_divider_data_divisor" spirit:componentRef="loongsontop"/>
+        <spirit:activeInterface spirit:busRef="S_AXIS_DIVISOR" spirit:componentRef="div_gen_0"/>
+      </spirit:interconnection>
+      <spirit:interconnection>
+        <spirit:name>io_divider_data_dout_1</spirit:name>
+        <spirit:activeInterface spirit:busRef="io_divider_data_dout" spirit:componentRef="loongsontop"/>
+        <spirit:activeInterface spirit:busRef="M_AXIS_DOUT" spirit:componentRef="div_gen_0"/>
+      </spirit:interconnection>
+    </spirit:interconnections>
     <spirit:adHocConnections>
       <spirit:adHocConnection>
         <spirit:name>util_vector_logic_0_Res</spirit:name>
@@ -1830,12 +2190,12 @@
         <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="reset"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_mul_a</spirit:name>
+        <spirit:name>loongson_top_0_io_mul_a</spirit:name>
         <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="io_mul_a"/>
         <spirit:internalPortReference spirit:componentRef="mult_gen_0" spirit:portRef="A"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_mul_b</spirit:name>
+        <spirit:name>loongson_top_0_io_mul_b</spirit:name>
         <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="io_mul_b"/>
         <spirit:internalPortReference spirit:componentRef="mult_gen_0" spirit:portRef="B"/>
       </spirit:adHocConnection>
@@ -1843,46 +2203,6 @@
         <spirit:name>mult_gen_0_P</spirit:name>
         <spirit:internalPortReference spirit:componentRef="mult_gen_0" spirit:portRef="P"/>
         <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="io_mul_dout"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>div_gen_0_s_axis_dividend_tready</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="s_axis_dividend_tready"/>
-        <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="io_div_diviend_ready"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_div_diviend_valid</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="io_div_diviend_valid"/>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="s_axis_dividend_tvalid"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_div_diviend_bits</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="io_div_diviend_bits"/>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="s_axis_dividend_tdata"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>div_gen_0_s_axis_divisor_tready</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="s_axis_divisor_tready"/>
-        <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="io_div_divisor_ready"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_div_divisor_valid</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="io_div_divisor_valid"/>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="s_axis_divisor_tvalid"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_div_divisor_bits</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="io_div_divisor_bits"/>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="s_axis_divisor_tdata"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>div_gen_0_m_axis_dout_tvalid</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="m_axis_dout_tvalid"/>
-        <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="io_div_dout_valid"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>div_gen_0_m_axis_dout_tdata</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="m_axis_dout_tdata"/>
-        <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="io_div_dout_bits"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>proc_sys_reset_0_peripheral_aresetn</spirit:name>
@@ -1898,22 +2218,22 @@
         <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="clk"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_debug_wb_pc</spirit:name>
+        <spirit:name>loongson_top_0_io_debug_wb_pc</spirit:name>
         <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="debug_wb_pc"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_pc"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_debug_wb_rf_wen</spirit:name>
+        <spirit:name>loongson_top_0_io_debug_wb_rf_wen</spirit:name>
         <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="debug_wb_rf_wen"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_rf_wen"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_debug_wb_rf_wdata</spirit:name>
+        <spirit:name>loongson_top_0_io_debug_wb_rf_wdata</spirit:name>
         <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="debug_wb_rf_wdata"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_rf_wdata"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_debug_wb_rf_wnum</spirit:name>
+        <spirit:name>loongson_top_0_io_debug_wb_rf_wnum</spirit:name>
         <spirit:internalPortReference spirit:componentRef="loongsontop" spirit:portRef="debug_wb_rf_wnum"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_rf_wnum"/>
       </spirit:adHocConnection>
@@ -1950,10 +2270,10 @@
       </spirit:adHocConnection>
     </spirit:adHocConnections>
     <spirit:hierConnections>
-      <spirit:hierConnection spirit:interfaceRef="io_dmem/LoongsonTop_0_io_dmem1">
+      <spirit:hierConnection spirit:interfaceRef="io_dmem/loongson_top_0_io_dmem1">
         <spirit:activeInterface spirit:busRef="io_dmem" spirit:componentRef="loongsontop"/>
       </spirit:hierConnection>
-      <spirit:hierConnection spirit:interfaceRef="io_imem/LoongsonTop_0_io_imem1">
+      <spirit:hierConnection spirit:interfaceRef="io_imem/loongson_top_0_io_imem1">
         <spirit:activeInterface spirit:busRef="io_imem" spirit:componentRef="loongsontop"/>
       </spirit:hierConnection>
     </spirit:hierConnections>
@@ -1976,6 +2296,24 @@
         <spirit:master/>
         <spirit:busType spirit:library="interface" spirit:name="aximm" spirit:vendor="xilinx.com" spirit:version="1.0"/>
         <spirit:abstractionType spirit:library="interface" spirit:name="aximm_rtl" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+      </spirit:busInterface>
+      <spirit:busInterface>
+        <spirit:name>io_divider_data_dividend</spirit:name>
+        <spirit:master/>
+        <spirit:busType spirit:library="interface" spirit:name="axis" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+        <spirit:abstractionType spirit:library="interface" spirit:name="axis_rtl" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+      </spirit:busInterface>
+      <spirit:busInterface>
+        <spirit:name>io_divider_data_divisor</spirit:name>
+        <spirit:master/>
+        <spirit:busType spirit:library="interface" spirit:name="axis" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+        <spirit:abstractionType spirit:library="interface" spirit:name="axis_rtl" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+      </spirit:busInterface>
+      <spirit:busInterface>
+        <spirit:name>io_divider_data_dout</spirit:name>
+        <spirit:slave/>
+        <spirit:busType spirit:library="interface" spirit:name="axis" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+        <spirit:abstractionType spirit:library="interface" spirit:name="axis_rtl" spirit:vendor="xilinx.com" spirit:version="1.0"/>
       </spirit:busInterface>
       <spirit:busInterface>
         <spirit:name>CLK.CLK</spirit:name>
@@ -2102,66 +2440,6 @@
           </spirit:wire>
         </spirit:port>
         <spirit:port>
-          <spirit:name>io_div_diviend_ready</spirit:name>
-          <spirit:wire>
-            <spirit:direction>in</spirit:direction>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_diviend_valid</spirit:name>
-          <spirit:wire>
-            <spirit:direction>out</spirit:direction>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_diviend_bits</spirit:name>
-          <spirit:wire>
-            <spirit:direction>out</spirit:direction>
-            <spirit:vector>
-              <spirit:left>39</spirit:left>
-              <spirit:right>0</spirit:right>
-            </spirit:vector>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_divisor_ready</spirit:name>
-          <spirit:wire>
-            <spirit:direction>in</spirit:direction>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_divisor_valid</spirit:name>
-          <spirit:wire>
-            <spirit:direction>out</spirit:direction>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_divisor_bits</spirit:name>
-          <spirit:wire>
-            <spirit:direction>out</spirit:direction>
-            <spirit:vector>
-              <spirit:left>39</spirit:left>
-              <spirit:right>0</spirit:right>
-            </spirit:vector>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_dout_valid</spirit:name>
-          <spirit:wire>
-            <spirit:direction>in</spirit:direction>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_dout_bits</spirit:name>
-          <spirit:wire>
-            <spirit:direction>in</spirit:direction>
-            <spirit:vector>
-              <spirit:left>79</spirit:left>
-              <spirit:right>0</spirit:right>
-            </spirit:vector>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
           <spirit:name>interrupt</spirit:name>
           <spirit:wire>
             <spirit:direction>in</spirit:direction>
@@ -2208,11 +2486,11 @@
     <spirit:version>1.00.a</spirit:version>
     <spirit:componentInstances>
       <spirit:componentInstance>
-        <spirit:instanceName>LOONGSON_TOP_0</spirit:instanceName>
-        <spirit:componentRef spirit:library="module_ref" spirit:name="LOONGSON_TOP" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+        <spirit:instanceName>loongson_top_0</spirit:instanceName>
+        <spirit:componentRef spirit:library="module_ref" spirit:name="loongson_top" spirit:vendor="xilinx.com" spirit:version="1.0"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_LOONGSON_TOP_0_0</spirit:configurableElementValue>
-          <spirit:configurableElementValue spirit:referenceId="bd:referenceName">LOONGSON_TOP</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_loongson_top_0_0</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:referenceName">loongson_top</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="bd:subInstancePath"></spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="bd:referenceType">hdl</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="bd:BoundaryCRC">0x0</spirit:configurableElementValue>
@@ -2224,122 +2502,91 @@
       <spirit:adHocConnection>
         <spirit:name>clk_1</spirit:name>
         <spirit:externalPortReference spirit:portRef="clk"/>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="clock"/>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="clock"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>reset_1</spirit:name>
         <spirit:externalPortReference spirit:portRef="reset"/>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="reset"/>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="reset"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>interrupt_1</spirit:name>
         <spirit:externalPortReference spirit:portRef="interrupt"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>io_div_diviend_ready_1</spirit:name>
-        <spirit:externalPortReference spirit:portRef="io_div_diviend_ready"/>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_divider_data_dividend_ready"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>io_div_divisor_ready_1</spirit:name>
-        <spirit:externalPortReference spirit:portRef="io_div_divisor_ready"/>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_divider_data_divisor_ready"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
         <spirit:name>io_mul_dout_1</spirit:name>
         <spirit:externalPortReference spirit:portRef="io_mul_dout"/>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_multiplier_data_dout"/>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_multiplier_data_dout"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>io_div_dout_valid_1</spirit:name>
-        <spirit:externalPortReference spirit:portRef="io_div_dout_valid"/>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_divider_data_dout_valid"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>io_div_dout_bits_1</spirit:name>
-        <spirit:externalPortReference spirit:portRef="io_div_dout_bits"/>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_divider_data_dout_bits"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_debug_wb_pc</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_commit_wb_pc"/>
+        <spirit:name>loongson_top_0_io_debug_wb_pc</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wb_pc"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_pc"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_debug_wb_rf_wen</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_commit_wb_rf_wen"/>
+        <spirit:name>loongson_top_0_io_debug_wb_rf_wen</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wb_rf_wen"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_rf_wen"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_debug_wb_rf_wdata</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_commit_wb_rf_wdata"/>
+        <spirit:name>loongson_top_0_io_debug_wb_rf_wdata</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wb_rf_wdata"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_rf_wdata"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_debug_wb_rf_wnum</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_commit_wb_rf_wnum"/>
+        <spirit:name>loongson_top_0_io_debug_wb_rf_wnum</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wb_rf_wnum"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_rf_wnum"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_div_diviend_bits</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_divider_data_dividend_bits"/>
-        <spirit:externalPortReference spirit:portRef="io_div_diviend_bits"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_mul_a</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_multiplier_data_a"/>
+        <spirit:name>loongson_top_0_io_mul_a</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_multiplier_data_a"/>
         <spirit:externalPortReference spirit:portRef="io_mul_a"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_mul_b</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_multiplier_data_b"/>
+        <spirit:name>loongson_top_0_io_mul_b</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_multiplier_data_b"/>
         <spirit:externalPortReference spirit:portRef="io_mul_b"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_div_diviend_valid</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_divider_data_dividend_valid"/>
-        <spirit:externalPortReference spirit:portRef="io_div_diviend_valid"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_div_divisor_bits</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_divider_data_divisor_bits"/>
-        <spirit:externalPortReference spirit:portRef="io_div_divisor_bits"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_div_divisor_valid</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_divider_data_divisor_valid"/>
-        <spirit:externalPortReference spirit:portRef="io_div_divisor_valid"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_debug_ninstr</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_commit_ninstr"/>
+        <spirit:name>loongson_top_0_io_debug_ninstr</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_ninstr"/>
         <spirit:externalPortReference spirit:portRef="debug_ninstr"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_debug_instr</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_commit_wb_instr"/>
+        <spirit:name>loongson_top_0_io_debug_instr</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wb_instr"/>
         <spirit:externalPortReference spirit:portRef="debug_instr"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>LoongsonTop_0_io_debug_wb_valid</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="LOONGSON_TOP_0" spirit:portRef="io_commit_wb_valid"/>
+        <spirit:name>loongson_top_0_io_debug_wb_valid</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="loongson_top_0" spirit:portRef="io_commit_wb_valid"/>
         <spirit:externalPortReference spirit:portRef="debug_wb_valid"/>
       </spirit:adHocConnection>
     </spirit:adHocConnections>
     <spirit:hierConnections>
-      <spirit:hierConnection spirit:interfaceRef="io_dmem/LOONGSON_TOP_0_io_dmem">
-        <spirit:activeInterface spirit:busRef="io_dmem" spirit:componentRef="LOONGSON_TOP_0"/>
+      <spirit:hierConnection spirit:interfaceRef="io_dmem/loongson_top_0_io_dmem">
+        <spirit:activeInterface spirit:busRef="io_dmem" spirit:componentRef="loongson_top_0"/>
       </spirit:hierConnection>
-      <spirit:hierConnection spirit:interfaceRef="io_imem/LOONGSON_TOP_0_io_imem">
-        <spirit:activeInterface spirit:busRef="io_imem" spirit:componentRef="LOONGSON_TOP_0"/>
+      <spirit:hierConnection spirit:interfaceRef="io_imem/loongson_top_0_io_imem">
+        <spirit:activeInterface spirit:busRef="io_imem" spirit:componentRef="loongson_top_0"/>
+      </spirit:hierConnection>
+      <spirit:hierConnection spirit:interfaceRef="io_divider_data_dividend/Conn1">
+        <spirit:activeInterface spirit:busRef="io_divider_data_dividend" spirit:componentRef="loongson_top_0"/>
+      </spirit:hierConnection>
+      <spirit:hierConnection spirit:interfaceRef="io_divider_data_divisor/Conn2">
+        <spirit:activeInterface spirit:busRef="io_divider_data_divisor" spirit:componentRef="loongson_top_0"/>
+      </spirit:hierConnection>
+      <spirit:hierConnection spirit:interfaceRef="io_divider_data_dout/Conn3">
+        <spirit:activeInterface spirit:busRef="io_divider_data_dout" spirit:componentRef="loongson_top_0"/>
       </spirit:hierConnection>
     </spirit:hierConnections>
   </spirit:design>
 
   <spirit:component xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009">
     <spirit:vendor>xilinx.com</spirit:vendor>
-    <spirit:library>Addressing/noop/core/loongsontop/LOONGSON_TOP_0</spirit:library>
-    <spirit:name>LOONGSON_TOP</spirit:name>
+    <spirit:library>Addressing/noop/core/loongsontop/loongson_top_0</spirit:library>
+    <spirit:name>loongson_top</spirit:name>
     <spirit:version>1.0</spirit:version>
     <spirit:busInterfaces>
       <spirit:busInterface>
