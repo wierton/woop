@@ -124,12 +124,12 @@ always@(posedge clk) begin
   #2;
   if (resetn && io_commit_valid) begin
     if (io_commit_pc != ref_pc) begin
-      $display("BAD: pc: core:0x%08h <> ref:0x%08h\n", io_commit_pc, ref_pc);
+      $display("@%0t: pc: core:0x%08h <> ref:0x%08h\n", $time, io_commit_pc, ref_pc);
       $finish;
     end
 
     if (io_commit_instr != ref_instr) begin
-      $display("BAD: instr: core:0x%08h <> ref:0x%08h\n", io_commit_instr, ref_instr);
+      $display("@%0t: %08x: instr: core:0x%08h <> ref:0x%08h\n", $time, ref_pc, io_commit_instr, ref_instr);
       $finish;
     end
 
@@ -140,7 +140,7 @@ always@(posedge clk) begin
   `X(24) `X(25) `X(26) `X(27) `X(28) `X(29) `X(30) `X(31)
 `define GPR_TEST(n) \
     if (io_commit_gpr_``n != ref_gpr[n]) begin \
-      $display("BAD: gpr[%d]: core:0x%08h <> ref:0x%08h\n", n, io_commit_gpr_``n, ref_gpr[n]); \
+      $display("@%0t: %08x: gpr[%2d]: core:0x%08h <> ref:0x%08h\n", $time, ref_pc, n, io_commit_gpr_``n, ref_gpr[n]); \
       $finish; \
     end
 
@@ -151,7 +151,7 @@ end
 initial begin
   forever begin
     #500000;
-    $display("\t\t@%0t: CPU commit PC is %x", $time, io_commit_pc);
+    $display("@%0t: CPU commit PC is %x", $time, io_commit_pc);
   end
 end
 

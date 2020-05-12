@@ -1,4 +1,5 @@
 .PHONY: clean-all minicom
+.SECONDEXPANSION:
 
 export ARCH             := mips32-npc
 export CROSS_COMPILE    := mips-linux-gnu-

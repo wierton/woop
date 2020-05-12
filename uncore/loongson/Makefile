@@ -39,16 +39,16 @@ $(LS_XPR):
 	@mkdir -p $(LS_OBJDIR)
 	@cp -r $(LS_SRC_DIR)/soc_axi_final $(LS_OBJDIR)
 
-sim-%: $(ELF2COE) project compile-%
+sim-%: $(ELF2COE) project \
+	$$($$*_OBJDIR)/bram.coe \
+	$$($$*_OBJDIR)/ddr.coe \
+	$$($$*_OBJDIR)/trace.txt
 	@mkdir -p $(dir $(DDR_COE))
 	@mkdir -p $(dir $(BRAM_COE))
-	@cd $($(subst sim-,,$@)_OBJDIR); \
-	  $(abspath $<) -e $(subst sim-,,$@).elf \
-		-s $(DDR_COE):0x80000000:1048576 \
-		-s $(BRAM_COE):0xbfc00000:1048576 \
-	@cd $($(subst sim-,,$@)_OBJDIR); \
-	  $(MIPS32_NEMU) -b -e $(subst sim-,,$@).elf -c \
-		2> $(TRACE)
+	@cd $($*_OBJDIR); \
+	  cp bram.coe $(BRAM_COE); \
+	  cp ddr.coe $(DDR_COE); \
+	  cp trace.txt $(TRACE);
 	@SOC_XPR=mycpu.xpr SOC_DIR=$(dir $(LS_XPR)) \
 	  $(VIVADO) -mode batch -source $(UNCORE_DIR)/sim.tcl
 

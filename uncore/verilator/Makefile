@@ -34,9 +34,9 @@ $(EMU_MK): $(EMU_TOP_V) $(EMU_CXXFILES) $(EMU_LIB_V)
 project: $(EMU_BIN)
 
 sim-%: project compile-%
-	@cd $($(subst sim-,,$@)_OBJDIR) && \
+	@cd $($*_OBJDIR) && \
 	  ln -sf $(abspath $(EMU_BIN)) emulator && \
-	  ./emulator -b -e ./$(subst sim-,,$@).elf 2> npc.out
+	  ./emulator -b -e ./$*.elf 2> npc.out
 
 update: $(EMU_MK)
 	@rm -rf $(EMU_BIN)
