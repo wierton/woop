@@ -1,4 +1,4 @@
-.PHONY: sim-% project update clean
+.PHONY: run-% project update clean
 
 EMU_OBJ_DIR    := $(CORE_OBJ_DIR)
 EMU_TOP_MODULE := $(CORE_TOP_MODULE)
@@ -33,7 +33,7 @@ $(EMU_MK): $(EMU_TOP_V) $(EMU_CXXFILES) $(EMU_LIB_V)
 
 project: $(EMU_BIN)
 
-sim-%: project compile-%
+run-%: project compile-%
 	@cd $($*_OBJDIR) && \
 	  ln -sf $(abspath $(EMU_BIN)) emulator && \
 	  ./emulator -b -e ./$*.elf 2> npc.out

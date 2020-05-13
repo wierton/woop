@@ -12,7 +12,7 @@ $(2)_OBJDIR := $(OBJ_DIR)/$(2)
 endif
 $(2)_DEPS != find $(1) -regex ".*.\(c\|h\|cc\|cpp\|S\)"
 
-.PHONY: compile-$(2) run-$(2) run-nemu-$(2) clean-$(2)
+.PHONY: compile-$(2) clean-$(2)
 
 $$($(2)_APP)-$(ARCH).%: $$($(2)_DEPS)
 	@make -s -C $(1) ARCH=$(ARCH) $(4)

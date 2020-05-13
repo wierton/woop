@@ -1,6 +1,6 @@
-.PHONY: sim prj
+.PHONY: run-% prj
 
-sim-%: $(MIPS32_NEMU) compile-%
+run-%: $(MIPS32_NEMU) compile-%
 	@cd $($*_OBJDIR) && $< -b -e ./$*.elf
 
 prj: $(MIPS32_NEMU)

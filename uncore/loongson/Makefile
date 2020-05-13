@@ -1,4 +1,4 @@
-.PHONY: sim-% project update vivado bitstream clean
+.PHONY: run-% update-% project update vivado bitstream clean
 
 LS_SRC_DIR := $(UNCORE_DIR)
 LS_OBJDIR  := $(abspath $(CORE_OBJ_DIR))
@@ -39,9 +39,7 @@ $(LS_XPR):
 	@mkdir -p $(LS_OBJDIR)
 	@cp -r $(LS_SRC_DIR)/soc_axi_final $(LS_OBJDIR)
 
-sim-%: $(ELF2COE) project \
-	$$($$*_OBJDIR)/bram.coe \
-	$$($$*_OBJDIR)/ddr.coe \
+update-%: $$($$*_OBJDIR)/bram.coe $$($$*_OBJDIR)/ddr.coe \
 	$$($$*_OBJDIR)/trace.txt
 	@mkdir -p $(dir $(DDR_COE))
 	@mkdir -p $(dir $(BRAM_COE))
@@ -49,7 +47,9 @@ sim-%: $(ELF2COE) project \
 	  cp bram.coe $(BRAM_COE); \
 	  cp ddr.coe $(DDR_COE); \
 	  cp trace.txt $(TRACE);
-	@SOC_XPR=mycpu.xpr SOC_DIR=$(dir $(LS_XPR)) \
+
+run-%: project update-%
+	SOC_XPR=mycpu.xpr SOC_DIR=$(dir $(LS_XPR)) \
 	  $(VIVADO) -mode batch -source $(UNCORE_DIR)/sim.tcl
 
 project: $(LS_XPR) $(LS_TOP_V) $(U_BOOT_COE) $(INST_COE) \
@@ -59,7 +59,7 @@ vivado: project
 	@cd $(dir $(LS_XPR)) && nohup $(VIVADO) $(LS_XPR) &
 
 bitstream: project
-	@SOC_XPR=mycpu.xpr SOC_DIR=$(dir $(ZB_XPR)) \
+	@SOC_XPR=mycpu.xpr SOC_DIR=$(dir $(LS_XPR)) \
 	  $(VIVADO) -mode batch -source $(UNCORE_DIR)/mk.tcl
 
 clean:
