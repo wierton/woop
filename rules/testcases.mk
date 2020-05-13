@@ -8,7 +8,7 @@ export INPUT ?= TEST
 endif
 
 AM_TESTS   != ls $(AM_HOME)/tests
-AM_TESTS   := $(filter-out cputests,$(AM_TESTS))
+AM_TESTS   := $(filter-out cputest,$(AM_TESTS))
 AM_APPS    != ls $(AM_HOME)/apps
 MIPS_TESTS != ls $(MIPS_TEST_HOME)
 CPUTESTS   != find $(AM_HOME)/tests/cputest -name "*.c"
@@ -29,9 +29,9 @@ $(foreach app,$(MIPS_TESTS),$(eval $(call test_template,$(MIPS_TEST_HOME)/$(app)
 # cputests
 $(foreach c,$(CPUTESTS),$(eval $(call test_template,$(AM_HOME)/tests/cputest,$(c),$(OBJ_DIR)/cputests/$(c),ALL=$(c))))
 
-.PHONY: clean-cputests %-cputests
+.PHONY: clean-cputests run-cputests
 
 clean-cputests:
 	@make -s -C $(AM_HOME)/tests/cputest clean
 
-sim-cputests: $(foreach c,$(CPUTESTS),sim-$(c))
+run-cputests: $(foreach c,$(CPUTESTS),run-$(c))
