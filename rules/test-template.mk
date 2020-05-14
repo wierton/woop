@@ -23,17 +23,21 @@ compile-$(2): $$($(2)_APP)-$(ARCH).elf \
 	@mkdir -p $$($(2)_OBJDIR)
 	@cd $$($(2)_OBJDIR) && \
 		ln -sf $$^ . && \
-		rename -f 's/txt$$$$/S/g' *.txt && \
-		rename -f 's/-$(ARCH)//g' * \
+		rename -f 's/-$(ARCH)//g' * && \
+		mv $(2).txt $(2).S
+
+$$($(2)_OBJDIR)/$(2).elf: compile-$(2)
 
 $$($(2)_OBJDIR)/bram.coe $$($(2)_OBJDIR)/ddr.coe: \
   $$($(2)_OBJDIR)/$(2).elf $(ELF2COE)
-	@$(abspath $(ELF2COE)) -e $$< \
-		-s $$($(2)_OBJDIR)/ddr.coe:0x80000000:1048576 \
-		-s $$($(2)_OBJDIR)/bram.coe:0xbfc00000:1048576
+	@cd $$($(2)_OBJDIR) && \
+	  $(abspath $(ELF2COE)) -e $(2).elf \
+		-s ddr.coe:0x80000000:1048576 \
+		-s bram.coe:0xbfc00000:1048576
 
 $$($(2)_OBJDIR)/trace.txt: $$($(2)_OBJDIR)/$(2).elf
-	@$(MIPS32_NEMU) -b -e $$< -c 2> $$@
+	@cd $$($(2)_OBJDIR) && \
+	  $(MIPS32_NEMU) -b -e $(2).elf -c 2> $$(@F)
 
 clean-$(2):
 	@make -s -C $(1) ARCH=$(ARCH) clean
