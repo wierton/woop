@@ -14,6 +14,14 @@
 #include <unistd.h>
 #include <vector>
 
+#define Assert(cond, fmt, ...)                            \
+  do {                                                    \
+    if (!(cond)) {                                        \
+      fprintf(stderr, "error: " fmt "\n", ##__VA_ARGS__); \
+      exit(1);                                            \
+    }                                                     \
+  } while (0)
+
 struct AddrSpace {
   std::string coe;
   unsigned addr;
@@ -79,10 +87,11 @@ char *as_map(std::vector<AddrSpace> &space, uint32_t addr,
 void as_load(
     std::vector<AddrSpace> &space, const char *elf_file) {
   uint8_t *buf = read_file(elf_file);
-  assert(buf);
+  Assert(buf, "elf file cannot be opened for reading");
 
   Elf32_Ehdr *elf = (Elf32_Ehdr *)buf;
-  assert(*(uint32_t *)elf == 0x464c457f);
+  Assert(*(uint32_t *)elf == 0x464c457f,
+      "specified elf file has bad magic number");
   for (int i = 0; i < elf->e_phnum; i++) {
     Elf32_Phdr *ph =
         (Elf32_Phdr *)(buf + i * elf->e_phentsize +
@@ -90,7 +99,8 @@ void as_load(
     if (ph->p_type != PT_LOAD) { continue; }
 
     char *ptr = as_map(space, ph->p_vaddr, ph->p_memsz);
-    assert(ptr);
+    Assert(ptr,
+        "elf file has sections out of specified range");
     memcpy(ptr, buf + ph->p_offset, ph->p_filesz);
     memset(
         ptr + ph->p_filesz, 0, ph->p_memsz - ph->p_filesz);
@@ -100,7 +110,7 @@ void as_load(
     uint32_t entry = elf->e_entry;
     uint32_t *p =
         (uint32_t *)as_map(space, 0xbfc00000, 4 * 4);
-    assert(p);
+    Assert(p, "addr range 0xBFC00000 is not specified");
     p[0] = 0x3c080000 | (entry >> 16); // lui t0, %hi(entry)
     p[1] = 0x35080000 |
            (entry & 0xFFFF); // ori t0, t0, %lo(entry)
@@ -143,7 +153,8 @@ int main(int argc, char *const argv[]) {
     } else if (strncmp(argv[i], "-s", 2) == 0) {
       const char *optarg = argv[++i];
       std::vector<std::string> pieces = split(optarg, ':');
-      assert(pieces.size() == 3);
+      Assert(
+          pieces.size() == 3, "wrong format in -s option");
 
       AddrSpace as;
       as.coe = pieces[0];
@@ -154,7 +165,7 @@ int main(int argc, char *const argv[]) {
     }
   }
 
-  assert(elf_file);
+  Assert(elf_file, "elf file is not specified");
   as_load(space, elf_file);
   as_realize(space);
   return 0;
