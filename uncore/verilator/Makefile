@@ -45,4 +45,4 @@ update: $(EMU_MK)
 	@touch $<
 
 clean:
-	rm -Irf $(OBJ_DIR)/$(UNCORE)
+	rm -rI $(OBJ_DIR)/$(UNCORE)

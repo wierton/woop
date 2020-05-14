@@ -63,4 +63,4 @@ bitstream: project
 	  $(VIVADO) -mode batch -source $(UNCORE_DIR)/mk.tcl
 
 clean:
-	rm -Irf $(LS_OBJDIR)
+	rm -rI $(LS_OBJDIR)
