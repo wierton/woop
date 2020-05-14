@@ -1,4 +1,6 @@
 .PHONY: clean-all minicom
+
+.SUFFIXES:
 .SECONDEXPANSION:
 
 export ARCH             := mips32-npc

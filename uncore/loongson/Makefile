@@ -48,7 +48,7 @@ update-%: $$($$*_OBJDIR)/bram.coe $$($$*_OBJDIR)/ddr.coe \
 	  cp ddr.coe $(DDR_COE); \
 	  cp trace.txt $(TRACE);
 
-run-%: project update-%
+run-%: project update-% $$($$*_ELF)
 	SOC_XPR=mycpu.xpr SOC_DIR=$(dir $(LS_XPR)) \
 	  $(VIVADO) -mode batch -source $(UNCORE_DIR)/sim.tcl
 
