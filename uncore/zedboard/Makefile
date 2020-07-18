@@ -11,7 +11,7 @@ $(ZB_TOP_V): $(CORE_TOP_V)
 
 $(ZB_XPR):
 	@rm -rf $(ZB_OBJDIR)
-	@cp -r soc/zedboard $(ZB_OBJDIR)
+	@cp -r uncore/zedboard $(ZB_OBJDIR)
 
 sim-%: compile-%
 

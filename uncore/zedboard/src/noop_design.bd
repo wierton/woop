@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<bd:repository xmlns:bd="http://www.xilinx.com/bd" bd:BoundaryCRC="0xA172E6B02DD945A6" bd:device="xc7z020clg484-1" bd:synthFlowMode="Hierarchical" bd:tool_version="2018.1" bd:top="noop_design" bd:version="1.00.a">
+<bd:repository xmlns:bd="http://www.xilinx.com/bd" bd:BoundaryCRC="0xA172E6B02DD945A6" bd:device="xc7z020clg484-1" bd:isValidated="true" bd:synthFlowMode="Hierarchical" bd:tool_version="2018.1" bd:top="noop_design" bd:version="1.00.a">
 
   <spirit:component xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009">
     <spirit:vendor>xilinx.com</spirit:vendor>
@@ -307,7 +307,7 @@
         <spirit:instanceName>proc_sys_reset_0</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="proc_sys_reset" spirit:vendor="xilinx.com" spirit:version="5.0"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_proc_sys_reset_0_3</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_proc_sys_reset_0_0</spirit:configurableElementValue>
         </spirit:configurableElementValues>
       </spirit:componentInstance>
       <spirit:componentInstance>
@@ -659,21 +659,21 @@
         <spirit:instanceName>axi_protocol_convert_1</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="axi_protocol_converter" spirit:vendor="xilinx.com" spirit:version="2.1"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi_protocol_convert_0_1</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi_protocol_convert_1_0</spirit:configurableElementValue>
         </spirit:configurableElementValues>
       </spirit:componentInstance>
       <spirit:componentInstance>
         <spirit:instanceName>axi_protocol_convert_2</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="axi_protocol_converter" spirit:vendor="xilinx.com" spirit:version="2.1"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi_protocol_convert_1_0</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi_protocol_convert_2_0</spirit:configurableElementValue>
         </spirit:configurableElementValues>
       </spirit:componentInstance>
       <spirit:componentInstance>
         <spirit:instanceName>axi_protocol_convert_3</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="axi_protocol_converter" spirit:vendor="xilinx.com" spirit:version="2.1"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi_protocol_convert_1_1</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi_protocol_convert_3_0</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="SI_PROTOCOL">AXI4LITE</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="MI_PROTOCOL">AXI4</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="TRANSLATION_MODE">2</spirit:configurableElementValue>
@@ -958,14 +958,14 @@
         <spirit:instanceName>axi_protocol_converter_0</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="axi_protocol_converter" spirit:vendor="xilinx.com" spirit:version="2.1"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi_protocol_converter_0_2</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi_protocol_converter_0_0</spirit:configurableElementValue>
         </spirit:configurableElementValues>
       </spirit:componentInstance>
       <spirit:componentInstance>
         <spirit:instanceName>axi_crossbar_0</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="axi_crossbar" spirit:vendor="xilinx.com" spirit:version="2.1"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi_crossbar_0_1</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi_crossbar_0_0</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="M00_A00_BASE_ADDR">0xffffffffffffffff</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="M00_A01_BASE_ADDR">0xffffffffffffffff</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="M00_A02_BASE_ADDR">0xffffffffffffffff</spirit:configurableElementValue>
@@ -1244,7 +1244,7 @@
         <spirit:instanceName>axi3_to_lite_pc</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="axi_protocol_converter" spirit:vendor="xilinx.com" spirit:version="2.1"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi3_to_lite_pc_1</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi3_to_lite_pc_0</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="TRANSLATION_MODE">2</spirit:configurableElementValue>
         </spirit:configurableElementValues>
       </spirit:componentInstance>
@@ -1252,7 +1252,7 @@
         <spirit:instanceName>armv7_processing_system</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="processing_system7" spirit:vendor="xilinx.com" spirit:version="5.5"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_armv7_processing_system_1</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_armv7_processing_system_0</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="PCW_DDR_RAM_BASEADDR">0x00100000</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="PCW_DDR_RAM_HIGHADDR">0x3FFFFFFF</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="PCW_UART0_BASEADDR">0xE0000000</spirit:configurableElementValue>
@@ -1771,7 +1771,7 @@
         <spirit:instanceName>axi_gpio_0</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="axi_gpio" spirit:vendor="xilinx.com" spirit:version="2.0"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi_gpio_0_1</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_axi_gpio_0_0</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="C_GPIO_WIDTH">1</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="C_ALL_OUTPUTS">1</spirit:configurableElementValue>
         </spirit:configurableElementValues>
@@ -1780,14 +1780,14 @@
         <spirit:instanceName>proc_sys_reset_0</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="proc_sys_reset" spirit:vendor="xilinx.com" spirit:version="5.0"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_proc_sys_reset_0_2</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_proc_sys_reset_0_1</spirit:configurableElementValue>
         </spirit:configurableElementValues>
       </spirit:componentInstance>
       <spirit:componentInstance>
         <spirit:instanceName>clk_wiz_0</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="clk_wiz" spirit:vendor="xilinx.com" spirit:version="6.0"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_clk_wiz_0_1</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_clk_wiz_0_0</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="CLKOUT2_USED">true</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="CLKOUT3_USED">true</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="NUM_OUT_CLKS">3</spirit:configurableElementValue>
@@ -1924,12 +1924,6 @@
         <spirit:abstractionType spirit:library="interface" spirit:name="aximm_rtl" spirit:vendor="xilinx.com" spirit:version="1.0"/>
       </spirit:busInterface>
       <spirit:busInterface>
-        <spirit:name>io_mmio</spirit:name>
-        <spirit:master/>
-        <spirit:busType spirit:library="interface" spirit:name="aximm" spirit:vendor="xilinx.com" spirit:version="1.0"/>
-        <spirit:abstractionType spirit:library="interface" spirit:name="aximm_rtl" spirit:vendor="xilinx.com" spirit:version="1.0"/>
-      </spirit:busInterface>
-      <spirit:busInterface>
         <spirit:name>CLK.CORECLK</spirit:name>
         <spirit:displayName>Clk</spirit:displayName>
         <spirit:description>Clock</spirit:description>
@@ -2051,7 +2045,7 @@
         <spirit:instanceName>proc_sys_reset_0</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="proc_sys_reset" spirit:vendor="xilinx.com" spirit:version="5.0"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_proc_sys_reset_0_0</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_proc_sys_reset_0_2</spirit:configurableElementValue>
         </spirit:configurableElementValues>
       </spirit:componentInstance>
       <spirit:componentInstance>
@@ -2059,23 +2053,24 @@
         <spirit:componentRef spirit:library="BlockDiagram/noop_design_imp/core_imp" spirit:name="zedboard_top" spirit:vendor="xilinx.com" spirit:version="1.00.a"/>
       </spirit:componentInstance>
     </spirit:componentInstances>
-    <spirit:interconnections/>
+    <spirit:interconnections>
+      <spirit:interconnection>
+        <spirit:name>zedboard_top_io_divider_data_dividend_0</spirit:name>
+        <spirit:activeInterface spirit:busRef="io_divider_data_dividend_0" spirit:componentRef="zedboard_top"/>
+        <spirit:activeInterface spirit:busRef="S_AXIS_DIVIDEND" spirit:componentRef="div_gen_0"/>
+      </spirit:interconnection>
+      <spirit:interconnection>
+        <spirit:name>zedboard_top_io_divider_data_divisor_0</spirit:name>
+        <spirit:activeInterface spirit:busRef="io_divider_data_divisor_0" spirit:componentRef="zedboard_top"/>
+        <spirit:activeInterface spirit:busRef="S_AXIS_DIVISOR" spirit:componentRef="div_gen_0"/>
+      </spirit:interconnection>
+      <spirit:interconnection>
+        <spirit:name>io_divider_data_dout_0_1</spirit:name>
+        <spirit:activeInterface spirit:busRef="io_divider_data_dout_0" spirit:componentRef="zedboard_top"/>
+        <spirit:activeInterface spirit:busRef="M_AXIS_DOUT" spirit:componentRef="div_gen_0"/>
+      </spirit:interconnection>
+    </spirit:interconnections>
     <spirit:adHocConnections>
-      <spirit:adHocConnection>
-        <spirit:name>FPGATop_0_io_mul_a</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_mul_a"/>
-        <spirit:internalPortReference spirit:componentRef="mult_gen_0" spirit:portRef="A"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>FPGATop_0_io_mul_b</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_mul_b"/>
-        <spirit:internalPortReference spirit:componentRef="mult_gen_0" spirit:portRef="B"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>mult_gen_0_P</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="mult_gen_0" spirit:portRef="P"/>
-        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_mul_dout"/>
-      </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>util_vector_logic_0_Res</spirit:name>
         <spirit:internalPortReference spirit:componentRef="util_vector_logic_0" spirit:portRef="Res"/>
@@ -2085,46 +2080,6 @@
         <spirit:name>proc_sys_reset_0_peripheral_aresetn1</spirit:name>
         <spirit:internalPortReference spirit:componentRef="proc_sys_reset_0" spirit:portRef="peripheral_aresetn"/>
         <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="aresetn"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>FPGATop_0_io_div_divisor_valid</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_div_divisor_valid"/>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="s_axis_divisor_tvalid"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>div_gen_0_s_axis_divisor_tready</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="s_axis_divisor_tready"/>
-        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_div_divisor_ready"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>FPGATop_0_io_div_divisor_bits</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_div_divisor_bits"/>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="s_axis_divisor_tdata"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>FPGATop_0_io_div_diviend_valid</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_div_diviend_valid"/>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="s_axis_dividend_tvalid"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>div_gen_0_s_axis_dividend_tready</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="s_axis_dividend_tready"/>
-        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_div_diviend_ready"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>FPGATop_0_io_div_diviend_bits</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_div_diviend_bits"/>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="s_axis_dividend_tdata"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>div_gen_0_m_axis_dout_tvalid</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="m_axis_dout_tvalid"/>
-        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_div_dout_valid"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>div_gen_0_m_axis_dout_tdata</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="div_gen_0" spirit:portRef="m_axis_dout_tdata"/>
-        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_div_dout_bits"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>uncoreclk_1</spirit:name>
@@ -2144,6 +2099,21 @@
         <spirit:name>dcm_locked_1</spirit:name>
         <spirit:externalPortReference spirit:portRef="dcm_locked"/>
         <spirit:internalPortReference spirit:componentRef="proc_sys_reset_0" spirit:portRef="dcm_locked"/>
+      </spirit:adHocConnection>
+      <spirit:adHocConnection>
+        <spirit:name>mult_gen_0_P</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="mult_gen_0" spirit:portRef="P"/>
+        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_multiplier_data_dout_0"/>
+      </spirit:adHocConnection>
+      <spirit:adHocConnection>
+        <spirit:name>zedboard_top_io_multiplier_data_a_0</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_multiplier_data_a_0"/>
+        <spirit:internalPortReference spirit:componentRef="mult_gen_0" spirit:portRef="A"/>
+      </spirit:adHocConnection>
+      <spirit:adHocConnection>
+        <spirit:name>zedboard_top_io_multiplier_data_b_0</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="zedboard_top" spirit:portRef="io_multiplier_data_b_0"/>
+        <spirit:internalPortReference spirit:componentRef="mult_gen_0" spirit:portRef="B"/>
       </spirit:adHocConnection>
     </spirit:adHocConnections>
     <spirit:hierConnections>
@@ -2173,6 +2143,24 @@
         <spirit:master/>
         <spirit:busType spirit:library="interface" spirit:name="aximm" spirit:vendor="xilinx.com" spirit:version="1.0"/>
         <spirit:abstractionType spirit:library="interface" spirit:name="aximm_rtl" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+      </spirit:busInterface>
+      <spirit:busInterface>
+        <spirit:name>io_divider_data_dividend_0</spirit:name>
+        <spirit:master/>
+        <spirit:busType spirit:library="interface" spirit:name="axis" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+        <spirit:abstractionType spirit:library="interface" spirit:name="axis_rtl" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+      </spirit:busInterface>
+      <spirit:busInterface>
+        <spirit:name>io_divider_data_divisor_0</spirit:name>
+        <spirit:master/>
+        <spirit:busType spirit:library="interface" spirit:name="axis" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+        <spirit:abstractionType spirit:library="interface" spirit:name="axis_rtl" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+      </spirit:busInterface>
+      <spirit:busInterface>
+        <spirit:name>io_divider_data_dout_0</spirit:name>
+        <spirit:slave/>
+        <spirit:busType spirit:library="interface" spirit:name="axis" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+        <spirit:abstractionType spirit:library="interface" spirit:name="axis_rtl" spirit:vendor="xilinx.com" spirit:version="1.0"/>
       </spirit:busInterface>
       <spirit:busInterface>
         <spirit:name>CLK.CORECLK</spirit:name>
@@ -2233,27 +2221,7 @@
           </spirit:wire>
         </spirit:port>
         <spirit:port>
-          <spirit:name>io_mul_a</spirit:name>
-          <spirit:wire>
-            <spirit:direction>out</spirit:direction>
-            <spirit:vector>
-              <spirit:left>32</spirit:left>
-              <spirit:right>0</spirit:right>
-            </spirit:vector>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_mul_b</spirit:name>
-          <spirit:wire>
-            <spirit:direction>out</spirit:direction>
-            <spirit:vector>
-              <spirit:left>32</spirit:left>
-              <spirit:right>0</spirit:right>
-            </spirit:vector>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_mul_dout</spirit:name>
+          <spirit:name>io_multiplier_data_dout_0</spirit:name>
           <spirit:wire>
             <spirit:direction>in</spirit:direction>
             <spirit:vector>
@@ -2263,61 +2231,21 @@
           </spirit:wire>
         </spirit:port>
         <spirit:port>
-          <spirit:name>io_div_diviend_ready</spirit:name>
-          <spirit:wire>
-            <spirit:direction>in</spirit:direction>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_diviend_valid</spirit:name>
-          <spirit:wire>
-            <spirit:direction>out</spirit:direction>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_diviend_bits</spirit:name>
+          <spirit:name>io_multiplier_data_a_0</spirit:name>
           <spirit:wire>
             <spirit:direction>out</spirit:direction>
             <spirit:vector>
-              <spirit:left>39</spirit:left>
+              <spirit:left>32</spirit:left>
               <spirit:right>0</spirit:right>
             </spirit:vector>
           </spirit:wire>
         </spirit:port>
         <spirit:port>
-          <spirit:name>io_div_divisor_ready</spirit:name>
-          <spirit:wire>
-            <spirit:direction>in</spirit:direction>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_divisor_valid</spirit:name>
-          <spirit:wire>
-            <spirit:direction>out</spirit:direction>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_divisor_bits</spirit:name>
+          <spirit:name>io_multiplier_data_b_0</spirit:name>
           <spirit:wire>
             <spirit:direction>out</spirit:direction>
             <spirit:vector>
-              <spirit:left>39</spirit:left>
-              <spirit:right>0</spirit:right>
-            </spirit:vector>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_dout_valid</spirit:name>
-          <spirit:wire>
-            <spirit:direction>in</spirit:direction>
-          </spirit:wire>
-        </spirit:port>
-        <spirit:port>
-          <spirit:name>io_div_dout_bits</spirit:name>
-          <spirit:wire>
-            <spirit:direction>in</spirit:direction>
-            <spirit:vector>
-              <spirit:left>79</spirit:left>
+              <spirit:left>32</spirit:left>
               <spirit:right>0</spirit:right>
             </spirit:vector>
           </spirit:wire>
@@ -2333,11 +2261,11 @@
     <spirit:version>1.00.a</spirit:version>
     <spirit:componentInstances>
       <spirit:componentInstance>
-        <spirit:instanceName>ZEDBOARD_TOP_0</spirit:instanceName>
-        <spirit:componentRef spirit:library="module_ref" spirit:name="ZEDBOARD_TOP" spirit:vendor="xilinx.com" spirit:version="1.0"/>
+        <spirit:instanceName>zedboard_top_0</spirit:instanceName>
+        <spirit:componentRef spirit:library="module_ref" spirit:name="zedboard_top" spirit:vendor="xilinx.com" spirit:version="1.0"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_ZEDBOARD_TOP_0_0</spirit:configurableElementValue>
-          <spirit:configurableElementValue spirit:referenceId="bd:referenceName">ZEDBOARD_TOP</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">noop_design_zedboard_top_0_1</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:referenceName">zedboard_top</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="bd:subInstancePath"></spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="bd:referenceType">hdl</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="bd:BoundaryCRC">0x0</spirit:configurableElementValue>
@@ -2349,83 +2277,52 @@
       <spirit:adHocConnection>
         <spirit:name>coreclk_1</spirit:name>
         <spirit:externalPortReference spirit:portRef="coreclk"/>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="clock"/>
+        <spirit:internalPortReference spirit:componentRef="zedboard_top_0" spirit:portRef="clock"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
         <spirit:name>reset_1</spirit:name>
         <spirit:externalPortReference spirit:portRef="reset"/>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="reset"/>
+        <spirit:internalPortReference spirit:componentRef="zedboard_top_0" spirit:portRef="reset"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>io_div_diviend_ready_1</spirit:name>
-        <spirit:externalPortReference spirit:portRef="io_div_diviend_ready"/>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="io_divider_data_dividend_ready"/>
+        <spirit:name>io_multiplier_data_dout_0_1</spirit:name>
+        <spirit:externalPortReference spirit:portRef="io_multiplier_data_dout_0"/>
+        <spirit:internalPortReference spirit:componentRef="zedboard_top_0" spirit:portRef="io_multiplier_data_dout"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>io_div_divisor_ready_1</spirit:name>
-        <spirit:externalPortReference spirit:portRef="io_div_divisor_ready"/>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="io_divider_data_divisor_ready"/>
+        <spirit:name>zedboard_top_0_io_multiplier_data_a</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="zedboard_top_0" spirit:portRef="io_multiplier_data_a"/>
+        <spirit:externalPortReference spirit:portRef="io_multiplier_data_a_0"/>
       </spirit:adHocConnection>
       <spirit:adHocConnection>
-        <spirit:name>io_div_dout_valid_1</spirit:name>
-        <spirit:externalPortReference spirit:portRef="io_div_dout_valid"/>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="io_divider_data_dout_valid"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>io_div_dout_bits_1</spirit:name>
-        <spirit:externalPortReference spirit:portRef="io_div_dout_bits"/>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="io_divider_data_dout_bits"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>io_mul_dout_1</spirit:name>
-        <spirit:externalPortReference spirit:portRef="io_mul_dout"/>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="io_multiplier_data_dout"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>ZEDBOARD_TOP_0_io_divider_data_dividend_valid</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="io_divider_data_dividend_valid"/>
-        <spirit:externalPortReference spirit:portRef="io_div_diviend_valid"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>ZEDBOARD_TOP_0_io_divider_data_divisor_valid</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="io_divider_data_divisor_valid"/>
-        <spirit:externalPortReference spirit:portRef="io_div_divisor_valid"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>ZEDBOARD_TOP_0_io_divider_data_dividend_bits</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="io_divider_data_dividend_bits"/>
-        <spirit:externalPortReference spirit:portRef="io_div_diviend_bits"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>ZEDBOARD_TOP_0_io_divider_data_divisor_bits</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="io_divider_data_divisor_bits"/>
-        <spirit:externalPortReference spirit:portRef="io_div_divisor_bits"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>ZEDBOARD_TOP_0_io_multiplier_data_a</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="io_multiplier_data_a"/>
-        <spirit:externalPortReference spirit:portRef="io_mul_a"/>
-      </spirit:adHocConnection>
-      <spirit:adHocConnection>
-        <spirit:name>ZEDBOARD_TOP_0_io_multiplier_data_b</spirit:name>
-        <spirit:internalPortReference spirit:componentRef="ZEDBOARD_TOP_0" spirit:portRef="io_multiplier_data_b"/>
-        <spirit:externalPortReference spirit:portRef="io_mul_b"/>
+        <spirit:name>zedboard_top_0_io_multiplier_data_b</spirit:name>
+        <spirit:internalPortReference spirit:componentRef="zedboard_top_0" spirit:portRef="io_multiplier_data_b"/>
+        <spirit:externalPortReference spirit:portRef="io_multiplier_data_b_0"/>
       </spirit:adHocConnection>
     </spirit:adHocConnections>
     <spirit:hierConnections>
-      <spirit:hierConnection spirit:interfaceRef="io_dmem/ZEDBOARD_TOP_0_io_dmem">
-        <spirit:activeInterface spirit:busRef="io_dmem" spirit:componentRef="ZEDBOARD_TOP_0"/>
+      <spirit:hierConnection spirit:interfaceRef="io_dmem/zedboard_top_0_io_imem">
+        <spirit:activeInterface spirit:busRef="io_imem" spirit:componentRef="zedboard_top_0"/>
       </spirit:hierConnection>
-      <spirit:hierConnection spirit:interfaceRef="io_imem/ZEDBOARD_TOP_0_io_imem">
-        <spirit:activeInterface spirit:busRef="io_imem" spirit:componentRef="ZEDBOARD_TOP_0"/>
+      <spirit:hierConnection spirit:interfaceRef="io_imem/zedboard_top_0_io_dmem">
+        <spirit:activeInterface spirit:busRef="io_dmem" spirit:componentRef="zedboard_top_0"/>
+      </spirit:hierConnection>
+      <spirit:hierConnection spirit:interfaceRef="io_divider_data_dividend_0/Conn1">
+        <spirit:activeInterface spirit:busRef="io_divider_data_dividend" spirit:componentRef="zedboard_top_0"/>
+      </spirit:hierConnection>
+      <spirit:hierConnection spirit:interfaceRef="io_divider_data_divisor_0/Conn2">
+        <spirit:activeInterface spirit:busRef="io_divider_data_divisor" spirit:componentRef="zedboard_top_0"/>
+      </spirit:hierConnection>
+      <spirit:hierConnection spirit:interfaceRef="io_divider_data_dout_0/Conn3">
+        <spirit:activeInterface spirit:busRef="io_divider_data_dout" spirit:componentRef="zedboard_top_0"/>
       </spirit:hierConnection>
     </spirit:hierConnections>
   </spirit:design>
 
   <spirit:component xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009">
     <spirit:vendor>xilinx.com</spirit:vendor>
-    <spirit:library>Addressing/core/zedboard_top/ZEDBOARD_TOP_0</spirit:library>
-    <spirit:name>ZEDBOARD_TOP</spirit:name>
+    <spirit:library>Addressing/core/zedboard_top/zedboard_top_0</spirit:library>
+    <spirit:name>zedboard_top</spirit:name>
     <spirit:version>1.0</spirit:version>
     <spirit:busInterfaces>
       <spirit:busInterface>
