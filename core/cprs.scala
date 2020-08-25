@@ -239,10 +239,10 @@ class CP0Config1 extends Bundle {
     this.C2 := 0.U
 
     require(conf.nICacheSets >= 1)
-    require(log2Ceil(conf.nICacheWayBytes) >= 1)
+    require(log2Ceil(conf.nICacheWordsPerWay) >= 1)
     require(log2Ceil(conf.nICacheSets) >= 6)
     this.IA := (conf.nICacheWays - 1).U
-    this.IL := (log2Ceil(conf.nICacheWayBytes) - 1).U
+    this.IL := (log2Ceil(conf.nICacheWordsPerWay) - 1).U
     this.IS := (log2Ceil(conf.nICacheSets) - 6).U
 
     require(conf.nDCacheSets >= 1)

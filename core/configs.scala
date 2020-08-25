@@ -20,7 +20,7 @@ object conf {
 
   val nICacheSets = 256
   val nICacheWays = 4
-  val nICacheWayBytes = 16
+  val nICacheWordsPerWay = 16
   val nDCacheSets = 256
   val nDCacheWays = 4
   val nDCacheWayBytes = 16

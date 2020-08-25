@@ -10,14 +10,14 @@ import woop.utils._
 
 object ICacheParams {
   val setno_bits = log2Ceil(conf.nICacheSets)
-  val off_bits = log2Ceil(conf.nICacheWayBytes / 4)
-  val tag_bits = conf.xprlen - setno_bits - off_bits - 2
+  val wordno_bits = log2Ceil(conf.nICacheWordsPerWay)
+  val tag_bits = conf.xprlen - setno_bits - wordno_bits - 2
 }
 
 class ICacheAddr extends Bundle {
   val tag = UInt(ICacheParams.tag_bits.W)
   val setno = UInt(ICacheParams.setno_bits.W)
-  val off = UInt(ICacheParams.off_bits.W)
+  val wordno = UInt(ICacheParams.wordno_bits.W)
   val l2bits = UInt(2.W)
 }
 
@@ -32,11 +32,11 @@ class ICache extends Module {
 
   require(isPow2(conf.nICacheSets))
   require(isPow2(conf.nICacheWays))
-  require(isPow2(conf.nICacheWayBytes))
+  require(isPow2(conf.nICacheWordsPerWay))
 
   val vbits = Module(new SeqMemAccessor(conf.nICacheSets, Vec(conf.nICacheWays, Bool())))
   val tags = Module(new SeqMemAccessor(conf.nICacheSets, Vec(conf.nICacheWays, UInt(ICacheParams.tag_bits.W))))
-  val datas = Module(new SeqMemAccessor(conf.nICacheSets * conf.nICacheWays, Vec(conf.nICacheWayBytes / 4, UInt(32.W))))
+  val datas = Module(new SeqMemAccessor(conf.nICacheSets * conf.nICacheWays, Vec(conf.nICacheWordsPerWay, UInt(32.W))))
 
   /* stage 0 */
   val s0_in = io.in.req.bits
