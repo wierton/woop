@@ -111,8 +111,8 @@ class CP0Cause extends Bundle {
 }
 
 class CP0Wired extends Bundle {
-  val _0  = UInt((32 - log2Ceil(conf.tlbsz)).W)
-  val bound = UInt(log2Ceil(conf.tlbsz).W)
+  val _0  = UInt((32 - log2Ceil(conf.TLBSZ)).W)
+  val bound = UInt(log2Ceil(conf.TLBSZ).W)
 
   def init(): Unit = {
     require(this.getWidth == 32)
@@ -241,7 +241,7 @@ class CP0Config1 extends Bundle {
     require(conf.nICacheSets >= 1)
     require(log2Ceil(conf.nICacheWordsPerWay) >= 1)
     require(log2Ceil(conf.nICacheSets) >= 6)
-    this.IA := (conf.nICacheWays - 1).U
+    this.IA := (conf.nICacheWaysPerSet - 1).U
     this.IL := (log2Ceil(conf.nICacheWordsPerWay) - 1).U
     this.IS := (log2Ceil(conf.nICacheSets) - 6).U
 
@@ -252,8 +252,8 @@ class CP0Config1 extends Bundle {
     this.DL := (log2Ceil(conf.nDCacheWayBytes) - 1).U
     this.DS := (log2Ceil(conf.nDCacheSets) - 6).U
 
-    require(conf.tlbsz <= 64)
-    this.MMU_size := (conf.tlbsz - 1).U
+    require(conf.TLBSZ <= 64)
+    this.MMU_size := (conf.TLBSZ - 1).U
     this.M := 0.U
   }
 
@@ -319,8 +319,8 @@ class CP0PageMask extends Bundle {
 }
 
 class CP0Random extends Bundle {
-  val _0    = UInt((32 - log2Ceil(conf.tlbsz)).W)
-  val index = UInt((log2Ceil(conf.tlbsz)).W)
+  val _0    = UInt((32 - log2Ceil(conf.TLBSZ)).W)
+  val index = UInt((log2Ceil(conf.TLBSZ)).W)
 
   def init(): Unit = {
     require(this.getWidth == 32)
@@ -333,8 +333,8 @@ class CP0Random extends Bundle {
 
 class CP0Index extends Bundle {
   val p     = UInt(1.W)
-  val _0    = UInt((31 - log2Ceil(conf.tlbsz)).W)
-  val index = UInt((log2Ceil(conf.tlbsz)).W)
+  val _0    = UInt((31 - log2Ceil(conf.TLBSZ)).W)
+  val index = UInt((log2Ceil(conf.TLBSZ)).W)
 
   def init(): Unit = {
     require(this.getWidth == 32)

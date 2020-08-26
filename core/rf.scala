@@ -19,8 +19,8 @@ class RegFile extends Module {
   })
 
   val wbids = Mem(32, UInt(conf.INSTR_ID_SZ.W))
-  val wb_rf = Mem(32, UInt(conf.xprlen.W))
-  val bp_rf = Mem(32, UInt(conf.xprlen.W))
+  val wb_rf = Mem(32, UInt(conf.DATA_WIDTH.W))
+  val bp_rf = Mem(32, UInt(conf.DATA_WIDTH.W))
   val rf_dirtys = Mem(32, Bool())
   val bp_readys = Mem(32, Bool())
 

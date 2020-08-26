@@ -98,7 +98,7 @@ class IMemPipe[T<:Data:ru.TypeTag](gen:T, entries:Int) extends Module {
 
 class IMemPipeData extends Bundle {
   val ex = new CP0Exception
-  val pc = UInt(conf.xprlen.W)
+  val pc = UInt(conf.DATA_WIDTH.W)
 }
 
 class IFU extends Module {
@@ -112,7 +112,7 @@ class IFU extends Module {
   })
 
   // init to be valid, the first instruction
-  val pc = RegInit(UInt(conf.xprlen.W), init=conf.start_addr)
+  val pc = RegInit(UInt(conf.DATA_WIDTH.W), init=conf.INIT_PC)
   val pc_misaligned = pc(1, 0) =/= 0.U
   val s0_bad_if = RegInit(N)
   pc := MuxCase(pc, Array(
@@ -151,7 +151,7 @@ class IFU extends Module {
   io.imem.req.valid := io.iaddr.resp.valid && !io.ex_flush.valid && s1_in.ex.et === ET_None
   io.imem.req.bits.is_cached := io.iaddr.resp.bits.is_cached
   io.imem.req.bits.addr  := io.iaddr.resp.bits.paddr
-  io.imem.req.bits.len   := (conf.xprlen / 8 - 1).U
+  io.imem.req.bits.len   := (conf.DATA_WIDTH / 8 - 1).U
   io.imem.req.bits.func  := MX_RD
   io.imem.req.bits.strb  := "b1111".U
   io.imem.req.bits.data  := 0.U

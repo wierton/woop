@@ -14,14 +14,14 @@ class MDUOp extends Bundle {
 }
 
 class MDUStageData extends Bundle {
-  val id = Output(UInt(log2Ceil(conf.div_stages).W))
+  val id = Output(UInt(log2Ceil(conf.DIV_STAGES).W))
   val fu_op = Output(UInt(FU_OP_SZ.W))
   val op1 = Output(UInt(32.W))
   val wb = new WriteBackIO
 }
 
 class MDUStageIn extends Bundle {
-  val id = Output(UInt(log2Ceil(conf.div_stages).W))
+  val id = Output(UInt(log2Ceil(conf.DIV_STAGES).W))
   val fu_op = Output(UInt(FU_OP_SZ.W))
   val op1 = Output(UInt(32.W))
   val op2 = Output(UInt(32.W))
@@ -29,7 +29,7 @@ class MDUStageIn extends Bundle {
 }
 
 class MDUStageOut extends Bundle {
-  val id = Output(UInt(log2Ceil(conf.div_stages).W))
+  val id = Output(UInt(log2Ceil(conf.DIV_STAGES).W))
   val hi = Output(UInt(32.W))
   val lo = Output(UInt(32.W))
   val op1 = Output(UInt(32.W))
@@ -52,7 +52,7 @@ class MDU_Multiplier extends Module with MDUConsts {
   pipe_in.fu_op := io.fu_in.bits.fu_op
   pipe_in.op1 := io.fu_in.bits.op1
   pipe_in.wb := io.fu_in.bits.wb
-  val fu_pipe = Pipe(io.fu_in.fire(), pipe_in, conf.mul_stages)
+  val fu_pipe = Pipe(io.fu_in.fire(), pipe_in, conf.MUL_STAGES)
 
   io.multiplier.data_a := Mux(pipe_in.fu_op === MDU_MULT,
     op1.asTypeOf(SInt(33.W)).asUInt,
@@ -89,7 +89,7 @@ class MDU_Divider extends Module with MDUConsts {
     val can_log_now = Input(Bool())
   })
 
-  val queue = Module(new Queue(new MDUStageData, conf.div_stages))
+  val queue = Module(new Queue(new MDUStageData, conf.DIV_STAGES))
   queue.io.enq.valid := io.divider.dividend_fire() && io.divider.divisor_fire()
   queue.io.enq.bits.id := io.fu_in.bits.id
   queue.io.enq.bits.op1 := io.fu_in.bits.op1
@@ -143,9 +143,9 @@ class MDU extends Module with MDUConsts {
     io.fu_in.bits.ops.fu_op === MDU_DIVU
 
   val fu_sz = RegInit(0.U(32.W))
-  val mduid_width = log2Ceil(conf.div_stages)
-  val hi = RegInit(0.U(conf.xprlen.W))
-  val lo = RegInit(0.U(conf.xprlen.W))
+  val mduid_width = log2Ceil(conf.DIV_STAGES)
+  val hi = RegInit(0.U(conf.DATA_WIDTH.W))
+  val lo = RegInit(0.U(conf.DATA_WIDTH.W))
   val mduid = RegInit(0.U(mduid_width.W))
   val multiplier = Module(new MDU_Multiplier)
   val divider = Module(new MDU_Divider)

@@ -47,10 +47,10 @@ class ISU extends Module {
   val reg_ready = rs_ready && rt_ready
 
   /* prepare operands */
-  val shamt_ext = instr.shamt.asTypeOf(UInt(conf.xprlen.W))
-  val se_imm = instr.imm.asTypeOf(SInt(conf.xprlen.W)).asUInt
-  val ze_imm = instr.imm.asTypeOf(UInt(conf.xprlen.W))
-  val ue_imm = Cat(instr.imm, 0.U((conf.xprlen - instr.imm.getWidth).W))
+  val shamt_ext = instr.shamt.asTypeOf(UInt(conf.DATA_WIDTH.W))
+  val se_imm = instr.imm.asTypeOf(SInt(conf.DATA_WIDTH.W)).asUInt
+  val ze_imm = instr.imm.asTypeOf(UInt(conf.DATA_WIDTH.W))
+  val ue_imm = Cat(instr.imm, 0.U((conf.DATA_WIDTH - instr.imm.getWidth).W))
   val rs_data = io.rfio.rs_data.bits
   val rt_data = io.rfio.rt_data.bits
 

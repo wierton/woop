@@ -63,7 +63,7 @@ class Divider extends Module {
   require(quotient.getWidth == 40)
   require(remainder.getWidth == 40)
   val pipe = Pipe(io.data_dividend_tvalid && io.data_divisor_tvalid,
-    Cat(quotient, remainder), conf.div_stages)
+    Cat(quotient, remainder), conf.DIV_STAGES)
 
   io.data_dividend_tready := Y
   io.data_divisor_tready := Y
@@ -75,7 +75,7 @@ class Multiplier extends Module {
   val io = IO(Flipped(new MultiplierIO))
   val a = io.data_a.asSInt
   val b = io.data_b.asSInt
-  val pipe = Pipe(Y, (a * b).asUInt, conf.mul_stages)
+  val pipe = Pipe(Y, (a * b).asUInt, conf.MUL_STAGES)
 
   io.data_dout := pipe.bits
 }
@@ -169,16 +169,16 @@ class AXI4_EMU_TOP extends Module {
 
 class loongson_top extends Module {
   val io = IO(new Bundle {
-    val imem = new AXI4IO(conf.xprlen)
-    val dmem = new AXI4IO(conf.xprlen)
+    val imem = new AXI4IO(conf.DATA_WIDTH)
+    val dmem = new AXI4IO(conf.DATA_WIDTH)
     val divider = new DividerIO
     val multiplier = new MultiplierIO
     val commit = new CommitIO
   })
 
   val core = Module(new Core)
-  val imem2axi = Module(new MemIO2AXI(conf.xprlen))
-  val dmem2axi = Module(new MemIO2AXI(conf.xprlen))
+  val imem2axi = Module(new MemIO2AXI(conf.DATA_WIDTH))
+  val dmem2axi = Module(new MemIO2AXI(conf.DATA_WIDTH))
   val icache = Module(new SimICache)
 
   core.io.can_log_now := N

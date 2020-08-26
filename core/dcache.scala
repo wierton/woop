@@ -9,7 +9,7 @@ import woop.consts._
 class DCache extends Module {
   val io = IO(new Bundle {
     val in = Flipped(new MemIO)
-    val out = new AXI4IO(conf.xprlen)
+    val out = new AXI4IO(conf.DATA_WIDTH)
     val flush = Input(Bool())
   })
 

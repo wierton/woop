@@ -16,7 +16,7 @@ class BRU extends Module {
   /* branch check */
   val pc = io.fu_in.bits.wb.pc
   val instr = io.fu_in.bits.wb.instr
-  val simm = instr.imm.asTypeOf(SInt(conf.xprlen.W)).asUInt
+  val simm = instr.imm.asTypeOf(SInt(conf.DATA_WIDTH.W)).asUInt
 
   val op1 = io.fu_in.bits.ops.op1
   val op2 = io.fu_in.bits.ops.op2

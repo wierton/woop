@@ -15,7 +15,7 @@ class AddrSpace(start:UInt, end:UInt) {
 
 class AXI42SRAM extends Module {
   val io = IO(new Bundle {
-    val in = Flipped(new AXI4IO(conf.xprlen))
+    val in = Flipped(new AXI4IO(conf.DATA_WIDTH))
     val out = new MemIO
   })
 }

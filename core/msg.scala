@@ -31,7 +31,7 @@ class CacheControl extends Bundle {
 class CP0Exception extends Bundle {
   val et = UInt(ET_WIDTH.W)
   val code = UInt(EC_WIDTH.W)
-  val addr = UInt(conf.xprlen.W)
+  val addr = UInt(conf.DATA_WIDTH.W)
   val asid = UInt(8.W)
 }
 
@@ -42,8 +42,8 @@ class RegFileIO extends Bundle {
   val wid = Output(UInt(conf.INSTR_ID_SZ.W))
   val rd_idx = Output(UInt(REG_SZ.W))
 
-  val rs_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
-  val rt_data = Flipped(ValidIO(Output(UInt(conf.xprlen.W))))
+  val rs_data = Flipped(ValidIO(Output(UInt(conf.DATA_WIDTH.W))))
+  val rt_data = Flipped(ValidIO(Output(UInt(conf.DATA_WIDTH.W))))
 }
 
 class DividerIO extends Bundle {
@@ -68,13 +68,13 @@ class MultiplierIO extends Bundle {
 
 class TLBReq extends Bundle {
   val func = Output(Bool()) // 1: load, 0:store
-  val vaddr = Output(UInt(conf.xprlen.W))
+  val vaddr = Output(UInt(conf.DATA_WIDTH.W))
   val len = Output(UInt(ML_SZ.W))
   val is_aligned = Output(Bool())
 }
 
 class TLBResp extends Bundle {
-  val paddr = Output(UInt(conf.xprlen.W))
+  val paddr = Output(UInt(conf.DATA_WIDTH.W))
   val is_cached = Output(Bool())
   val ex = Output(new CP0Exception)
 }
@@ -87,15 +87,15 @@ class TLBTransaction extends Bundle {
 
 class MemReq extends Bundle {
   val is_cached = Output(Bool())
-  val addr = Output(UInt(conf.xprlen.W))
+  val addr = Output(UInt(conf.DATA_WIDTH.W))
   val len = Output(UInt(ML_SZ.W))              // aligned
-  val strb = Output(UInt((conf.xprlen / 8).W)) // unaligned
-  val data  = Output(UInt(conf.xprlen.W))
+  val strb = Output(UInt((conf.DATA_WIDTH / 8).W)) // unaligned
+  val data  = Output(UInt(conf.DATA_WIDTH.W))
   val func  = Output(UInt(MX_SZ.W))
 }
 
 class MemResp extends Bundle {
-  val data = Output(UInt(conf.xprlen.W))
+  val data = Output(UInt(conf.DATA_WIDTH.W))
 }
 
 class MemIO extends Bundle {
@@ -111,55 +111,55 @@ trait MemoryMapped {
 
 class CommitIO extends Bundle {
   val valid = Output(Bool())
-  val pc = Output(UInt(conf.xprlen.W))
-  val instr = Output(UInt(conf.xprlen.W))
+  val pc = Output(UInt(conf.DATA_WIDTH.W))
+  val instr = Output(UInt(conf.DATA_WIDTH.W))
   val ip7 = Output(Bool())
-  val gpr = Output(Vec(32, UInt(conf.xprlen.W)))
+  val gpr = Output(Vec(32, UInt(conf.DATA_WIDTH.W)))
   val rd_idx = Output(UInt(REG_SZ.W))
-  val wdata = Output(UInt(conf.xprlen.W))
+  val wdata = Output(UInt(conf.DATA_WIDTH.W))
   val wen = Output(Bool())
 }
 
 class FlushIO extends Bundle {
-  val br_target = Output(UInt(conf.xprlen.W))
+  val br_target = Output(UInt(conf.DATA_WIDTH.W))
 }
 
 class BypassIO extends Bundle {
   val v = Output(Bool())
   val rd_idx = Output(UInt(REG_SZ.W))
   val wen = Output(Bool())
-  val data = Output(UInt(conf.xprlen.W))
+  val data = Output(UInt(conf.DATA_WIDTH.W))
 }
 
 class WriteBackIO extends Bundle {
   val v = Output(Bool())
   val id = Output(UInt(conf.INSTR_ID_SZ.W))
-  val pc = Output(UInt(conf.xprlen.W))
+  val pc = Output(UInt(conf.DATA_WIDTH.W))
   val instr = Output(new Instr)
   val rd_idx = Output(UInt(REG_SZ.W))
   val wen = Output(Bool())
-  val data = Output(UInt(conf.xprlen.W))
+  val data = Output(UInt(conf.DATA_WIDTH.W))
   val ip7 = Output(Bool())
   val is_ds = Output(Bool()) // is_delayslot
   val is_br = Output(Bool())
-  val npc = Output(UInt(conf.xprlen.W))
+  val npc = Output(UInt(conf.DATA_WIDTH.W))
 }
 
 class EXU_OPS extends Bundle {
   val fu_type = Output(UInt(FU_TYPE_SZ.W))
   val fu_op = Output(UInt(FU_OP_SZ.W))
-  val op1 = Output(UInt(conf.xprlen.W))
-  val op2 = Output(UInt(conf.xprlen.W))
+  val op1 = Output(UInt(conf.DATA_WIDTH.W))
+  val op2 = Output(UInt(conf.DATA_WIDTH.W))
 }
 
 class IFU_IDU_IO extends Bundle {
-  val pc = Output(UInt(conf.xprlen.W))
-  val instr = Output(UInt(conf.xprlen.W))
+  val pc = Output(UInt(conf.DATA_WIDTH.W))
+  val instr = Output(UInt(conf.DATA_WIDTH.W))
   val ex = Output(new CP0Exception)
 }
 
 class IDU_ISU_IO extends Bundle {
-  val pc = Output(UInt(conf.xprlen.W))
+  val pc = Output(UInt(conf.DATA_WIDTH.W))
   val instr = Output(new Instr)
   val fu_type = Output(UInt(FU_TYPE_SZ.W))
   val fu_op = Output(UInt(FU_OP_SZ.W))
@@ -176,7 +176,7 @@ class ISU_BRU_IN extends Bundle {
 
 class ISU_BRU_OUT extends Bundle {
   val wb = Output(new WriteBackIO)
-  val br_target = Output(UInt(conf.xprlen.W))
+  val br_target = Output(UInt(conf.DATA_WIDTH.W))
 }
 
 class ISU_BRU_IO extends Bundle {
@@ -212,16 +212,16 @@ class EXU_WBU_IO extends Bundle {
 
 class BRINFO_IO extends Bundle {
   val need_br = Output(Bool())
-  val br_target = Output(UInt(conf.xprlen.W))
+  val br_target = Output(UInt(conf.DATA_WIDTH.W))
 }
 
 class TLB_RPORT extends Bundle {
-  val index = Output(UInt(log2Ceil(conf.tlbsz).W))
+  val index = Output(UInt(log2Ceil(conf.TLBSZ).W))
   val entry = Input(new TLBEntry)
 }
 
 class TLB_WPORT extends Bundle {
-  val index = Output(UInt(log2Ceil(conf.tlbsz).W))
+  val index = Output(UInt(log2Ceil(conf.TLBSZ).W))
   val entry = Output(new TLBEntry)
 }
 
@@ -268,9 +268,9 @@ class EHU_CP0_IO extends Bundle {
 
 class NSCSCCCommitIO extends Bundle {
   val ninstr = Output(UInt(32.W))
-  val wb_pc = Output(UInt(conf.xprlen.W))
-  val wb_instr = Output(UInt(conf.xprlen.W))
-  val wb_rf_wdata = Output(UInt(conf.xprlen.W))
+  val wb_pc = Output(UInt(conf.DATA_WIDTH.W))
+  val wb_instr = Output(UInt(conf.DATA_WIDTH.W))
+  val wb_rf_wdata = Output(UInt(conf.DATA_WIDTH.W))
   val wb_rf_wen = Output(Bool())
   val wb_rf_wnum = Output(UInt(5.W))
   val wb_valid = Output(Bool())

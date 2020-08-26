@@ -26,7 +26,7 @@ class TLBEntry extends Bundle {
 
 class MMURes extends Bundle {
   val ex = new CP0Exception
-  val paddr = UInt(conf.xprlen.W)
+  val paddr = UInt(conf.DATA_WIDTH.W)
 }
 
 class TLB extends Module {
@@ -42,8 +42,8 @@ class TLB extends Module {
     val can_log_now = Input(Bool())
   })
 
-  val tlb_entries = Mem(conf.tlbsz, new TLBEntry)
-  val tlb_entry_ports = for (i <- 0 until conf.tlbsz) yield tlb_entries(i)
+  val tlb_entries = Mem(conf.TLBSZ, new TLBEntry)
+  val tlb_entry_ports = for (i <- 0 until conf.TLBSZ) yield tlb_entries(i)
 
   def tlb_entry_match(vpn:UInt, tlb_port:TLBEntry) = {
     val mask = tlb_port.pagemask.asTypeOf(UInt(32.W))
@@ -77,11 +77,11 @@ class TLB extends Module {
   }
 
   def tlb_translate(name:String, vaddr:UInt, rwbit:UInt) = {
-    val tlb_rports = for (i <- 0 until conf.tlbsz) yield tlb_entries(i)
-    val matches = Reverse(Cat(for (i <- 0 until conf.tlbsz) yield
+    val tlb_rports = for (i <- 0 until conf.TLBSZ) yield tlb_entries(i)
+    val matches = Reverse(Cat(for (i <- 0 until conf.TLBSZ) yield
       tlb_entry_match(vaddr(31, 13), tlb_rports(i))))
     val miss = !matches.orR
-    val hit_res = Mux1H(for (i <- 0 until conf.tlbsz) yield
+    val hit_res = Mux1H(for (i <- 0 until conf.TLBSZ) yield
       matches(i) -> tlb_entry_translate(vaddr, rwbit, tlb_rports(i)))
     val miss_res = WireInit(0.U.asTypeOf(new MMURes))
     miss_res.ex.et := ET_TLB_REFILL
@@ -188,20 +188,20 @@ class TLB extends Module {
 
   /* TLB rw io */
   io.rport.entry := Mux1H(
-    for (i <- 0 until conf.tlbsz) yield
+    for (i <- 0 until conf.TLBSZ) yield
     (i.U === io.rport.index) -> tlb_entry_ports(i))
   when (io.wport.valid && !io.ex_flush.valid) {
-    for (i <- 0 until conf.tlbsz) {
+    for (i <- 0 until conf.TLBSZ) {
       when (i.U === io.wport.bits.index) {
         tlb_entry_ports(i) := io.wport.bits.entry
       }
     }
   }
 
-  val matches = Reverse(Cat(for (i <- 0 until conf.tlbsz) yield tlb_entry_match(io.pport.entry_hi.vpn, tlb_entry_ports(i))))
+  val matches = Reverse(Cat(for (i <- 0 until conf.TLBSZ) yield tlb_entry_match(io.pport.entry_hi.vpn, tlb_entry_ports(i))))
   io.pport.index._0 := 0.U
   io.pport.index.p := !matches.orR
-  io.pport.index.index := Mux1H(for (i <- 0 until conf.tlbsz) yield matches(i) -> i.U)
+  io.pport.index.index := Mux1H(for (i <- 0 until conf.TLBSZ) yield matches(i) -> i.U)
 
   if (conf.log_TLB) {
     when (io.can_log_now) { dump() }
@@ -218,7 +218,7 @@ class TLB extends Module {
     printv(io.br_flush, "TLB.br_flush")
     printv(io.ex_flush, "TLB.ex_flush")
     if (conf.log_TLB_ENTRY) {
-      for (i <- 0 until conf.tlbsz) {
+      for (i <- 0 until conf.TLBSZ) {
         printv(tlb_entries(i), "TLB.entry."+i)
       }
     }
