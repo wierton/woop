@@ -8,25 +8,25 @@ import woop.configs._
 
 import woop.utils._
 
-object ICacheParams {
+trait ICacheParams {
   val SETNO_BITS = log2Ceil(conf.nICacheSets)
   val WORDNO_BITS = log2Ceil(conf.nICacheWordsPerWay)
   val TAG_BITS = conf.ADDR_WIDTH - SETNO_BITS - WORDNO_BITS - 2
 }
 
-class ICacheAddr extends Bundle {
-  val tag = UInt(ICacheParams.TAG_BITS.W)
-  val setno = UInt(ICacheParams.SETNO_BITS.W)
-  val wordno = UInt(ICacheParams.WORDNO_BITS.W)
+class ICacheAddr extends Bundle with ICacheParams {
+  val tag = UInt(TAG_BITS.W)
+  val setno = UInt(SETNO_BITS.W)
+  val wordno = UInt(WORDNO_BITS.W)
   val l2bits = UInt(2.W)
 
   val make(tag:UInt, setno:UInt, wordno:UInt) : ICacheAddr =
-    (tag << (ICacheParams.SETNO_BITS + ICacheParams.WORDNO_BITS + 2)) |
-    (setno << (ICacheParams.WORDNO_BITS + 2)) |
+    (tag << (SETNO_BITS + WORDNO_BITS + 2)) |
+    (setno << (WORDNO_BITS + 2)) |
     (wordno << 2)
 }
 
-class ICache extends Module {
+class ICache extends Module with ICacheParams {
   val io = IO(new Bundle {
     val in = Flipped(new MemIO)
     val out = new AXI4IO(conf.DATA_WIDTH)
@@ -40,21 +40,24 @@ class ICache extends Module {
   require(isPow2(conf.nICacheWordsPerWay))
 
   val vbits = Mem(conf.nICacheSets, Vec(conf.nICacheWaysPerSet, Bool()))
-  val tags = Module(new SeqMemAccessor(conf.nICacheSets, Vec(conf.nICacheWaysPerSet, UInt(ICacheParams.TAG_BITS.W))))
+  val tags = for (i <- 0 until conf.nICacheWaysPerSet) yield
+    Module(new SeqMemAccessor(conf.nICacheSets, UInt(TAG_BITS.W)))
   val datas = Module(new SeqMemAccessor(conf.nICacheSets * conf.nICacheWaysPerSet, Vec(conf.nICacheWordsPerWay, UInt(32.W))))
 
   /* stage 0 */
   val s0_in = io.in.req.bits
   val s0_addr = s0_in.asTypeOf(new ICacheAddr)
   val vbits_rdata = RegNext(vbits(s0_addr.setno))
-  tags.io.raddr := s0_addr.setno
+  for (i <- 0 until conf.nICacheWaysPerSet) tags(i).io.raddr := s0_addr.setno
+  val tags_rvalid = for (i <- 0 until conf.nICacheWaysPerSet) yield tags(i).io.rdata.valid
+  val tags_rdata = for (i <- 0 until conf.nICacheWaysPerSet) yield tags(i).io.rdata.bits
 
   // s1_out_valid = s1_valid
   val s1_valid = RegInit(N)
   val s1_addr = RegEnable(next=s0_addr,
     enable=io.in.req.fire(), init=0.U.asTypeOf(s0_addr))
   val s1_matches = Reverse(Cat(for (i <- 0 until conf.nICacheWaysPerSet) yield (
-    vbits_rdata(i) && tags.io.rdata.valid && tags.io.rdata.bits(i) === s1_addr.tag)))
+    vbits_rdata(i) && tags_rvalid && tags_rdata(i) === s1_addr.tag)))
   val s1_match = s1_matches.orR
   val s1_out_valid = s1_valid
   val s1_out_ready = WireInit(N)
@@ -103,39 +106,52 @@ class ICache extends Module {
   io.out.ar.valid := s3_in_fire || s3_valid
   io.out.ar.bits := 0.U.asTypeOf(io.out.ar.bits)
   io.out.ar.bits.addr := s3_addr.make(s3_addr.tag, s3_addr.setno, 0.U.asTypeOf(s3_addr.wordno))
+  io.out.ar.bits.burst := 1.U
   io.out.ar.bits.len := (AXI4_BURST_LENGTH - 1).U
   io.out.ar.bits.size := log2Ceil(AXI4_BURST_SIZE)
 
   s1_out_ready := (s1_match && s2_in_ready) || (!s1_match && s3_in_ready)
 
-  /* stage 4: mismatch and recv axi4 recv */
-  val axi4_total_sz = conf.AXI4_BURST_LENGTH * AXI4_BURST_BYTES
-  val cache_pline_sz = (nICacheWordsPerWay * 4)
-  val p = axi4_total_sz / cache_pline_sz
+  /* stage 4: mismatch and recv axi4 r channel, update cache */
+  val axi4_total_sz = conf.AXI4_BURST_LENGTH * conf.AXI4_BURST_BYTES
+  val cache_pline_sz = (conf.nICacheWordsPerWay * 4)
   def isPowerOfTwo(n:Int) = (n != 0) && ((n & (n - 1)) == 0)
   require(isPowerOfTwo(axi4_total_sz / cache_pline_sz))
   require(cache_pline_sz >= conf.AXI4_BURST_BYTES)
+  require(conf.AXI4_BURST_BYTES >= 4)
   val s4_buf = Mem(cache_pline_sz / conf.AXI4_BURST_BYTES,
     UInt((8 * conf.AXI4_BURST_BYTES).W))
   val s4_valid = RegInit(N)
   val s4_in_fire = io.out.ar.fire()
-  val s4_addr = RegEnable(s3_addr, enable=s4_in_fire, init=0.U.asTypeOf(s3_addr))
   val s4_out_data = WireInit(0.U(conf.DATA_WIDTH.W))
-  val s4_out_ready = WireInit(N)
+  val s4_out_valid = WireInit(N)
+  val s3_tag = s3_addr.asTypeOf(UInt(32.W)) >> log2Ceil(conf.AXI4_BURST_BYTES)
+  val s4_tag = RegEnable(s3_tag, enable=s4_in_fire, init=0.U.asTypeOf(s3_tag))
   val recv_counter = RegInit(0.U(log2Ceil((cache_pline_sz / conf.AXI4_BURST_BYTES).W)))
   io.out.r.ready := Y
+  for (i <- 0 until conf.nICacheWaysPerSet) {
+    tags(i).io.wen := N
+    tags(i).io.waddr := 0.U
+    tags(i).io.wdata := 0.U
+  }
+  datas.io.wen := N
+  datas.io.wdata := s4_buf.asTypeOf(tags.io.wdata)
+  datas.io.waddr := 0.U
   when (io.out.r.valid) {
     s4_buf(recv_counter) := io.out.r.bits.data
     recv_counter := recv_counter + 1.U
+    s3_tag := s3_tag + 1.U
 
-    when (~recv_counter == 0.U) {
+    when (recv_counter == s4_addr.setno) {
+      /* update */
+    }
+
+    when (~recv_counter === 0.U) {
       /* write which ? */
     }
   }
 
   /* stage 5: get data from stage 2 and stage 4 */
-
-  /* stage 6: update cache using data from stage 4 */
 }
 
 class SimICacheEntry extends Bundle {
