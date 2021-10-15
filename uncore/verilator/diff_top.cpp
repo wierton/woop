@@ -79,7 +79,7 @@ DiffTop::DiffTop(int argc, const char *argv[]) {
   reset_ncycles(10);
 
   /* print seed */
-  printf(ESC_BLUE "seed %u" ESC_RST "\n", seed);
+  // printf(ESC_BLUE "seed %u" ESC_RST "\n", seed);
 }
 
 void DiffTop::reset_ncycles(unsigned n) {

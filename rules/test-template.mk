@@ -35,7 +35,7 @@ compile-$(2): $$($(2)_OBJDIR)/$(2).elf
 
 $$($(2)_ELF): $$($(2)_ORIG_APP)
 	@mkdir -p $$($(2)_OBJDIR)
-	@cd $$($(2)_OBJDIR); ln -sf $$^ $$(@F);  \
+	@cd $$($(2)_OBJDIR); cp $$^ $$(@F);  \
 		$(CROSS_COMPILE)objdump -d $$(@F) > $(2).S
 
 $$($(2)_OBJDIR)/bram.coe $$($(2)_OBJDIR)/ddr.coe: \

@@ -16,7 +16,7 @@ ASAN_LDFLAGS := -fsanitize=address,undefined
 endif
 
 EMU_CFLAGS := -I. -I $(MIPS32_NEMU_HOME)/include $(ASAN_CFLAGS)
-EMU_LDFLAGS := $(MIPS32_NEMU_LIB) -lpthread -lreadline -lSDL $(ASAN_LDFLAGS)
+EMU_LDFLAGS := $(notdir $(MIPS32_NEMU_LIB)) -lpthread -lreadline -lSDL $(ASAN_LDFLAGS) -Wl,-rpath=.
 
 $(EMU_BIN): $(EMU_MK) $(EMU_CXXFILES)
 	@echo + $(EMU_BIN)
@@ -30,12 +30,14 @@ $(EMU_MK): $(EMU_TOP_V) $(EMU_CXXFILES) $(EMU_LIB_V)
 	  -o $(notdir $(EMU_BIN)) -Mdir $(@D) \
 	  -CFLAGS "$(EMU_CFLAGS)" -LDFLAGS "$(EMU_LDFLAGS)" \
 	  --prefix $(EMU_PREFIX) $^ 
+	@cp $(MIPS32_NEMU_LIB) $(@D)
 
 project: $(EMU_BIN)
 
 run-%: project $$($$*_ELF)
 	@cd $($*_OBJDIR) && \
-	  ln -sf $(abspath $(EMU_BIN)) emulator && \
+	  cp $(MIPS32_NEMU_LIB) ./$(notdir $(MIPS32_NEMU_LIB)) && \
+	  cp $(abspath $(EMU_BIN)) ./emulator && \
 	  ./emulator -b -e ./$*.elf 2> npc.out
 
 update: $(EMU_MK)
