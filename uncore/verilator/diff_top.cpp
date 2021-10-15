@@ -136,8 +136,10 @@ void DiffTop::single_cycle() {
 }
 
 int DiffTop::execute(uint64_t n) {
+  bool flag = napi_get_woop_enable_bug_flag();
   while (!finished && n > 0) {
     dut_ptr->io_can_log_now = can_log_now();
+    dut_ptr->io_enable_bug = flag;
     single_cycle();
     if (!finished) cycle_epilogue();
     n--;

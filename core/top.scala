@@ -20,6 +20,7 @@ class DeviceAccessor extends Module {
     val clock = Input(Clock())
     val reset = Input(Bool())
     val in = Flipped(new MemIO)
+    val enable_bug = Input(Bool())
     val can_log_now = Input(Bool())
   })
 
@@ -84,6 +85,7 @@ class verilator_top extends Module {
   val io = IO(new Bundle {
     val commit = new CommitIO
     val can_log_now = Input(Bool())
+    val enable_bug = Input(Bool())
   })
 
   val core = Module(new Core)
@@ -96,6 +98,7 @@ class verilator_top extends Module {
 
   // dev.io.can_log_now := io.can_log_now
   core.io.can_log_now := io.can_log_now
+  core.io.enable_bug := io.enable_bug
   crossbar.io.can_log_now := io.can_log_now
   icache.io.can_log_now := io.can_log_now
 

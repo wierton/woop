@@ -78,8 +78,9 @@ class DiffTop {
   void reset_ncycles(unsigned n);
 
   bool can_log_now() const {
-    // return cycles >= 456643 - 1000;
-    return false;
+    unsigned st = napi_get_woop_log_cycles_st();
+    unsigned ed = napi_get_woop_log_cycles_ed();
+    return st <= cycles && cycles < ed;
   }
 
 public:

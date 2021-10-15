@@ -30,6 +30,7 @@ class EXU extends Module {
     val bp = ValidIO(new BypassIO)
     val ex_flush = Flipped(ValidIO(new FlushIO))
     val can_log_now = Input(Bool())
+    val enable_bug = Input(Bool())
   })
 
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire(), init=0.U.asTypeOf(io.fu_in.bits))
@@ -184,7 +185,8 @@ class EXU extends Module {
   io.icache_control.bits.addr := fu_in.ops.op1
 
   /* tlbr */
-  val tlbr_mask = ~io.tlb_rport.entry.pagemask.asTypeOf(UInt(32.W))
+  val tlbr_mask_correct = io.tlb_rport.entry.pagemask.asTypeOf(UInt(32.W))
+  val tlbr_mask = Mux(io.enable_bug, ~tlbr_mask_correct, tlbr_mask_correct)
   io.tlb_rport.index := io.cp0_tlbr_port.index.index
   io.cp0_tlbw_port.valid := io.fu_out.fire() &&
     fu_type === FU_PRU && fu_op === PRU_TLBR

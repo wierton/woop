@@ -19,6 +19,7 @@ class Core extends Module {
     val multiplier = new MultiplierIO
     val divider = new DividerIO
     val can_log_now = Input(Bool())
+    val enable_bug = Input(Bool())
   })
 
   val rf  = Module(new RegFile)
@@ -35,6 +36,7 @@ class Core extends Module {
   ifu.io.can_log_now := io.can_log_now
   idu.io.can_log_now := io.can_log_now
   exu.io.can_log_now := io.can_log_now
+  exu.io.enable_bug := io.enable_bug
   cp0.io.can_log_now := io.can_log_now
   tlb.io.can_log_now := io.can_log_now
   ehu.io.can_log_now := io.can_log_now
