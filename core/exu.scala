@@ -184,7 +184,7 @@ class EXU extends Module {
   io.icache_control.bits.addr := fu_in.ops.op1
 
   /* tlbr */
-  val tlbr_mask = io.tlb_rport.entry.pagemask.asTypeOf(UInt(32.W))
+  val tlbr_mask = ~io.tlb_rport.entry.pagemask.asTypeOf(UInt(32.W))
   io.tlb_rport.index := io.cp0_tlbr_port.index.index
   io.cp0_tlbw_port.valid := io.fu_out.fire() &&
     fu_type === FU_PRU && fu_op === PRU_TLBR
