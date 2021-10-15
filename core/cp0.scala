@@ -189,15 +189,15 @@ class CP0 extends CPRS with LSUConsts {
 
   def dump():Unit = {
     printv(this, "CP0")
-    printv(io.rport, "CP0.rport")
-    printv(io.wport, "CP0.wport")
+    printv(io.rport, "CP0.io.rport")
+    printv(io.wport, "CP0.io.wport")
     if (conf.log_TLB) {
-      printv(io.tlbr_port, "CP0.tlbr_port")
-      printv(io.tlbw_port, "CP0.tlbw_port")
-      printv(io.tlbp_port, "CP0.tlbp_port")
+      printv(io.tlbr_port, "CP0.io.tlbr_port")
+      printv(io.tlbw_port, "CP0.io.tlbw_port")
+      printv(io.tlbp_port, "CP0.io.tlbp_port")
     }
-    printv(io.status, "CP0.status")
-    printv(io.ehu, "CP0.ehu")
-    printv(io.ex_flush, "CP0.ex_flush")
+    printv(io.status, "CP0.io.status")
+    printv(io.ehu, "CP0.io.ehu")
+    printv(io.ex_flush, "CP0.io.ex_flush")
   }
 }

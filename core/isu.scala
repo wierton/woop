@@ -112,9 +112,9 @@ class ISU extends Module {
 
   def dump() = {
     printv(this, "ISU")
-    printv(io.fu_in, "ISU.fu_in")
-    printv(io.fu_out, "ISU.fu_out")
-    printv(io.br_flush, "ISU.br_flush")
-    printv(io.rfio, "ISU.rfio")
+    printv(io.fu_in, "ISU.io.fu_in")
+    printv(io.fu_out, "ISU.io.fu_out")
+    printv(io.br_flush, "ISU.io.br_flush")
+    printv(io.rfio, "ISU.io.rfio")
   }
 }

@@ -38,7 +38,7 @@ object printv {
   private def traverse(obj: Any, tp: ru.Type, fmtmap:Map[String,String]=dftFmtMap): (String, Seq[Bits]) = {
     if (tp =:= ru.typeOf[UInt] || tp =:= ru.typeOf[SInt]
       || tp =:= ru.typeOf[Bool]) {
-      return ("%x", Seq[Bits](obj.asInstanceOf[Bits]))
+      return ("\"%x\"", Seq[Bits](obj.asInstanceOf[Bits]))
     }
 
     val mirror = ru.runtimeMirror(getClass.getClassLoader)
@@ -49,51 +49,29 @@ object printv {
       .toList.sortWith(_.name.toString < _.name.toString)
     var fmtString = ""
     var fmtBits = Seq[Bits]()
-    var isBits = false
-    if (tp <:< ru.typeOf[ValidIO[_]]) {
-      val valid = objMirror.reflectMethod(members.filter(
-        _.name.toString == "valid").head.asMethod)()
-      fmtString = fmtString+"[%b]"
-      fmtBits=fmtBits++Seq[Bits](valid.asInstanceOf[Bits])
-      members = members.filter(_.name.toString == "bits")
-      isBits = true
-    } else if (tp <:< ru.typeOf[DecoupledIO[_]]) {
-      val valid = objMirror.reflectMethod(members.filter(
-        _.name.toString == "valid").head.asMethod)()
-      val ready = objMirror.reflectMethod(members.filter(
-        _.name.toString == "ready").head.asMethod)()
-      fmtString = fmtString+"[%b,%b]"
-      fmtBits=fmtBits++Seq[Bits](valid.asInstanceOf[Bits], ready.asInstanceOf[Bits])
-      members = members.filter(_.name.toString == "bits")
-      isBits = true
-    }
     members.foreach { m => {
         val value = objMirror.reflectMethod(m.asMethod)()
-        val info = if(isBits)
+        val name = m.name.toString
+        val info = if (name == "bits")
           getTypeFromString(value.getClass.getName)
           else m.asMethod.returnType
-        val name = if(isBits) "" else m.name.toString
+        val quotedname = "\""+name+"\""
         if (fmtmap.contains(name)) {
-          fmtString = fmtString+name+"="+
-            fmtmap.getOrElse(name, "%x") + " "
+          fmtString = fmtString+quotedname+":"+
+            "\""+fmtmap.getOrElse(name, "%x") + "\", "
           fmtBits = fmtBits++Seq[Bits](value.asInstanceOf[Data].asUInt)
-        } else if ((info <:< ru.typeOf[ValidIO[_]]) ||
-          (info <:< ru.typeOf[DecoupledIO[_]])) {
-          val ret = traverse(value, info, fmtmap)
-          fmtString = fmtString+name+ret._1.trim+" "
-          fmtBits = fmtBits++ret._2
         } else if ((info <:< ru.typeOf[Bundle])) {
           val ret = traverse(value, info, fmtmap)
-          fmtString = fmtString+name+"={"+
-            ret._1.trim+"} "
+          fmtString = fmtString+quotedname+":"+
+            ret._1.trim+", "
           fmtBits = fmtBits++ret._2
         } else if (info <:< ru.typeOf[Bits]) {
-          fmtString = fmtString+name+"=%x "
+          fmtString = fmtString+quotedname+":\"%x\", "
           fmtBits = fmtBits++Seq[Bits](value.asInstanceOf[Bits])
         }
       }
     }
-    (fmtString.trim, fmtBits)
+    ("{"+fmtString.trim+"}", fmtBits)
   }
 
   def traverseMemberValues[T](topLevelObj: T, fmtmap:Map[String,String]=dftFmtMap)(implicit c: ru.TypeTag[T]) = {
@@ -112,10 +90,10 @@ object printv {
     var bits = Seq[Bits](GTimer())
     for (i <- 0 until mem.length.toInt) {
       val ret = traverseMemberValues(mem(i), fmtmap)
-      fmts=fmts+ret._1 + " "
+      fmts=fmts+ret._1 + ", "
       bits=bits++ret._2
     }
-    printf("%d: "+msg+": "+fmts.trim+"\n", bits:_*)
+    printf("%d: "+msg+": ["+fmts.trim+"]\n", bits:_*)
   }
 
   def apply(module:String, sigs:Array[(String,Data)]) {

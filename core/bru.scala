@@ -53,7 +53,7 @@ class BRU extends Module {
 
   def dump():Unit = {
     printv(this, "BRU")
-    printv(io.fu_in, "BRU.fu_in")
-    printv(io.fu_out, "BRU.fu_out")
+    printv(io.fu_in, "BRU.io.fu_in")
+    printv(io.fu_out, "BRU.io.fu_out")
   }
 }

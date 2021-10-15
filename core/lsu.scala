@@ -57,9 +57,6 @@ class LSUOp extends Bundle {
     val rmask = Mux(!align && ext === LSUConsts.LSU_L,
       mask << ((~l2b) << 3), mask >> (l2b << 3))
 
-    def dump():Unit = {
-      printf("%d: LSU.c: addr=%x, data=%x, mdata=%x, mask=%x, rdata=%x, rmask=%x\n", GTimer(), addr, data, mdata, mask, rdata, rmask)
-    }
     (rdata & rmask) | (mdata & ~rmask)
   }
   def memReqDataOf(addr:UInt, data:UInt) = {
@@ -140,9 +137,9 @@ class LSU extends Module with LSUConsts {
     printv(s3_in, "LSU.s3_in")
     printv(s2_datas.io.enq, "LSU.s2_datas.enq")
     printv(s2_datas.io.deq, "LSU.s2_datas.deq")
-    printv(io.fu_in, "LSU.fu_in")
-    printv(io.fu_out, "LSU.fu_out")
-    printv(io.dmem, "LSU.dmem")
+    printv(io.fu_in, "LSU.io.fu_in")
+    printv(io.fu_out, "LSU.io.fu_out")
+    printv(io.dmem, "LSU.io.dmem")
   }
 }
 

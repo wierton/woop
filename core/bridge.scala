@@ -117,9 +117,9 @@ class MemMux(name:String) extends Module {
 
   if (conf.log_MemMux) {
     when (io.can_log_now) {
-      printv(io.in, name+".in")
-      printv(io.cached, name+".cached")
-      printv(io.uncached, name+".uncached")
+      printv(io.in, name+".io.in")
+      printv(io.cached, name+".io.cached")
+      printv(io.uncached, name+".io.uncached")
     }
   }
 }

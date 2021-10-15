@@ -185,9 +185,11 @@ class IDU extends Module with LSUConsts with MDUConsts {
 
   def dump():Unit = {
     printv(this, "IDU")
-    printv(io.fu_in, "IDU.fu_in")
-    printv(io.fu_out, "IDU.fu_out")
-    printv(io.ex_flush, "IDU.ex_flush")
+    printv(io.fu_in, "IDU.io.fu_in")
+    printv(io.fu_out, "IDU.io.fu_out")
+    printv(io.ex_flush, "IDU.io.ex_flush")
+    printv(io.br_flush, "IDU.io.br_flush")
+    printv(io.rfio, "IDU.io.rfio")
   }
 }
 

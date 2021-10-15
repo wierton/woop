@@ -92,27 +92,12 @@ class RegFile extends Module {
   }
 
   def dump():Unit = {
-    printv(io.commit, "RF.commit")
-    printv(io.bp, "RF.bp")
-    printv(io.wb, "RF.wb")
-    printv(io.rfio, "RF.rfio")
-    printf("%d: RF: rf_dirtys=%b\n", GTimer(), Cat(for (i <- 0 until 32) yield rf_dirtys(i)).asUInt)
-    printf("%d: RF: bp_readys=%b\n", GTimer(), Cat(for (i <- 0 until 32) yield bp_readys(i)).asUInt)
-    printf("%d: RF: RS@%d={bp_match:%b, rf_ready=%b, bits=%x, wbrf=%x, bprf=%x}\n", GTimer(), io.rfio.rs_idx, bypass_match(io.rfio.rs_idx), rf_data_ready(io.rfio.rs_idx), rf_data_bits(io.rfio.rs_idx), wb_rf(io.rfio.rs_idx), bp_rf(io.rfio.rs_idx))
-    printf("%d: RF: RT@%d={bp_match:%b, rf_ready=%b, bits=%x, wbrf=%x, bprf=%x}\n", GTimer(), io.rfio.rt_idx, bypass_match(io.rfio.rt_idx), rf_data_ready(io.rfio.rt_idx), rf_data_bits(io.rfio.rt_idx), wb_rf(io.rfio.rt_idx), bp_rf(io.rfio.rt_idx))
-    printv.memdump(wbids, "RF.wbids")
-
-    when (io.commit.valid) {
-      printf("$pc:    %x\n", io.commit.pc)
-      printf("$instr: %x\n", io.commit.instr)
-      printf("$0 :%x $at:%x $v0:%x $v1:%x\n", io.commit.gpr(0), io.commit.gpr(1), io.commit.gpr(2), io.commit.gpr(3))
-      printf("$a0:%x $a1:%x $a2:%x $a3:%x\n", io.commit.gpr(4), io.commit.gpr(5), io.commit.gpr(6), io.commit.gpr(7))
-      printf("$t0:%x $t1:%x $t2:%x $t3:%x\n", io.commit.gpr(8), io.commit.gpr(9), io.commit.gpr(10), io.commit.gpr(11))
-      printf("$t4:%x $t5:%x $t6:%x $t7:%x\n", io.commit.gpr(12), io.commit.gpr(13), io.commit.gpr(14), io.commit.gpr(15))
-      printf("$s0:%x $s1:%x $s2:%x $s3:%x\n", io.commit.gpr(16), io.commit.gpr(17), io.commit.gpr(18), io.commit.gpr(19))
-      printf("$s4:%x $s5:%x $s6:%x $s7:%x\n", io.commit.gpr(20), io.commit.gpr(21), io.commit.gpr(22), io.commit.gpr(23))
-      printf("$t8:%x $t9:%x $k0:%x $k1:%x\n", io.commit.gpr(24), io.commit.gpr(25), io.commit.gpr(26), io.commit.gpr(27))
-      printf("$gp:%x $sp:%x $fp:%x $ra:%x\n", io.commit.gpr(28), io.commit.gpr(29), io.commit.gpr(30), io.commit.gpr(31))
-    }
+    printv(io.commit, "RF.io.commit")
+    printv(io.bp, "RF.io.bp")
+    printv(io.wb, "RF.io.wb")
+    printv(io.rfio, "RF.io.rfio")
+    printv(io.commit, "RF.io.commit")
+    printv(io.ex_flush, "RF.io.ex_flush")
+    printv.memdump(wbids, "RF.io.wbids")
   }
 }

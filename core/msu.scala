@@ -35,8 +35,7 @@ class MSUPipelineStage extends Module {
   }
 
   def dump():Unit = {
-    printf("%d: MSU.psu.io.fu_in: fu_valid=%b, io.fu_in[%b,%b]={fu_type=%d}\n", GTimer(), fu_valid, io.fu_in.valid, io.fu_in.ready, io.fu_in.bits.fu_type)
-    printv(io.fu_out, "LSMD-PSU.fu_out")
+    printv(io.fu_out, "LSMD-PSU.io.fu_out")
   }
 }
 
@@ -100,10 +99,13 @@ class MSU extends Module {
 
   def dump():Unit = {
     printv(this, "MSU")
-    printv(lsu.io.fu_in, "MSU.lsu_in")
-    printv(lsu.io.fu_out, "MSU.lsu_out")
-    printv(io.wb, "MSU.wb")
-    printv(io.fu_in, "MSU.fu_in")
+    printv(lsu.io.fu_in, "MSU.io.lsu_in")
+    printv(lsu.io.fu_out, "MSU.io.lsu_out")
+    printv(io.divider, "MSU.io.divider")
+    printv(io.multiplier, "MSU.io.multiplier")
+    printv(io.dmem, "MSU.io.dmem")
+    printv(io.wb, "MSU.io.wb")
+    printv(io.fu_in, "MSU.io.fu_in")
   }
   assert (RegNext(AtMost1H(lsu.io.fu_out.valid,
     mdu.io.fu_out.valid, psu.io.fu_out.valid)),

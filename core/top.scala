@@ -51,7 +51,7 @@ class DeviceAccessor extends Module {
 
   def dump():Unit = {
     printv(this, "DEV")
-    printv(io.in, "DEV.in")
+    printv(io.in, "DEV.io.in")
   }
 }
 
@@ -127,7 +127,7 @@ class verilator_top extends Module {
   }
 
   def dump():Unit = {
-    printf("------------\n")
+    printv(io.commit, "TOP.io.commit")
   }
 }
 

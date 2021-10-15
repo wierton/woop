@@ -35,6 +35,7 @@ int main(int argc, const char **argv) {
 
   diff_top.reset(new DiffTop(argc, argv));
   auto ret = diff_top->execute();
+  diff_top.reset();
 
   if (ret == -1) {
     eprintf(ESC_RED "Timeout\n" ESC_RST);
@@ -44,6 +45,6 @@ int main(int argc, const char **argv) {
     eprintf(ESC_RED "HIT BAD TRAP (%d)\n" ESC_RST, ret);
   }
 
-  syscall(__NR_exit, ret);
+  // syscall(__NR_exit, ret);
   return ret;
 }

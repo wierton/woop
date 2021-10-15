@@ -164,8 +164,8 @@ class SimICache extends Module {
   }
   def dump():Unit = {
     printv(this, "SimICache")
-    printv(io.in, "SimICache.in")
-    printv(io.out, "SimICache.out")
+    printv(io.in, "SimICache.io.in")
+    printv(io.out, "SimICache.io.out")
   }
 }
 

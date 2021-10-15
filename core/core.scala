@@ -22,6 +22,19 @@ class Core extends Module {
     val enable_bug = Input(Bool())
   })
 
+  when (io.can_log_now) { dump() }
+
+  def dump():Unit = {
+    printv(io.imem, "CORE.io.imem")
+    printv(io.dmem, "CORE.io.dmem")
+    printv(io.icache_control, "CORE.io.icache_control")
+    printv(io.commit, "CORE.io.commit")
+    printv(io.br_flush, "CORE.io.br_flush")
+    printv(io.ex_flush, "CORE.io.ex_flush")
+    printv(io.multiplier, "CORE.io.multiplier")
+    printv(io.divider, "CORE.io.divider")
+  }
+
   val rf  = Module(new RegFile)
   val ifu = Module(new IFU)
   val idu = Module(new IDU)

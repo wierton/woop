@@ -97,7 +97,6 @@ class Cistern[T<:Data](gen:T, entries:Int) extends Module {
   }
 
   def dump():Unit = {
-    printf("%d: Cistern: onoff=%b, size=%d\n", GTimer(), onoff, size)
   }
 }
 
