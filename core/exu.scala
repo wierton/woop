@@ -7,31 +7,32 @@ import woop.consts._
 import woop.configs._
 import woop.utils._
 
+class EXUModuleIO extends Bundle {
+  val fu_in = Flipped(DecoupledIO(new ISU_EXU_IO))
+  val fu_out = DecoupledIO(new EXU_EHU_IO)
+
+  val cp0_rport = new CPR_RPORT
+  val cp0_wport = ValidIO(new CPR_WPORT)
+  val cp0_tlbr_port = new CP0_TLBR_PORT
+  val cp0_tlbw_port = ValidIO(new CP0_TLBW_PORT)
+  val cp0_tlbp_port = ValidIO(new CP0_TLBP_PORT)
+
+  val daddr = new TLBTransaction
+  val tlb_rport = new TLB_RPORT
+  val tlb_wport = ValidIO(new TLB_WPORT)
+  val tlb_pport = new TLB_PPORT
+
+  val icache_control = ValidIO(new CacheControl)
+
+  val wb = Flipped(ValidIO(new WriteBackIO))
+  val bp = ValidIO(new BypassIO)
+  val ex_flush = Flipped(ValidIO(new FlushIO))
+  val can_log_now = Input(Bool())
+  val enable_bug = Input(Bool())
+}
 
 class EXU extends Module {
-  val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new ISU_EXU_IO))
-    val fu_out = DecoupledIO(new EXU_EHU_IO)
-
-    val cp0_rport = new CPR_RPORT
-    val cp0_wport = ValidIO(new CPR_WPORT)
-    val cp0_tlbr_port = new CP0_TLBR_PORT
-    val cp0_tlbw_port = ValidIO(new CP0_TLBW_PORT)
-    val cp0_tlbp_port = ValidIO(new CP0_TLBP_PORT)
-
-    val daddr = new TLBTransaction
-    val tlb_rport = new TLB_RPORT
-    val tlb_wport = ValidIO(new TLB_WPORT)
-    val tlb_pport = new TLB_PPORT
-
-    val icache_control = ValidIO(new CacheControl)
-
-    val wb = Flipped(ValidIO(new WriteBackIO))
-    val bp = ValidIO(new BypassIO)
-    val ex_flush = Flipped(ValidIO(new FlushIO))
-    val can_log_now = Input(Bool())
-    val enable_bug = Input(Bool())
-  })
+  val io = IO(new EXUModuleIO)
 
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire(), init=0.U.asTypeOf(io.fu_in.bits))
   val fu_valid = RegInit(N)

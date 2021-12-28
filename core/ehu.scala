@@ -8,14 +8,16 @@ import woop.configs._
 
 import woop.utils._
 
+class EHUModuleIO extends Bundle {
+  val fu_in = Flipped(DecoupledIO(new EXU_EHU_IO))
+  val fu_out = DecoupledIO(new EHU_MSU_IO)
+  val cp0 = new EHU_CP0_IO
+  val ex_flush = Flipped(ValidIO(new FlushIO))
+  val can_log_now = Input(Bool())
+}
+
 class EHU extends Module {
-  val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new EXU_EHU_IO))
-    val fu_out = DecoupledIO(new EHU_MSU_IO)
-    val cp0 = new EHU_CP0_IO
-    val ex_flush = Flipped(ValidIO(new FlushIO))
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new EHUModuleIO)
 
   val fu_valid = RegInit(N)
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire(), init=0.U.asTypeOf(io.fu_in.bits))

@@ -45,7 +45,7 @@ object printv {
     val objMirror = mirror.reflect(obj)
     var members = tp.members.filter(m => m.isPublic && m.isMethod && m.asMethod.returnType <:< ru.typeOf[Data])
       .filter(m => !m.isConstructor && m.isMethod && m.info.paramLists.isEmpty && !m.info.takesTypeArgs)
-      .filter(m => !(m.asMethod.returnType =:= tp) && m.name.toString != "cloneType" && m.name.toString != "io" && m.name.toString.exists(_.isLower))
+      .filter(m => !(m.asMethod.returnType =:= tp) && m.name.toString != "cloneType" && m.name.toString.exists(_.isLower))
       .toList.sortWith(_.name.toString < _.name.toString)
     var fmtString = ""
     var fmtBits = Seq[Bits]()

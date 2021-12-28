@@ -8,16 +8,19 @@ import woop.configs._
 
 import woop.utils._
 
+class MSUPipelineStageIO_FUIN extends Bundle {
+  val wb = new WriteBackIO
+  val fu_type = Output(UInt(FU_TYPE_SZ.W))
+}
+
+class MSUPipelineStageModuleIO extends Bundle {
+  val fu_in = Flipped(DecoupledIO(new MSUPipelineStageIO_FUIN))
+  val fu_out = ValidIO(new WriteBackIO)
+  val can_log_now = Input(Bool())
+}
 
 class MSUPipelineStage extends Module {
-  val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new Bundle {
-      val wb = new WriteBackIO
-      val fu_type = Output(UInt(FU_TYPE_SZ.W))
-    }))
-    val fu_out = ValidIO(new WriteBackIO)
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new MSUPipelineStageModuleIO)
 
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire(), init=0.U.asTypeOf(io.fu_in.bits))
   val fu_valid = RegInit(N)
@@ -39,16 +42,18 @@ class MSUPipelineStage extends Module {
   }
 }
 
+class MSUModuleIO extends Bundle {
+  val fu_in = Flipped(DecoupledIO(new EHU_MSU_IO))
+  val wb = ValidIO(new WriteBackIO)
+  val divider = new DividerIO
+  val multiplier = new MultiplierIO
+  val dmem = new MemIO
+  val can_log_now = Input(Bool())
+}
+
 /* multiple stage unit */
 class MSU extends Module {
-  val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new EHU_MSU_IO))
-    val wb = ValidIO(new WriteBackIO)
-    val divider = new DividerIO
-    val multiplier = new MultiplierIO
-    val dmem = new MemIO
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new MSUModuleIO)
 
   val lsu = Module(new LSU)
   val mdu = Module(new MDU)

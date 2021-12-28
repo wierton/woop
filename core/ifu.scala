@@ -8,16 +8,17 @@ import woop.configs._
 import woop.utils._
 import scala.reflect.runtime.{universe => ru}
 
+class IMemPipeModuleIO[T<:Data:ru.TypeTag](gen:T) extends Bundle {
+  val enq = Flipped(DecoupledIO(gen))
+  val deq = DecoupledIO(ValidIO(gen))
+  val br_flush = Flipped(ValidIO(new FlushIO))
+  val ex_flush = Flipped(ValidIO(new FlushIO))
+  val can_log_now = Input(Bool())
+}
 
 /* without cache */
 class IMemPipe[T<:Data:ru.TypeTag](gen:T, entries:Int) extends Module {
-  val io = IO(new Bundle {
-    val enq = Flipped(DecoupledIO(gen))
-    val deq = DecoupledIO(ValidIO(gen))
-    val br_flush = Flipped(ValidIO(new FlushIO))
-    val ex_flush = Flipped(ValidIO(new FlushIO))
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new IMemPipeModuleIO(gen))
 
   val head = RegInit(0.U(log2Ceil(entries).W))
   val tail = RegInit(0.U(log2Ceil(entries).W))
@@ -101,15 +102,17 @@ class IMemPipeData extends Bundle {
   val pc = UInt(conf.xprlen.W)
 }
 
+class IFUModuleIO extends Bundle {
+  val imem = new MemIO
+  val iaddr = new TLBTransaction
+  val fu_out = DecoupledIO(new IFU_IDU_IO)
+  val br_flush = Flipped(ValidIO(new FlushIO))
+  val ex_flush = Flipped(ValidIO(new FlushIO))
+  val can_log_now = Input(Bool())
+}
+
 class IFU extends Module {
-  val io = IO(new Bundle {
-    val imem = new MemIO
-    val iaddr = new TLBTransaction
-    val fu_out = DecoupledIO(new IFU_IDU_IO)
-    val br_flush = Flipped(ValidIO(new FlushIO))
-    val ex_flush = Flipped(ValidIO(new FlushIO))
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new IFUModuleIO)
 
   // init to be valid, the first instruction
   val pc = RegInit(UInt(conf.xprlen.W), init=conf.start_addr)
@@ -169,13 +172,6 @@ class IFU extends Module {
 
   def dump():Unit = {
     printv(this, "IFU")
-    printv(s1_datas.io.enq, "IFU.s1.enq")
-    printv(s1_datas.io.deq, "IFU.s1.deq")
-    printv(io.imem, "IFU.imem")
-    printv(io.iaddr, "IFU.iaddr")
-    printv(io.fu_out, "IFU.fu_out")
-    printv(io.br_flush, "IFU.br_flush")
-    printv(io.ex_flush, "IFU.ex_flush")
   }
 }
 

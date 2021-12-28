@@ -36,6 +36,7 @@ project: $(EMU_BIN)
 
 run-%: project $$($$*_ELF)
 	@cd $($*_OBJDIR) && \
+	  rm -f ./$(notdir $(MIPS32_NEMU_LIB)) ./emulator && \
 	  cp $(MIPS32_NEMU_LIB) ./$(notdir $(MIPS32_NEMU_LIB)) && \
 	  cp $(abspath $(EMU_BIN)) ./emulator && \
 	  ./emulator -b -e ./$*.elf 2> npc.out

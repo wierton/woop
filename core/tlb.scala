@@ -29,18 +29,20 @@ class MMURes extends Bundle {
   val paddr = UInt(conf.xprlen.W)
 }
 
+class TLBModuleIO extends Bundle {
+  val iaddr = Flipped(new TLBTransaction)
+  val daddr = Flipped(new TLBTransaction)
+  val rport = Flipped(new TLB_RPORT)
+  val wport = Flipped(ValidIO(new TLB_WPORT))
+  val pport = Flipped(new TLB_PPORT)
+  val status = Input(new CP0Status)
+  val br_flush = Flipped(ValidIO(new FlushIO))
+  val ex_flush = Flipped(ValidIO(new FlushIO))
+  val can_log_now = Input(Bool())
+}
+
 class TLB extends Module {
-  val io = IO(new Bundle {
-    val iaddr = Flipped(new TLBTransaction)
-    val daddr = Flipped(new TLBTransaction)
-    val rport = Flipped(new TLB_RPORT)
-    val wport = Flipped(ValidIO(new TLB_WPORT))
-    val pport = Flipped(new TLB_PPORT)
-    val status = Input(new CP0Status)
-    val br_flush = Flipped(ValidIO(new FlushIO))
-    val ex_flush = Flipped(ValidIO(new FlushIO))
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new TLBModuleIO)
 
   val tlb_entries = Mem(conf.tlbsz, new TLBEntry)
   val tlb_entry_ports = for (i <- 0 until conf.tlbsz) yield tlb_entries(i)

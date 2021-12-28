@@ -9,15 +9,16 @@ import woop.configs._
 
 import woop.utils._
 
+class ISUModuleIO extends Bundle {
+  val fu_in = Flipped(DecoupledIO(new IDU_ISU_IO))
+  val fu_out = DecoupledIO(new ISU_EXU_IO)
+  val br_flush = ValidIO(Output(new FlushIO))
+  val rfio = new RegFileIO
+  val can_log_now = Input(Bool())
+}
 
 class ISU extends Module {
-  val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new IDU_ISU_IO))
-    val fu_out = DecoupledIO(new ISU_EXU_IO)
-    val br_flush = ValidIO(Output(new FlushIO))
-    val rfio = new RegFileIO
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new ISUModuleIO)
 
   val bru = Module(new BRU)
   bru.io.can_log_now := io.can_log_now

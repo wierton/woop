@@ -21,14 +21,16 @@ class ICacheAddr extends Bundle {
   val l2bits = UInt(2.W)
 }
 
+class ICacheModuleIO extends Bundle {
+  val in = Flipped(new MemIO)
+  val out = new AXI4IO(conf.xprlen)
+  val br_flush = Input(Bool())
+  val ex_flush = Input(Bool())
+  val can_log_now = Input(Bool())
+}
+
 class ICache extends Module {
-  val io = IO(new Bundle {
-    val in = Flipped(new MemIO)
-    val out = new AXI4IO(conf.xprlen)
-    val br_flush = Input(Bool())
-    val ex_flush = Input(Bool())
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new ICacheModuleIO)
 
   require(isPow2(conf.nICacheSets))
   require(isPow2(conf.nICacheWays))
@@ -75,15 +77,17 @@ class SimICacheEntry extends Bundle {
   val data = UInt(conf.xprlen.W)
 }
 
+class SimICacheModuleIO extends Bundle {
+  val in = Flipped(new MemIO)
+  val out = new MemIO
+  val br_flush = Input(Bool())
+  val ex_flush = Input(Bool())
+  val control = Flipped(ValidIO(new CacheControl))
+  val can_log_now = Input(Bool())
+}
+
 class SimICache extends Module {
-  val io = IO(new Bundle {
-    val in = Flipped(new MemIO)
-    val out = new MemIO
-    val br_flush = Input(Bool())
-    val ex_flush = Input(Bool())
-    val control = Flipped(ValidIO(new CacheControl))
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new SimICacheModuleIO)
 
   val nEntryBits = log2Ceil(conf.nSimICacheEntries)
   def idxOf(addr:UInt) = addr(nEntryBits - 1, 0)
@@ -174,14 +178,16 @@ class IMemCisternEntry extends Bundle {
   val resp = ValidIO(new MemResp)
 }
 
+class IMemCisternModuleIO extends Bundle {
+  val in = Flipped(new MemIO)
+  val out = new MemIO
+  val br_flush = Input(Bool())
+  val ex_flush = Input(Bool())
+  val can_log_now = Input(Bool())
+}
+
 class IMemCistern(entries:Int) extends Module {
-  val io = IO(new Bundle {
-    val in = Flipped(new MemIO)
-    val out = new MemIO
-    val br_flush = Input(Bool())
-    val ex_flush = Input(Bool())
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new IMemCisternModuleIO)
 
   val queue = Mem(entries, new IMemCisternEntry)
 

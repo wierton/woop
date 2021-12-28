@@ -124,13 +124,15 @@ class MemMux(name:String) extends Module {
   }
 }
 
+class CrossbarNx1ModuleIO(m:Int) extends Bundle {
+  val in = Vec(m, Flipped(new MemIO))
+  val out = new MemIO
+  val can_log_now = Input(Bool())
+}
+
 /* assume memory request reach in order */
 class CrossbarNx1(m:Int) extends Module {
-  val io = IO(new Bundle {
-    val in = Vec(m, Flipped(new MemIO))
-    val out = new MemIO
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new CrossbarNx1ModuleIO(m))
 
   val in_valids = Reverse(Cat(for (i <- 0 until m) yield io.in(i).req.valid))
   val in_readys = Reverse(Cat(for (i <- 0 until m) yield io.in(i).req.ready))

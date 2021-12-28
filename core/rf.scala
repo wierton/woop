@@ -8,15 +8,17 @@ import woop.configs._
 
 import woop.utils._
 
+class RegFileModuleIO extends Bundle {
+  val bp = Flipped(ValidIO(new BypassIO))
+  val wb = Flipped(ValidIO(new WriteBackIO))
+  val rfio = Flipped(new RegFileIO)
+  val commit = Output(new CommitIO)
+  val ex_flush = Flipped(ValidIO(new FlushIO))
+  val can_log_now = Input(Bool())
+}
+
 class RegFile extends Module {
-  val io = IO(new Bundle {
-    val bp = Flipped(ValidIO(new BypassIO))
-    val wb = Flipped(ValidIO(new WriteBackIO))
-    val rfio = Flipped(new RegFileIO)
-    val commit = Output(new CommitIO)
-    val ex_flush = Flipped(ValidIO(new FlushIO))
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new RegFileModuleIO)
 
   val wbids = Mem(32, UInt(conf.INSTR_ID_SZ.W))
   val wb_rf = Mem(32, UInt(conf.xprlen.W))

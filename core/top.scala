@@ -15,14 +15,16 @@ class SimDev extends BlackBox {
   })
 }
 
+class DeviceAccessorModuleIO extends Bundle {
+  val clock = Input(Clock())
+  val reset = Input(Bool())
+  val in = Flipped(new MemIO)
+  val enable_bug = Input(Bool())
+  val can_log_now = Input(Bool())
+}
+
 class DeviceAccessor extends Module {
-  val io = IO(new Bundle {
-    val clock = Input(Clock())
-    val reset = Input(Bool())
-    val in = Flipped(new MemIO)
-    val enable_bug = Input(Bool())
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new DeviceAccessorModuleIO)
 
   val dev = Module(new SimDev)
   dev.io.clock := io.clock
@@ -81,12 +83,14 @@ class Multiplier extends Module {
   io.data_dout := pipe.bits
 }
 
+class verilator_top_io extends Bundle {
+  val commit = new CommitIO
+  val can_log_now = Input(Bool())
+  val enable_bug = Input(Bool())
+}
+
 class verilator_top extends Module {
-  val io = IO(new Bundle {
-    val commit = new CommitIO
-    val can_log_now = Input(Bool())
-    val enable_bug = Input(Bool())
-  })
+  val io = IO(new verilator_top_io)
 
   val core = Module(new Core)
   val dev = Module(new SimDev)
@@ -131,10 +135,12 @@ class verilator_top extends Module {
   }
 }
 
+class AXI4_EMU_TOP_ModuleIO extends Bundle {
+  val commit = new CommitIO
+}
+
 class AXI4_EMU_TOP extends Module {
-  val io = IO(new Bundle {
-    val commit = new CommitIO
-  })
+  val io = IO(new AXI4_EMU_TOP_ModuleIO)
 
   val core = Module(new Core)
   val imux = Module(new MemMux("imux"))
@@ -170,14 +176,16 @@ class AXI4_EMU_TOP extends Module {
   core.io.commit <> io.commit
 }
 
+class loongson_top_top extends Bundle {
+  val imem = new AXI4IO(conf.xprlen)
+  val dmem = new AXI4IO(conf.xprlen)
+  val divider = new DividerIO
+  val multiplier = new MultiplierIO
+  val commit = new CommitIO
+}
+
 class loongson_top extends Module {
-  val io = IO(new Bundle {
-    val imem = new AXI4IO(conf.xprlen)
-    val dmem = new AXI4IO(conf.xprlen)
-    val divider = new DividerIO
-    val multiplier = new MultiplierIO
-    val commit = new CommitIO
-  })
+  val io = IO(new loongson_top_top)
 
   val core = Module(new Core)
   val imem2axi = Module(new MemIO2AXI(conf.xprlen))

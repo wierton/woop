@@ -75,14 +75,16 @@ object AddrLen2Strb {
   }
 }
 
+class LSUModuleIO extends Bundle {
+  val dmem = new MemIO
+  val fu_in = Flipped(DecoupledIO(new EHU_MSU_IO))
+  val fu_out = ValidIO(new WriteBackIO)
+  val working = Output(Bool())
+  val can_log_now = Input(Bool())
+}
+
 class LSU extends Module with LSUConsts {
-  val io = IO(new Bundle {
-    val dmem = new MemIO
-    val fu_in = Flipped(DecoupledIO(new EHU_MSU_IO))
-    val fu_out = ValidIO(new WriteBackIO)
-    val working = Output(Bool())
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new LSUModuleIO)
 
   io.fu_in.ready := !io.fu_in.valid || io.dmem.req.ready
 
