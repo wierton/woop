@@ -211,18 +211,5 @@ class TLB extends Module {
 
   def dump():Unit = {
     printv(this, "TLB")
-    printv(io.iaddr, "TLB.io.iaddr")
-    printv(io.daddr, "TLB.io.daddr")
-    printv(io.rport, "TLB.io.rport")
-    printv(io.wport, "TLB.io.wport")
-    printv(io.pport, "TLB.io.pport")
-    printv(io.status, "TLB.io.status")
-    printv(io.br_flush, "TLB.io.br_flush")
-    printv(io.ex_flush, "TLB.io.ex_flush")
-    if (conf.log_TLB_ENTRY) {
-      for (i <- 0 until conf.tlbsz) {
-        printv(tlb_entries(i), "TLB.entry."+i)
-      }
-    }
   }
 }

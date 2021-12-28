@@ -46,9 +46,5 @@ class EHU extends Module {
 
   def dump():Unit = {
     printv(this, "EHU")
-    printv(io.fu_in, "EHU.io.fu_in")
-    printv(io.fu_out, "EHU.io.fu_out")
-    printv(io.cp0, "EHU.io.cp0")
-    printv(io.ex_flush, "EHU.io.ex_flush")
   }
 }

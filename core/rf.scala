@@ -94,12 +94,6 @@ class RegFile extends Module {
   }
 
   def dump():Unit = {
-    printv(io.commit, "RF.io.commit")
-    printv(io.bp, "RF.io.bp")
-    printv(io.wb, "RF.io.wb")
-    printv(io.rfio, "RF.io.rfio")
-    printv(io.commit, "RF.io.commit")
-    printv(io.ex_flush, "RF.io.ex_flush")
-    printv.memdump(wbids, "RF.io.wbids")
+    printv(this, "RegFile")
   }
 }

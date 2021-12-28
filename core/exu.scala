@@ -254,25 +254,5 @@ class EXU extends Module {
 
   def dump() = {
     printv(this, "EXU")
-    printv(io.fu_in, "EXU.io.fu_in")
-    printv(io.fu_out, "EXU.io.fu_out")
-
-    printv(io.cp0_rport, "EXU.io.cp0_rport")
-    printv(io.cp0_wport, "EXU.io.cp0_wport")
-
-    if (conf.log_TLB) {
-      printv(io.cp0_tlbr_port, "EXU.io.cp0_tlbr_port")
-      printv(io.cp0_tlbw_port, "EXU.io.cp0_tlbw_port")
-      printv(io.cp0_tlbp_port, "EXU.io.cp0_tlbp_port")
-
-      printv(io.daddr, "EXU.io.daddr")
-      printv(io.tlb_rport, "EXU.io.tlb_rport")
-      printv(io.tlb_wport, "EXU.io.tlb_wport")
-      printv(io.tlb_pport, "EXU.io.tlb_pport")
-    }
-
-    printv(io.ex_flush, "EXU.io.ex_flush")
-    printv(io.wb, "EXU.io.wb")
-    printv(io.bp, "EXU.io.bp")
   }
 }

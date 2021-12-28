@@ -77,9 +77,7 @@ class MDU_Multiplier extends Module with MDUConsts {
   }
 
   def dump():Unit = {
-    printv(this, "MDU.M")
-    printv(io.fu_in, "MDU.M.io.fu_in")
-    printv(io.fu_out, "MDU.M.io.fu_out")
+    printv(this, "MDU.multiplier")
   }
 }
 
@@ -127,9 +125,7 @@ class MDU_Divider extends Module with MDUConsts {
   }
 
   def dump():Unit = {
-    printv(this, "MDU.D")
-    printv(io.fu_in, "MDU.D.io.fu_in")
-    printv(io.fu_out, "MDU.D.io.fu_out")
+    printv(this, "MDU.divider")
   }
 }
 
@@ -241,18 +237,5 @@ class MDU extends Module with MDUConsts {
 
   def dump():Unit = {
     printv(this, "MDU")
-    printv(io.fu_in, "MDU.io.fu_in")
-    printv(io.fu_out, "MDU.io.fu_out")
-    printv(io.divider, "MDU.io.divider")
-    printv(io.multiplier, "MDU.io.multiplier")
-    printv("MDU.rob.enq(0)", Array[(String,Data)](
-      ("v", rob.io.enq(0).valid),
-      ("id", rob.io.enq(0).bits.id),
-      ("b", rob.io.enq(0).bits.data)))
-    printv("MDU.rob.enq(1)", Array[(String,Data)](
-      ("v", rob.io.enq(1).valid),
-      ("id", rob.io.enq(1).bits.id),
-      ("b", rob.io.enq(1).bits.data)))
-    printv(rob.io.deq, "MDU.rob.deq")
   }
 }

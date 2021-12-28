@@ -38,7 +38,7 @@ class MSUPipelineStage extends Module {
   }
 
   def dump():Unit = {
-    printv(io.fu_out, "LSMD-PSU.io.fu_out")
+    printv(this, "MSUPipelineStage")
   }
 }
 
@@ -104,13 +104,6 @@ class MSU extends Module {
 
   def dump():Unit = {
     printv(this, "MSU")
-    printv(lsu.io.fu_in, "MSU.io.lsu_in")
-    printv(lsu.io.fu_out, "MSU.io.lsu_out")
-    printv(io.divider, "MSU.io.divider")
-    printv(io.multiplier, "MSU.io.multiplier")
-    printv(io.dmem, "MSU.io.dmem")
-    printv(io.wb, "MSU.io.wb")
-    printv(io.fu_in, "MSU.io.fu_in")
   }
   assert (RegNext(AtMost1H(lsu.io.fu_out.valid,
     mdu.io.fu_out.valid, psu.io.fu_out.valid)),

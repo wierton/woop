@@ -165,18 +165,12 @@ class CrossbarNx1(m:Int) extends Module {
   io.out.req.bits := in_req
 
   if (conf.log_CrossbarNx1) {
-    when (io.can_log_now) { dump("crossbar") }
+    when (io.can_log_now) { dump("CrossbarNx1") }
   }
   assert ((~q_data_sz).orR =/= 0.U || !io.out.resp.valid)
 
   def dump(msg:String) = {
     printv(this, msg)
-    for (i <- 0 until io.in.size) {
-      printv(io.in(i), msg+".io.in."+i)
-    }
-    printv(io.out, msg+".io.out")
-    printv(in_req, msg+".in_req")
-    printv.memdump(q_datas, msg)
   }
 }
 

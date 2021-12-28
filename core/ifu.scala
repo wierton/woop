@@ -86,13 +86,8 @@ class IMemPipe[T<:Data:ru.TypeTag](gen:T, entries:Int) extends Module {
   }
 
   def dump():Unit = {
-    printv(this, "IFUPD")
-    printv("IFUPD.io", Array[(String,Data)](
-      ("br_flush", io.br_flush),
-      ("ex_flush", io.ex_flush),
-      ("enq", io.enq),
-      ("deq", io.deq)))
-    printv.memdump(queue, "IFUPD.queue")
+    printv(this, "IMemPipe")
+    printv.memdump(queue, "IMemPipe.queue")
   }
   assert (!is_full || !is_empty)
 }
