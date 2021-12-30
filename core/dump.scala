@@ -71,7 +71,11 @@ object printv {
         }
       }
     }
-    ("{"+fmtString.trim+"}", fmtBits)
+    fmtString = fmtString.trim
+    if (fmtString.endsWith(",")) {
+      fmtString = fmtString.substring(0, fmtString.size-1)
+    }
+    ("{"+fmtString+"}", fmtBits)
   }
 
   def traverseMemberValues[T](topLevelObj: T, fmtmap:Map[String,String]=dftFmtMap)(implicit c: ru.TypeTag[T]) = {
