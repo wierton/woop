@@ -15,13 +15,45 @@ void DiffTop::abort_prologue() {
   single_cycle();
 }
 
-void DiffTop::check_states() {
+void DiffTop::save_registers(bool chkflag) {
+  /* for storage, only output 1000 cycles */
+  unsigned st = napi_get_woop_log_cycles_st();
+  unsigned ed = napi_get_woop_log_cycles_ed();
+  if (this->cycles < st || this->cycles >= ed) return;
+
+  registers_fs << "  (" << std::dec << this->cycles << ", "
+               << (chkflag ? "true" : "false") << ", ";
+
+  /* nemu registers */
+  registers_fs << "[";
+  registers_fs << "0x" << std::hex << napi_get_pc() << ", ";
+  registers_fs << "0x" << std::hex << napi_get_instr()
+               << ", ";
+  for (int i = 0; i < 31; i++)
+    registers_fs << "0x" << std::hex << napi_get_gpr(i)
+                 << ", ";
+  registers_fs << "0x" << std::hex << napi_get_gpr(31)
+               << "], ";
+
+  /* nemu registers */
+  registers_fs << "  [";
+  registers_fs << "0x" << std::hex << dut_ptr->io_commit_pc
+               << ", ";
+  registers_fs << "0x" << std::hex
+               << dut_ptr->io_commit_instr << ", ";
+  for (int i = 0; i < 31; i++)
+    registers_fs << "0x" << std::hex << get_dut_gpr(i)
+                 << ", ";
+  registers_fs << "0x" << std::hex << get_dut_gpr(31)
+               << "]";
+  registers_fs << "),\n";
+}
+
+bool DiffTop::check_states() {
 #define check_eq(a, b, ...) \
   if ((a) != (b)) {         \
-    napi_dump_states();     \
     eprintf(__VA_ARGS__);   \
-    abort_prologue();       \
-    abort();                \
+    return false;           \
   }
 
   check_eq(napi_get_pc(), dut_ptr->io_commit_pc,
@@ -45,6 +77,7 @@ void DiffTop::check_states() {
       dut_ptr->io_commit_gpr_##i);
   GPRS(GPR_TEST);
 #undef GPR_TEST
+  return true;
 }
 
 uint32_t DiffTop::get_dut_gpr(uint32_t r) {
@@ -57,8 +90,22 @@ uint32_t DiffTop::get_dut_gpr(uint32_t r) {
   return 0;
 }
 
+DiffTop::~DiffTop() {
+  registers_fs << "  ( 0xdeadbeef )\n";
+  serial_fs << "  ( 0xdeadbeef )\n";
+
+  registers_fs << "]";
+  serial_fs << "]";
+}
+
 // argv decay to the secondary pointer
-DiffTop::DiffTop(int argc, const char *argv[]) {
+DiffTop::DiffTop(int argc, const char *argv[])
+    : registers_fs("registers.txt"),
+      serial_fs("serial.txt") {
+  /* init registers.txt and serial.txt */
+  registers_fs << "[\n";
+  serial_fs << "[\n";
+
   /* `soc_emu_top' must be created before srand */
   dut_ptr.reset(new verilator_top);
 
@@ -120,9 +167,18 @@ void DiffTop::cycle_epilogue() {
     napi_set_gpr(r, count0);
   }
 
+  bool chkflag = true;
   /* don't check eret and syscall instr */
   if (!instr.is_syscall() && !instr.is_eret())
-    check_states();
+    chkflag = check_states();
+
+  save_registers(chkflag);
+  if (!chkflag) {
+    napi_dump_states();
+    abort_prologue();
+    this->~DiffTop();
+    abort();
+  }
 
   last_instr_is_store = false;
 }
@@ -173,6 +229,8 @@ void DiffTop::device_io(int addr, int len, int data,
         printf(
             "cycles: %ld, ninstr: %ld\n", cycles, ninstr);
       } else if (addr == ULITE_BASE + ULITE_Tx) {
+        serial_fs << "  (" << this->cycles << ", '"
+                  << escape(data) << "'),\n";
       }
     }
     return;

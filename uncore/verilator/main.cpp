@@ -27,6 +27,7 @@ double sc_time_stamp() { return 0; }
 
 void difftop_epilogue(int sig) {
   napi_dump_states();
+  if (diff_top) diff_top.reset();
   syscall(__NR_exit, 0);
 }
 

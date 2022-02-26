@@ -57,6 +57,9 @@ public:
 class DiffTop {
   std::unique_ptr<verilator_top> dut_ptr;
 
+  std::ofstream registers_fs;
+  std::ofstream serial_fs;
+
   uint32_t seed;
   uint64_t ninstr = 0;
   uint64_t cycles = 0, silent_cycles = 0;
@@ -70,7 +73,7 @@ class DiffTop {
   bool last_instr_is_store = false;
   uint32_t ls_addr, ls_data;
 
-  void check_states();
+  bool check_states();
   uint32_t get_dut_gpr(uint32_t r);
   void single_cycle();
   void abort_prologue();
@@ -83,9 +86,28 @@ class DiffTop {
     return st <= cycles && cycles < ed;
   }
 
+  static std::string escape(char ch) {
+    std::string out;
+    if (ch == '\n')
+      out += "\\n";
+    else if (ch == '\r')
+      out += "\\r";
+    else if (std::isprint(ch))
+      out.push_back(ch);
+    else {
+      out += "\\x";
+      out.push_back((ch >> 4) + 'a');
+      out.push_back((ch & 0xf) + 'a');
+    }
+    return out;
+  }
+
+  void save_registers(bool);
+
 public:
   // argv decay to the secondary pointer
   DiffTop(int argc, const char *argv[]);
+  ~DiffTop();
   int execute(uint64_t n = -1ull);
   void device_io(int addr, int len, int data, char func,
       char wstrb, int *resp);
