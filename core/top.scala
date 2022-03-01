@@ -128,6 +128,9 @@ class verilator_top extends Module {
   }
 }
 
+class klee_top extends verilator_top {
+}
+
 class AXI4_EMU_TOP extends Module {
   val io = IO(new Bundle {
     val commit = new CommitIO
