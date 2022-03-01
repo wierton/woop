@@ -27,7 +27,7 @@ $(EMU_BC): $(EMU_MK) $(EMU_CXXFILES) $(IMAGE_TXT)
 	@echo + $(EMU_BC)
 	@cd $(@D) && \
 	  make -s -nB -f $(notdir $<) | \
-	  sed 's/^g++/clang -g -emit-llvm/g' | \
+	  sed 's/^g++/clang -fno-rtti -fno-exceptions -g -emit-llvm/g' | \
 	  sed 's/\(\w*\)\.[oa]/\1.bc/g' | \
 	  sed 's/-Wno-unused-but-set-variable//g' | \
 	  sed 's/ar -cr/$(LLVM_LINK) -o/g' | \

@@ -27,14 +27,17 @@ extern "C" void device_io(unsigned char valid, int addr,
 
 double sc_time_stamp() { return 0; }
 
-void emulator_epilogue(int sig) { syscall(__NR_exit, 0); }
-
 int main(int argc, const char **argv) {
-  signal(SIGINT, emulator_epilogue);
-
+  int ret = 0;
   emu = new Emulator(image, sizeof(image));
   emu->dut.io_can_log_now = false;
-  auto ret = emu->execute();
+  while (true) {
+    emu->single_cycle();
+    if (emu->dut.io_commit_valid &&
+        emu->dut.io_commit_instr == 0x12345678)
+      break;
+  }
+  assert(0);
 
   if (ret == -1) {
     eprintf(ESC_RED "Timeout\n" ESC_RST);
@@ -45,6 +48,5 @@ int main(int argc, const char **argv) {
   }
 
   delete emu;
-  syscall(__NR_exit, ret);
   return ret;
 }

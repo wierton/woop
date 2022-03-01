@@ -27,13 +27,7 @@
 struct Emulator {
   klee_top dut;
   static constexpr uint32_t entry = 0x80000000;
-  static constexpr uint32_t bram[4] = {
-      0x3c080000 | (entry >> 16), // lui t0, %hi(entry)
-      0x35080000 |
-          (entry & 0xFFFF), // ori t0, t0, %lo(entry)
-      0x01000008,           // jr t0
-      0x00000000,           // nop
-  };
+  static uint32_t bram[4];
 
   uint32_t seed;
   uint64_t ninstr = 0;

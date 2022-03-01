@@ -1,11 +1,21 @@
 #include "common.h"
 #include "emu.h"
 
-constexpr uint32_t Emulator::bram[4];
+uint32_t Emulator::bram[4]
+#if 0
+ = {
+   0x3c080000 | (Emulator::entry >> 16), // lui t0, %hi(entry)
+   0x35080000 | (Emulator::entry & 0xFFFF), // ori t0, t0, %lo(entry)
+   0x01000008,
+   0x00000000,
+ }
+#endif
+    ;
 
 Emulator::Emulator(uint8_t *image, uint32_t image_size)
     : ddr(image), ddr_size(image_size) {
-  reset_ncycles(10);
+  reset_ncycles(1);
+  klee_make_symbolic(bram, sizeof(bram), "bram");
 }
 
 void Emulator::reset_ncycles(unsigned n) {
@@ -50,7 +60,7 @@ void Emulator::device_io(int addr, int len, int data,
       if (addr == GPIO_TRAP) {
         finished = true;
         ret_code = data;
-        printf(
+        dprintf(
             "cycles: %ld, ninstr: %ld\n", cycles, ninstr);
       } else if (addr == ULITE_Tx) {
       }
