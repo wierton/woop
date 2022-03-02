@@ -297,8 +297,6 @@ void DiffTop::device_io(int addr, int len, int data,
         finished = true;
         hit_trap = true;
         ret_code = data;
-        printf(
-            "cycles: %ld, ninstr: %ld\n", cycles, ninstr);
       } else if (addr == ULITE_BASE + ULITE_Tx) {
         print_noop_serial_single(data);
       }

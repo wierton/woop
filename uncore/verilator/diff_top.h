@@ -72,7 +72,7 @@ class DiffTop {
   void print_nemu_serial_single();
   void print_noop_serial_single(int data);
 
-private:
+public:
   uint32_t seed;
   uint64_t ninstr = 0;
   uint64_t cycles = 0, silent_cycles = 0;
