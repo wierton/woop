@@ -160,7 +160,7 @@ DiffTop::DiffTop(int argc, const char *argv[])
   dut_ptr.reset(new verilator_top);
 
   /* srand */
-  seed = (unsigned)time(NULL) ^ (unsigned)getpid();
+  seed = 0x12345678;
   srand(seed);
   srand48(seed);
   Verilated::randReset(seed);
