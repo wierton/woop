@@ -79,7 +79,7 @@ void DiffTop::print_noop_regs_single(bool chkflag) {
 void DiffTop::print_nemu_serial_single() {
   int data = napi_ulite_get_data();
   if (data == NAPI_ULITE_DATA_INV) return;
-  if (napi_get_enable_nemu_log_flag()) return;
+  if (!napi_get_enable_nemu_log_flag()) return;
 
   static bool isFirstEntry = true;
   if (!isFirstEntry) nemu_serial_fs << ",\n";
@@ -245,8 +245,15 @@ int DiffTop::execute(uint64_t n) {
     dut_ptr->io_can_log_now = can_log_now();
     dut_ptr->io_enable_bug = flag;
     single_cycle();
-    if (!finished) cycle_epilogue();
+    if (!finished || hit_trap) cycle_epilogue();
     n--;
+  }
+
+  if (hit_trap) {
+    while (!dut_ptr->io_commit_valid) {
+      single_cycle();
+      cycle_epilogue();
+    }
   }
 
   while (!napi_cpu_is_end()) {
@@ -280,6 +287,7 @@ void DiffTop::device_io(int addr, int len, int data,
     } else {
       if (addr == GPIO_TRAP) {
         finished = true;
+        hit_trap = true;
         ret_code = data;
         printf(
             "cycles: %ld, ninstr: %ld\n", cycles, ninstr);
