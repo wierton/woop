@@ -117,20 +117,22 @@ class MemMux(name:String) extends Module {
 
   if (conf.log_MemMux) {
     when (io.can_log_now) {
-      printv(io.in, name+".in")
-      printv(io.cached, name+".cached")
-      printv(io.uncached, name+".uncached")
+      printv(io.in, name+".io.in")
+      printv(io.cached, name+".io.cached")
+      printv(io.uncached, name+".io.uncached")
     }
   }
 }
 
+class CrossbarNx1ModuleIO(m:Int) extends Bundle {
+  val in = Vec(m, Flipped(new MemIO))
+  val out = new MemIO
+  val can_log_now = Input(Bool())
+}
+
 /* assume memory request reach in order */
 class CrossbarNx1(m:Int) extends Module {
-  val io = IO(new Bundle {
-    val in = Vec(m, Flipped(new MemIO))
-    val out = new MemIO
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new CrossbarNx1ModuleIO(m))
 
   val in_valids = Reverse(Cat(for (i <- 0 until m) yield io.in(i).req.valid))
   val in_readys = Reverse(Cat(for (i <- 0 until m) yield io.in(i).req.ready))
@@ -163,18 +165,12 @@ class CrossbarNx1(m:Int) extends Module {
   io.out.req.bits := in_req
 
   if (conf.log_CrossbarNx1) {
-    when (io.can_log_now) { dump("crossbar") }
+    when (io.can_log_now) { dump("CrossbarNx1") }
   }
   assert ((~q_data_sz).orR =/= 0.U || !io.out.resp.valid)
 
   def dump(msg:String) = {
     printv(this, msg)
-    for (i <- 0 until io.in.size) {
-      printv(io.in(i), msg+".io.in."+i)
-    }
-    printv(io.out, msg+".io.out")
-    printv(in_req, msg+".in_req")
-    printv.memdump(q_datas, msg)
   }
 }
 

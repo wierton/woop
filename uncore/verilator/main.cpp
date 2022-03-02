@@ -35,6 +35,9 @@ int main(int argc, const char **argv) {
 
   diff_top.reset(new DiffTop(argc, argv));
   auto ret = diff_top->execute();
+  printf("[cycles: %ld, ninstr: %ld]\n",
+      diff_top->noop_cycles, diff_top->noop_ninstr);
+  diff_top.reset();
 
   if (ret == -1) {
     eprintf(ESC_RED "Timeout\n" ESC_RST);

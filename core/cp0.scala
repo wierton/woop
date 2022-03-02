@@ -44,18 +44,20 @@ abstract class CPRS extends Module {
   cpr_count := cpr_count + 1.U
 }
 
+class CP0ModuleIO extends Bundle {
+  val rport = Flipped(new CPR_RPORT)
+  val wport = Flipped(ValidIO(new CPR_WPORT))
+  val tlbr_port = Flipped(new CP0_TLBR_PORT)
+  val tlbw_port = Flipped(ValidIO(new CP0_TLBW_PORT))
+  val tlbp_port = Flipped(ValidIO(new CP0_TLBP_PORT))
+  val status = Output(new CP0Status)
+  val ehu = Flipped(new EHU_CP0_IO)
+  val ex_flush = ValidIO(new FlushIO)
+  val can_log_now = Input(Bool())
+}
+
 class CP0 extends CPRS with LSUConsts {
-  val io = IO(new Bundle {
-    val rport = Flipped(new CPR_RPORT)
-    val wport = Flipped(ValidIO(new CPR_WPORT))
-    val tlbr_port = Flipped(new CP0_TLBR_PORT)
-    val tlbw_port = Flipped(ValidIO(new CP0_TLBW_PORT))
-    val tlbp_port = Flipped(ValidIO(new CP0_TLBP_PORT))
-    val status = Output(new CP0Status)
-    val ehu = Flipped(new EHU_CP0_IO)
-    val ex_flush = ValidIO(new FlushIO)
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new CP0ModuleIO)
 
   io.status := cpr_status
 
@@ -189,15 +191,5 @@ class CP0 extends CPRS with LSUConsts {
 
   def dump():Unit = {
     printv(this, "CP0")
-    printv(io.rport, "CP0.rport")
-    printv(io.wport, "CP0.wport")
-    if (conf.log_TLB) {
-      printv(io.tlbr_port, "CP0.tlbr_port")
-      printv(io.tlbw_port, "CP0.tlbw_port")
-      printv(io.tlbp_port, "CP0.tlbp_port")
-    }
-    printv(io.status, "CP0.status")
-    printv(io.ehu, "CP0.ehu")
-    printv(io.ex_flush, "CP0.ex_flush")
   }
 }

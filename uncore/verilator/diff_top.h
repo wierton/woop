@@ -54,42 +54,115 @@ public:
   uint32_t get_rt() { return rt; }
 };
 
+inline bool string_contains(
+    const std::string &lhs, const std::string &rhs) {
+  if (rhs.empty()) return true;
+  for (int i = 0; i < lhs.size(); i++) {
+    bool isSame = true;
+    for (int j = 0; j < rhs.size(); j++) {
+      if (i + j >= lhs.size() || lhs[i + j] != rhs[j]) {
+        isSame = false;
+        break;
+      }
+    }
+    if (isSame) return true;
+  }
+  return false;
+}
+
+inline std::string escape(char ch) {
+  std::string out;
+  if (ch == '\n')
+    out += "\\n";
+  else if (ch == '\r')
+    out += "\\r";
+  else if (std::isprint(ch))
+    out.push_back(ch);
+  else {
+    out += "\\x";
+    out.push_back((ch >> 4) + 'a');
+    out.push_back((ch & 0xf) + 'a');
+  }
+  return out;
+}
+
 class DiffTop {
+private:
   std::unique_ptr<verilator_top> dut_ptr;
 
-  uint32_t seed;
-  uint64_t ninstr = 0;
-  uint64_t cycles = 0, silent_cycles = 0;
+  std::ofstream regs_fs;
+  std::ofstream nemu_ulite_fs;
+  std::ofstream noop_ulite_fs;
 
-  bool finished = false;
-  int ret_code = -1;
+  void dump_regs_pre(std::ostream &os);
+  void dump_regs_post(std::ostream &os);
+  void dump_regs_single(bool chkflag);
+  void dump_nemu_regs_single(std::ostream &os);
+  void dump_noop_regs_single(std::ostream &os);
+
+  void dump_ulite_pre(std::ostream &os);
+  void dump_ulite_post(std::ostream &os);
+  void dump_nemu_ulite_single(int data);
+  void dump_noop_ulite_single(int data);
+
+  const char *ulite_stop_string = nullptr;
+  const char *ulite_stop_string_ptr;
+
+  enum ElfType { VMLINUX, MICROBENCH, OTHER } elf_type;
+
+  enum NemuState {
+    NEMU_RUNNING,
+    NEMU_TRAP,
+    NEMU_ULITE_END,
+    NEMU_END,
+  } nemu_state = NEMU_RUNNING;
+
+  enum NoopState {
+    NOOP_RUNNING,
+    NOOP_CHKFAIL,
+    NOOP_TRAP,
+    NOOP_ULITE_END,
+  } noop_state = NOOP_RUNNING;
+
+  void updateNoopState(NoopState newState) {
+    assert(noop_state == NOOP_RUNNING);
+    noop_state == newState;
+  }
+
+public:
+  uint64_t noop_ninstr = 0;
+  uint64_t noop_cycles = 0;
+  int noop_trap_code = 0;
+  bool noop_enable_bug = false;
+  bool noop_enable_diff = false;
+
+  void stopWhenUliteSend(const char *string);
+
   static constexpr uint32_t ddr_size = 128 * 1024 * 1024;
   uint8_t ddr[ddr_size];
 
-  /* record last memory store */
-  bool last_instr_is_store = false;
-  uint32_t ls_addr, ls_data;
-
-  void check_states();
+  bool check_states();
   uint32_t get_dut_gpr(uint32_t r);
-  void single_cycle();
-  void abort_prologue();
-  void cycle_epilogue();
-  void reset_ncycles(unsigned n);
 
-  bool can_log_now() const {
-    // return cycles >= 456643 - 1000;
-    return false;
-  }
+  void noop_reset_ncycles(unsigned n);
+  bool noop_one_cycle();
+  void noop_tame_nemu();
+  void nemu_one_instr();
+  void diff_one_instr();
+
+  bool can_log_now() const;
+  void dump_registers();
+
+  void init_from_args(int argc, const char *argv[]);
 
 public:
   // argv decay to the secondary pointer
   DiffTop(int argc, const char *argv[]);
-  int execute(uint64_t n = -1ull);
+  ~DiffTop();
+
+  int execute();
   void device_io(int addr, int len, int data, char func,
       char wstrb, int *resp);
-
-  uint64_t get_cycles() const { return cycles; }
 };
 
 #endif

@@ -57,9 +57,6 @@ class LSUOp extends Bundle {
     val rmask = Mux(!align && ext === LSUConsts.LSU_L,
       mask << ((~l2b) << 3), mask >> (l2b << 3))
 
-    def dump():Unit = {
-      printf("%d: LSU.c: addr=%x, data=%x, mdata=%x, mask=%x, rdata=%x, rmask=%x\n", GTimer(), addr, data, mdata, mask, rdata, rmask)
-    }
     (rdata & rmask) | (mdata & ~rmask)
   }
   def memReqDataOf(addr:UInt, data:UInt) = {
@@ -78,14 +75,16 @@ object AddrLen2Strb {
   }
 }
 
+class LSUModuleIO extends Bundle {
+  val dmem = new MemIO
+  val fu_in = Flipped(DecoupledIO(new EHU_MSU_IO))
+  val fu_out = ValidIO(new WriteBackIO)
+  val working = Output(Bool())
+  val can_log_now = Input(Bool())
+}
+
 class LSU extends Module with LSUConsts {
-  val io = IO(new Bundle {
-    val dmem = new MemIO
-    val fu_in = Flipped(DecoupledIO(new EHU_MSU_IO))
-    val fu_out = ValidIO(new WriteBackIO)
-    val working = Output(Bool())
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new LSUModuleIO)
 
   io.fu_in.ready := !io.fu_in.valid || io.dmem.req.ready
 
@@ -136,13 +135,6 @@ class LSU extends Module with LSUConsts {
 
   def dump():Unit = {
     printv(this, "LSU")
-    printv(s2_in, "LSU.s2_in")
-    printv(s3_in, "LSU.s3_in")
-    printv(s2_datas.io.enq, "LSU.s2_datas.enq")
-    printv(s2_datas.io.deq, "LSU.s2_datas.deq")
-    printv(io.fu_in, "LSU.fu_in")
-    printv(io.fu_out, "LSU.fu_out")
-    printv(io.dmem, "LSU.dmem")
   }
 }
 

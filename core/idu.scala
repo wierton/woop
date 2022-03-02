@@ -8,15 +8,17 @@ import woop.configs._
 
 import woop.utils._
 
+class IDUModuleIO extends Bundle {
+  val fu_in = Flipped(DecoupledIO(new IFU_IDU_IO))
+  val fu_out = DecoupledIO(new ISU_EXU_IO)
+  val br_flush = ValidIO(Output(new FlushIO))
+  val rfio = new RegFileIO
+  val ex_flush = Flipped(ValidIO(new FlushIO))
+  val can_log_now = Input(Bool())
+}
+
 class IDU extends Module with LSUConsts with MDUConsts {
-  val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new IFU_IDU_IO))
-    val fu_out = DecoupledIO(new ISU_EXU_IO)
-    val br_flush = ValidIO(Output(new FlushIO))
-    val rfio = new RegFileIO
-    val ex_flush = Flipped(ValidIO(new FlushIO))
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new IDUModuleIO)
 
   val isu = Module(new ISU)
   val fu_in = RegEnable(next=io.fu_in.bits, enable=io.fu_in.fire(), init=0.U.asTypeOf(io.fu_in.bits))
@@ -185,9 +187,6 @@ class IDU extends Module with LSUConsts with MDUConsts {
 
   def dump():Unit = {
     printv(this, "IDU")
-    printv(io.fu_in, "IDU.fu_in")
-    printv(io.fu_out, "IDU.fu_out")
-    printv(io.ex_flush, "IDU.ex_flush")
   }
 }
 

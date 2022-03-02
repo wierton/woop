@@ -37,13 +37,15 @@ class MDUStageOut extends Bundle {
   val wb = new WriteBackIO
 }
 
+class MDU_MultiplierModuleIO extends Bundle {
+  val fu_in = Flipped(DecoupledIO(new MDUStageIn))
+  val fu_out = ValidIO(new MDUStageOut)
+  val multiplier = new MultiplierIO
+  val can_log_now = Input(Bool())
+}
+
 class MDU_Multiplier extends Module with MDUConsts {
-  val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new MDUStageIn))
-    val fu_out = ValidIO(new MDUStageOut)
-    val multiplier = new MultiplierIO
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new MDU_MultiplierModuleIO)
 
   val op1 = io.fu_in.bits.op1
   val op2 = io.fu_in.bits.op2
@@ -75,19 +77,19 @@ class MDU_Multiplier extends Module with MDUConsts {
   }
 
   def dump():Unit = {
-    printv(this, "MDU.M")
-    printv(io.fu_in, "MDU.M.fu_in")
-    printv(io.fu_out, "MDU.M.fu_out")
+    printv(this, "MDU.multiplier")
   }
 }
 
+class MDU_DividerModuleIO extends Bundle {
+  val fu_in = Flipped(DecoupledIO(new MDUStageIn))
+  val fu_out = ValidIO(new MDUStageOut)
+  val divider = new DividerIO
+  val can_log_now = Input(Bool())
+}
+
 class MDU_Divider extends Module with MDUConsts {
-  val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new MDUStageIn))
-    val fu_out = ValidIO(new MDUStageOut)
-    val divider = new DividerIO
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new MDU_DividerModuleIO)
 
   val queue = Module(new Queue(new MDUStageData, conf.div_stages))
   queue.io.enq.valid := io.divider.dividend_fire() && io.divider.divisor_fire()
@@ -123,21 +125,21 @@ class MDU_Divider extends Module with MDUConsts {
   }
 
   def dump():Unit = {
-    printv(this, "MDU.D")
-    printv(io.fu_in, "MDU.D.fu_in")
-    printv(io.fu_out, "MDU.D.fu_out")
+    printv(this, "MDU.divider")
   }
 }
 
+class MDUModuleIO extends Bundle {
+  val fu_in = Flipped(DecoupledIO(new EHU_MSU_IO))
+  val fu_out = ValidIO(new WriteBackIO)
+  val working = Output(Bool())
+  val divider = new DividerIO
+  val multiplier = new MultiplierIO
+  val can_log_now = Input(Bool())
+}
+
 class MDU extends Module with MDUConsts {
-  val io = IO(new Bundle {
-    val fu_in = Flipped(DecoupledIO(new EHU_MSU_IO))
-    val fu_out = ValidIO(new WriteBackIO)
-    val working = Output(Bool())
-    val divider = new DividerIO
-    val multiplier = new MultiplierIO
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new MDUModuleIO)
 
   val is_div = io.fu_in.bits.ops.fu_op === MDU_DIV ||
     io.fu_in.bits.ops.fu_op === MDU_DIVU
@@ -235,16 +237,5 @@ class MDU extends Module with MDUConsts {
 
   def dump():Unit = {
     printv(this, "MDU")
-    printv(io.fu_in, "MDU.fu_in")
-    printv(io.fu_out, "MDU.fu_out")
-    printv("MDU.rob.enq(0)", Array[(String,Data)](
-      ("v", rob.io.enq(0).valid),
-      ("id", rob.io.enq(0).bits.id),
-      ("b", rob.io.enq(0).bits.data)))
-    printv("MDU.rob.enq(1)", Array[(String,Data)](
-      ("v", rob.io.enq(1).valid),
-      ("id", rob.io.enq(1).bits.id),
-      ("b", rob.io.enq(1).bits.data)))
-    printv(rob.io.deq, "MDU.rob.deq")
   }
 }

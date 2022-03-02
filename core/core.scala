@@ -8,18 +8,27 @@ import woop.consts._
 import woop.configs._
 import woop.utils._
 
+class CoreModuleIO extends Bundle {
+  val imem = new MemIO
+  val dmem = new MemIO
+  val icache_control = ValidIO(new CacheControl)
+  val commit = new CommitIO
+  val br_flush = Output(Bool())
+  val ex_flush = Output(Bool())
+  val multiplier = new MultiplierIO
+  val divider = new DividerIO
+  val can_log_now = Input(Bool())
+  val enable_bug = Input(Bool())
+}
+
 class Core extends Module {
-  val io = IO(new Bundle {
-    val imem = new MemIO
-    val dmem = new MemIO
-    val icache_control = ValidIO(new CacheControl)
-    val commit = new CommitIO
-    val br_flush = Output(Bool())
-    val ex_flush = Output(Bool())
-    val multiplier = new MultiplierIO
-    val divider = new DividerIO
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new CoreModuleIO)
+
+  when (io.can_log_now) { dump() }
+
+  def dump():Unit = {
+    printv(this, "Core")
+  }
 
   val rf  = Module(new RegFile)
   val ifu = Module(new IFU)
@@ -35,6 +44,7 @@ class Core extends Module {
   ifu.io.can_log_now := io.can_log_now
   idu.io.can_log_now := io.can_log_now
   exu.io.can_log_now := io.can_log_now
+  exu.io.enable_bug := io.enable_bug
   cp0.io.can_log_now := io.can_log_now
   tlb.io.can_log_now := io.can_log_now
   ehu.io.can_log_now := io.can_log_now

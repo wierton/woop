@@ -8,10 +8,12 @@ import woop.configs._
 
 import woop.utils._
 
+class BRUModuleIO extends ISU_BRU_IO {
+  val can_log_now = Input(Bool())
+}
+
 class BRU extends Module {
-  val io = IO(new ISU_BRU_IO {
-    val can_log_now = Input(Bool())
-  })
+  val io = IO(new BRUModuleIO)
 
   /* branch check */
   val pc = io.fu_in.bits.wb.pc
@@ -53,7 +55,5 @@ class BRU extends Module {
 
   def dump():Unit = {
     printv(this, "BRU")
-    printv(io.fu_in, "BRU.fu_in")
-    printv(io.fu_out, "BRU.fu_out")
   }
 }
