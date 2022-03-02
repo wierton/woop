@@ -30,6 +30,18 @@ void DiffTop::print_serial_epilogue(std::ostream &os) {
 
 void DiffTop::print_nemu_regs_single() {
   static bool isFirstEntry = true;
+  if (!napi_get_enable_nemu_log_flag()) {
+    if (isFirstEntry) {
+      nemu_regs_fs << "  (0, true, ";
+      nemu_regs_fs << "[";
+      for (int i = 0; i < 32 + 1; i++)
+        nemu_regs_fs << "0x0, ";
+      nemu_regs_fs << "0x0]";
+      isFirstEntry = false;
+    }
+    return;
+  }
+
   if (!isFirstEntry) nemu_regs_fs << ",\n";
   isFirstEntry = false;
   nemu_regs_fs << "  (" << std::dec << this->cycles << ", "
@@ -67,9 +79,11 @@ void DiffTop::print_noop_regs_single(bool chkflag) {
 void DiffTop::print_nemu_serial_single() {
   int data = napi_ulite_get_data();
   if (data == NAPI_ULITE_DATA_INV) return;
+  if (napi_get_enable_nemu_log_flag()) return;
 
   static bool isFirstEntry = true;
   if (!isFirstEntry) nemu_serial_fs << ",\n";
+
   isFirstEntry = false;
   nemu_serial_fs << "  (" << (this->cycles - 1) << ", '"
                  << escape((char)data) << "')";
@@ -211,12 +225,7 @@ void DiffTop::cycle_epilogue() {
 
   print_nemu_regs_single();
   print_noop_regs_single(chkflag);
-  if (!chkflag) {
-    napi_dump_states();
-    abort_prologue();
-    this->~DiffTop();
-    abort();
-  }
+  if (!chkflag) { finished = true; }
 
   last_instr_is_store = false;
 }
@@ -230,6 +239,7 @@ void DiffTop::single_cycle() {
 }
 
 int DiffTop::execute(uint64_t n) {
+  ret_code = 0;
   bool flag = napi_get_woop_enable_bug_flag();
   while (!finished && n > 0) {
     dut_ptr->io_can_log_now = can_log_now();
@@ -241,6 +251,8 @@ int DiffTop::execute(uint64_t n) {
 
   while (!napi_cpu_is_end()) {
     napi_exec(1);
+    this->cycles++;
+    print_nemu_regs_single();
     print_nemu_serial_single();
   }
 
