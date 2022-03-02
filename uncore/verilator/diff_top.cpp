@@ -15,38 +15,71 @@ void DiffTop::abort_prologue() {
   single_cycle();
 }
 
-void DiffTop::save_registers(bool chkflag) {
-  /* for storage, only output 1000 cycles */
-  unsigned st = napi_get_woop_log_cycles_st();
-  unsigned ed = napi_get_woop_log_cycles_ed();
-  if (this->cycles < st || this->cycles >= ed) return;
+void DiffTop::print_regs_prologue(std::ostream &os) {
+  os << "[\n";
+}
+void DiffTop::print_regs_epilogue(std::ostream &os) {
+  os << "\n]\n";
+}
+void DiffTop::print_serial_prologue(std::ostream &os) {
+  os << "[\n";
+}
+void DiffTop::print_serial_epilogue(std::ostream &os) {
+  os << "\n]\n";
+}
 
-  registers_fs << "  (" << std::dec << this->cycles << ", "
-               << (chkflag ? "true" : "false") << ", ";
-
-  /* nemu registers */
-  registers_fs << "[";
-  registers_fs << "0x" << std::hex << napi_get_pc() << ", ";
-  registers_fs << "0x" << std::hex << napi_get_instr()
+void DiffTop::print_nemu_regs_single() {
+  static bool isFirstEntry = true;
+  if (!isFirstEntry) nemu_regs_fs << ",\n";
+  isFirstEntry = false;
+  nemu_regs_fs << "  (" << std::dec << this->cycles << ", "
+               << "true"
+               << ", ";
+  nemu_regs_fs << "[";
+  nemu_regs_fs << "0x" << std::hex << napi_get_pc() << ", ";
+  nemu_regs_fs << "0x" << std::hex << napi_get_instr()
                << ", ";
   for (int i = 0; i < 31; i++)
-    registers_fs << "0x" << std::hex << napi_get_gpr(i)
+    nemu_regs_fs << "0x" << std::hex << napi_get_gpr(i)
                  << ", ";
-  registers_fs << "0x" << std::hex << napi_get_gpr(31)
-               << "], ";
-
-  /* nemu registers */
-  registers_fs << "  [";
-  registers_fs << "0x" << std::hex << dut_ptr->io_commit_pc
+  nemu_regs_fs << "0x" << std::hex << napi_get_gpr(31)
+               << "]";
+  nemu_regs_fs << ")";
+}
+void DiffTop::print_noop_regs_single(bool chkflag) {
+  static bool isFirstEntry = true;
+  if (!isFirstEntry) noop_regs_fs << ",\n";
+  isFirstEntry = false;
+  noop_regs_fs << "  (" << std::dec << this->cycles << ", "
+               << (chkflag ? "true" : "false") << ", ";
+  noop_regs_fs << "[";
+  noop_regs_fs << "0x" << std::hex << dut_ptr->io_commit_pc
                << ", ";
-  registers_fs << "0x" << std::hex
+  noop_regs_fs << "0x" << std::hex
                << dut_ptr->io_commit_instr << ", ";
   for (int i = 0; i < 31; i++)
-    registers_fs << "0x" << std::hex << get_dut_gpr(i)
+    noop_regs_fs << "0x" << std::hex << get_dut_gpr(i)
                  << ", ";
-  registers_fs << "0x" << std::hex << get_dut_gpr(31)
+  noop_regs_fs << "0x" << std::hex << get_dut_gpr(31)
                << "]";
-  registers_fs << "),\n";
+  noop_regs_fs << ")";
+}
+void DiffTop::print_nemu_serial_single() {
+  int data = napi_ulite_get_data();
+  if (data == NAPI_ULITE_DATA_INV) return;
+
+  static bool isFirstEntry = true;
+  if (!isFirstEntry) nemu_serial_fs << ",\n";
+  isFirstEntry = false;
+  nemu_serial_fs << "  (" << (this->cycles - 1) << ", '"
+                 << escape((char)data) << "')";
+}
+void DiffTop::print_noop_serial_single(int data) {
+  static bool isFirstEntry = true;
+  if (!isFirstEntry) noop_serial_fs << ",\n";
+  isFirstEntry = false;
+  noop_serial_fs << "  (" << this->cycles << ", '"
+                 << escape((char)data) << "')";
 }
 
 bool DiffTop::check_states() {
@@ -91,20 +124,23 @@ uint32_t DiffTop::get_dut_gpr(uint32_t r) {
 }
 
 DiffTop::~DiffTop() {
-  registers_fs << "  ( 0xdeadbeef )\n";
-  serial_fs << "  ( 0xdeadbeef )\n";
-
-  registers_fs << "]";
-  serial_fs << "]";
+  print_regs_epilogue(nemu_regs_fs);
+  print_regs_epilogue(noop_regs_fs);
+  print_serial_epilogue(nemu_serial_fs);
+  print_serial_epilogue(noop_serial_fs);
 }
 
 // argv decay to the secondary pointer
 DiffTop::DiffTop(int argc, const char *argv[])
-    : registers_fs("registers.txt"),
-      serial_fs("serial.txt") {
+    : nemu_regs_fs("nemu-regs.txt"),
+      noop_regs_fs("noop-regs.txt"),
+      nemu_serial_fs("nemu-serial.txt"),
+      noop_serial_fs("noop-serial.txt") {
   /* init registers.txt and serial.txt */
-  registers_fs << "[\n";
-  serial_fs << "[\n";
+  print_regs_prologue(nemu_regs_fs);
+  print_regs_prologue(noop_regs_fs);
+  print_serial_prologue(nemu_serial_fs);
+  print_serial_prologue(noop_serial_fs);
 
   /* `soc_emu_top' must be created before srand */
   dut_ptr.reset(new verilator_top);
@@ -158,6 +194,7 @@ void DiffTop::cycle_epilogue() {
 
   /* nemu executes one cycle */
   napi_exec(1);
+  print_nemu_serial_single();
 
   /* keep consistency when execute mfc0 count */
   mips_instr_t instr = napi_get_instr();
@@ -172,7 +209,8 @@ void DiffTop::cycle_epilogue() {
   if (!instr.is_syscall() && !instr.is_eret())
     chkflag = check_states();
 
-  save_registers(chkflag);
+  print_nemu_regs_single();
+  print_noop_regs_single(chkflag);
   if (!chkflag) {
     napi_dump_states();
     abort_prologue();
@@ -199,6 +237,11 @@ int DiffTop::execute(uint64_t n) {
     single_cycle();
     if (!finished) cycle_epilogue();
     n--;
+  }
+
+  while (!napi_cpu_is_end()) {
+    napi_exec(1);
+    print_nemu_serial_single();
   }
 
   if (finished) return ret_code;
@@ -229,8 +272,7 @@ void DiffTop::device_io(int addr, int len, int data,
         printf(
             "cycles: %ld, ninstr: %ld\n", cycles, ninstr);
       } else if (addr == ULITE_BASE + ULITE_Tx) {
-        serial_fs << "  (" << this->cycles << ", '"
-                  << escape(data) << "'),\n";
+        print_noop_serial_single(data);
       }
     }
     return;

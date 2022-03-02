@@ -57,9 +57,22 @@ public:
 class DiffTop {
   std::unique_ptr<verilator_top> dut_ptr;
 
-  std::ofstream registers_fs;
-  std::ofstream serial_fs;
+  std::ofstream nemu_regs_fs;
+  std::ofstream noop_regs_fs;
+  std::ofstream nemu_serial_fs;
+  std::ofstream noop_serial_fs;
 
+  void print_regs_prologue(std::ostream &os);
+  void print_regs_epilogue(std::ostream &os);
+  void print_serial_prologue(std::ostream &os);
+  void print_serial_epilogue(std::ostream &os);
+
+  void print_nemu_regs_single();
+  void print_noop_regs_single(bool chkflag);
+  void print_nemu_serial_single();
+  void print_noop_serial_single(int data);
+
+private:
   uint32_t seed;
   uint64_t ninstr = 0;
   uint64_t cycles = 0, silent_cycles = 0;
@@ -101,8 +114,6 @@ class DiffTop {
     }
     return out;
   }
-
-  void save_registers(bool);
 
 public:
   // argv decay to the secondary pointer
