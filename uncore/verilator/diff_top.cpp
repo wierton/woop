@@ -223,8 +223,13 @@ void DiffTop::cycle_epilogue() {
   if (!instr.is_syscall() && !instr.is_eret())
     chkflag = check_states();
 
-  print_nemu_regs_single();
-  print_noop_regs_single(chkflag);
+  unsigned st = napi_get_woop_log_cycles_st();
+  unsigned ed = napi_get_woop_log_cycles_ed();
+  if (this->cycles % 9000 == 0 ||
+      (st <= this->cycles && this->cycles < ed)) {
+    print_nemu_regs_single();
+    print_noop_regs_single(chkflag);
+  }
   if (!chkflag) { finished = true; }
 
   last_instr_is_store = false;
@@ -239,6 +244,8 @@ void DiffTop::single_cycle() {
 }
 
 int DiffTop::execute(uint64_t n) {
+  napi_stop_cpu_when_ulite_send("activate this console.");
+
   ret_code = 0;
   bool flag = napi_get_woop_enable_bug_flag();
   while (!finished && n > 0) {
@@ -246,6 +253,7 @@ int DiffTop::execute(uint64_t n) {
     dut_ptr->io_enable_bug = flag;
     single_cycle();
     if (!finished || hit_trap) cycle_epilogue();
+    if (napi_cpu_is_end()) return 0;
     n--;
   }
 
@@ -259,7 +267,7 @@ int DiffTop::execute(uint64_t n) {
   while (!napi_cpu_is_end()) {
     napi_exec(1);
     this->cycles++;
-    print_nemu_regs_single();
+    if (this->cycles % 4000 == 0) print_nemu_regs_single();
     print_nemu_serial_single();
   }
 
