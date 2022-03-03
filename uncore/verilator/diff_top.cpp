@@ -76,6 +76,15 @@ void DiffTop::dump_nemu_regs_single(std::ostream &os) {
 }
 
 void DiffTop::dump_noop_regs_single(std::ostream &os) {
+  static bool isFirstTime = true;
+  if (noop_state == NOOP_CHKFAIL) {
+    if (!isFirstTime) {
+      os << "[]";
+      return;
+    }
+    isFirstTime = false;
+  }
+
   os << "[";
   os << "0x" << std::hex << dut_ptr->io_commit_pc << ", ";
   os << "0x" << std::hex << dut_ptr->io_commit_instr
@@ -98,6 +107,11 @@ void DiffTop::dump_regs_single(bool chkflag) {
   dump_nemu_regs_single(regs_fs);
   regs_fs << ")";
 }
+
+void DiffTop::dump_registers() {
+  dump_regs_single(noop_state != NOOP_CHKFAIL);
+}
+bool DiffTop::can_log_now() const { return false; }
 
 void DiffTop::dump_nemu_ulite_single(int data) {
   static bool isFirstTime = true;
@@ -207,9 +221,6 @@ void DiffTop::run_nemu_one_instr() {
   if (napi_cpu_is_end()) nemu_state = NEMU_END;
 }
 
-void DiffTop::dump_registers() {}
-bool DiffTop::can_log_now() const { return false; }
-
 void DiffTop::noop_tame_nemu() {
   /* keep consistency when execute mfc0 count */
   mips_instr_t instr = napi_get_instr();
@@ -226,7 +237,7 @@ bool DiffTop::run_noop_one_cycle() {
 
   dut_ptr->clock = 1;
   dut_ptr->eval();
-  noop_cycles ++;
+  noop_cycles++;
   return dut_ptr->io_commit_valid;
 }
 
@@ -235,28 +246,39 @@ void DiffTop::run_noop_one_instr() {
     ;
 }
 
-void DiffTop::run_diff_one_instr() {
-  if (noop_state == NOOP_RUNNING) run_noop_one_instr();
+bool DiffTop::run_diff_one_instr() {
+  bool chkflag = true;
+  if (noop_state == NOOP_RUNNING)
+    run_noop_one_instr();
+  else
+    noop_cycles++;
 
   if (noop_enable_diff && nemu_state == NEMU_RUNNING) {
     run_nemu_one_instr();
-    noop_tame_nemu();
-    check_states();
+    if (noop_state == NOOP_RUNNING) {
+      noop_tame_nemu();
+      chkflag = check_states();
+    }
   }
 
   noop_ninstr++;
+  return chkflag;
 }
 
 int DiffTop::execute() {
   if (!noop_enable_diff) nemu_state == NEMU_END;
   while (nemu_state == NEMU_RUNNING ||
          noop_state == NOOP_RUNNING) {
-    eprintf("<$pc: %08x %08x %d %d\n", dut_ptr->io_commit_pc, napi_get_pc(), nemu_state, noop_state);
+    eprintf("<$pc: %08x %08x %d %d\n",
+        dut_ptr->io_commit_pc, napi_get_pc(), nemu_state,
+        noop_state);
     dut_ptr->io_can_log_now = can_log_now();
     dut_ptr->io_enable_bug = noop_enable_bug;
     run_diff_one_instr();
     dump_registers();
-    eprintf(">$pc: %08x %08x %d %d\n", dut_ptr->io_commit_pc, napi_get_pc(), nemu_state, noop_state);
+    eprintf(">$pc: %08x %08x %d %d\n",
+        dut_ptr->io_commit_pc, napi_get_pc(), nemu_state,
+        noop_state);
   }
   return 0;
 }

@@ -46,6 +46,11 @@ class TLB extends Module {
 
   val tlb_entries = Mem(conf.tlbsz, new TLBEntry)
   val tlb_entry_ports = for (i <- 0 until conf.tlbsz) yield tlb_entries(i)
+  when (reset.toBool) {
+    for (i <- 0 until conf.tlbsz) {
+      tlb_entries(i) := 0.U.asTypeOf(new TLBEntry)
+    }
+  }
 
   def tlb_entry_match(vpn:UInt, tlb_port:TLBEntry) = {
     val mask = tlb_port.pagemask.asTypeOf(UInt(32.W))

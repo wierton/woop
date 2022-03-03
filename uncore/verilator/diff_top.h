@@ -147,7 +147,7 @@ public:
   bool run_noop_one_cycle();
   void run_noop_one_instr();
   void run_nemu_one_instr();
-  void run_diff_one_instr();
+  bool run_diff_one_instr();
 
   bool can_log_now() const;
   void dump_registers();
