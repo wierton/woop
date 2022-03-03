@@ -48,6 +48,13 @@ data-%: project compile-%
 
 data-cputests: $(foreach c,$(CPUTESTS),data-$(c))
 
+data-linux: project compile-linux
+	@cd $(MIPS32_NEMU_HOME); make mips32r1_defconfig && make -j32
+	@$(call getdata,linux,has_bug_no_diff,--enable-bug)
+	@$(call getdata,linux,has_bug_has_diff,--enable-bug --enable-diff)
+	@cd $(MIPS32_NEMU_HOME); make noop_defconfig && make -j32
+	@$(call getdata,linux,no_bug_has_diff,--enable-diff)
+
 update: $(EMU_MK)
 	@rm -rf $(EMU_BIN)
 	@echo + $(EMU_BIN)
