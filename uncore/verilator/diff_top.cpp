@@ -117,7 +117,9 @@ void DiffTop::dump_registers() {
         dump_regs_single(noop_state != NOOP_CHKFAIL);
       }
     } break;
-    default: break;
+    default:
+      dump_regs_single(noop_state != NOOP_CHKFAIL);
+      break;
     }
   }
 }
@@ -127,9 +129,9 @@ bool DiffTop::can_log_now() const {
   case ELF_VMLINUX:
     return (noop_end_ninstr - 5000 < noop_ninstr &&
             noop_ninstr < noop_end_ninstr + 20);
-  default: break;
+  case ELF_OTHER: return true;
   }
-  return false;
+  return true;
 }
 
 void DiffTop::dump_nemu_ulite_single(int data) {
@@ -182,21 +184,15 @@ void DiffTop::init_stop_condition() {
     break;
   case ELF_VMLINUX:
     if (noop_enable_bug) {
-      if (noop_enable_diff)
-        noop_end_ninstr = 31955420;
-      else
-        noop_end_ninstr = 34909125;
-    } else {
-      noop_end_ninstr = 33258878;
-    }
-
-    if (noop_enable_bug) {
       if (noop_enable_diff) {
+        noop_end_ninstr = 29949901;
       } else {
+        noop_end_ninstr = 34909125;
         stop_noop_when_ulite_send(
             "kill the idle task! ]---");
       }
     } else {
+      noop_end_ninstr = 33258878;
       stop_noop_when_ulite_send("activate this console.");
     }
     napi_stop_cpu_when_ulite_send("activate this console.");
@@ -296,6 +292,9 @@ void DiffTop::noop_tame_nemu() {
 }
 
 bool DiffTop::run_noop_one_cycle() {
+  dut_ptr->io_can_log_now = can_log_now();
+  dut_ptr->io_enable_bug = noop_enable_bug;
+
   dut_ptr->clock = 0;
   dut_ptr->eval();
 
@@ -337,8 +336,6 @@ bool DiffTop::run_diff_one_instr() {
 int DiffTop::execute() {
   while (nemu_state == NEMU_RUNNING ||
          noop_state == NOOP_RUNNING) {
-    dut_ptr->io_can_log_now = can_log_now();
-    dut_ptr->io_enable_bug = noop_enable_bug;
     run_diff_one_instr();
     dump_registers();
   }

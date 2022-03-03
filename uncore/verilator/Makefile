@@ -38,6 +38,18 @@ run-%: project compile-%
 	  ln -sf $(abspath $(EMU_BIN)) emulator && \
 	  ./emulator --enable-diff -e ./$*.elf 2> npc.out
 
+define getdata
+cd $($1_OBJDIR); mkdir -p $2; \
+  cd $2; cp ../$1* .; \
+  ln -sf $(abspath $(EMU_BIN)) emulator && \
+  ./emulator $3 -e ./$1.elf >terminal.txt 2>noop-signals.txt &
+endef
+
+data-%: project compile-%
+	@$(call getdata,$*,has_bug_no_diff,--enable-bug)
+	@$(call getdata,$*,has_bug_has_diff,--enable-bug --enable-diff)
+	@$(call getdata,$*,no_bug_has_diff,--enable-diff)
+
 update: $(EMU_MK)
 	@rm -rf $(EMU_BIN)
 	@echo + $(EMU_BIN)
