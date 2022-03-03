@@ -138,9 +138,9 @@ private:
   }
 
 public:
-  uint64_t noop_end_ninstr = 0;
-  uint64_t noop_ninstr = 0;
-  uint64_t noop_cycles = 0;
+  int64_t noop_end_ninstr = 0;
+  int64_t noop_ninstr = 0;
+  int64_t noop_cycles = 0;
   int noop_trap_code = 0;
   bool noop_enable_bug = false;
   bool noop_enable_diff = false;

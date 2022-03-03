@@ -179,9 +179,10 @@ bool DiffTop::check_states() {
 
 #define GPR_TEST(i)                                     \
   check_eq(napi_get_gpr(i), dut_ptr->io_commit_gpr_##i, \
-      "cycle %lu: gpr[%d]: nemu:%08x <> dut:%08x\n",    \
-      noop_cycles, i, napi_get_gpr(i),                  \
-      dut_ptr->io_commit_gpr_##i);
+      "cycle %lu, pc %08x, instr %08x: gpr[%d]: "       \
+      "nemu:%08x <> dut:%08x\n",                        \
+      noop_cycles, napi_get_pc(), napi_get_instr(), i,  \
+      napi_get_gpr(i), dut_ptr->io_commit_gpr_##i);
   GPRS(GPR_TEST);
 #undef GPR_TEST
   return true;
@@ -267,7 +268,8 @@ void DiffTop::dump_registers() {
       }
     } break;
     default:
-      if (noop_ninstr % ((noop_end_ninstr / 400) + 1) == 0 ||
+      if (noop_ninstr % ((noop_end_ninstr / 400) + 1) ==
+              0 ||
           (noop_end_ninstr - 400 < noop_ninstr &&
               noop_ninstr < noop_end_ninstr + 20))
         dump_regs_single(noop_state != NOOP_CHKFAIL);
@@ -281,9 +283,9 @@ bool DiffTop::can_log_now() const {
   case ELF_VMLINUX:
   case ELF_CACHE_FLUSH:
   case ELF_MICROBENCH:
+  case ELF_OTHER:
     return (noop_end_ninstr - 200 < noop_ninstr &&
             noop_ninstr < noop_end_ninstr + 20);
-  case ELF_OTHER: return true;
   }
   return true;
 }
@@ -487,6 +489,7 @@ void DiffTop::run_noop_one_instr() {
 }
 
 bool DiffTop::run_diff_one_instr() {
+  noop_end_ninstr = -1000;
   bool chkflag = true;
   if (noop_state == NOOP_RUNNING)
     run_noop_one_instr();
@@ -500,6 +503,9 @@ bool DiffTop::run_diff_one_instr() {
       chkflag = check_states();
     }
   }
+
+  if (napi_get_instr() == 0x42000008)
+    eprintf("\n-------------\n");
 
   if (!chkflag) {
     printf("[noop chkfail, cycles: %ld, ninstr: %ld]\n",

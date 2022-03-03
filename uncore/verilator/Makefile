@@ -10,14 +10,9 @@ EMU_BIN        := $(EMU_OBJ_DIR)/emulator
 EMU_LIB_V      != find $(EMU_SRC_DIR) -name "*.v"
 EMU_CXXFILES   != find $(EMU_SRC_DIR) -name "*.cpp"
 
-ifeq ($(ASAN),1)
-ASAN_CFLAGS := -fsanitize=address,undefined -Wformat -Werror=format-security -Werror=array-bounds
-ASAN_LDFLAGS := -fsanitize=address,undefined
-endif
-
-EMU_CFLAGS := -ggdb3 -I. -I $(MIPS32_NEMU_HOME)/include $(ASAN_CFLAGS)
+EMU_CFLAGS := -O3 -ggdb3 -I. -I $(MIPS32_NEMU_HOME)/include
 EMU_CFLAGS += -DNEMU_BIN=\\\"$(abspath $(MIPS32_NEMU))\\\"
-EMU_LDFLAGS := $(MIPS32_NEMU_LIB) -lpthread -lreadline -lSDL $(ASAN_LDFLAGS)
+EMU_LDFLAGS := $(MIPS32_NEMU_LIB) -lpthread -lreadline -lSDL
 
 $(EMU_BIN): $(EMU_MK) $(EMU_CXXFILES)
 	@echo + $(EMU_BIN)
@@ -26,7 +21,7 @@ $(EMU_BIN): $(EMU_MK) $(EMU_CXXFILES)
 
 $(EMU_MK): $(EMU_TOP_V) $(EMU_CXXFILES) $(EMU_LIB_V)
 	@mkdir -p $(@D)
-	@verilator -Wno-lint --cc --exe \
+	@verilator -Wno-lint --cc --exe -O3 \
 	  --top-module $(EMU_TOP_MODULE) \
 	  -o $(notdir $(EMU_BIN)) -Mdir $(@D) \
 	  -CFLAGS "$(EMU_CFLAGS)" -LDFLAGS "$(EMU_LDFLAGS)" \

@@ -236,6 +236,7 @@ class EXU extends Module {
   }
 
   /* tlbp */
+  io.tlb_pport.valid := io.cp0_tlbp_port.valid
   io.tlb_pport.entry_hi := io.cp0_tlbr_port.entry_hi
   io.cp0_tlbp_port.valid := io.fu_out.fire() &&
     fu_type === FU_PRU && fu_op === PRU_TLBP
