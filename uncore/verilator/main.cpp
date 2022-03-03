@@ -39,14 +39,6 @@ int main(int argc, const char **argv) {
       diff_top->noop_cycles, diff_top->noop_ninstr);
   diff_top.reset();
 
-  if (ret == -1) {
-    eprintf(ESC_RED "Timeout\n" ESC_RST);
-  } else if (ret == 0) {
-    eprintf(ESC_GREEN "HIT GOOD TRAP\n" ESC_RST);
-  } else {
-    eprintf(ESC_RED "HIT BAD TRAP (%d)\n" ESC_RST, ret);
-  }
-
   syscall(__NR_exit, ret);
   return ret;
 }

@@ -112,8 +112,6 @@ private:
 
   enum NemuState {
     NEMU_RUNNING,
-    NEMU_TRAP,
-    NEMU_ULITE_END,
     NEMU_END,
   } nemu_state = NEMU_RUNNING;
 
@@ -126,7 +124,7 @@ private:
 
   void updateNoopState(NoopState newState) {
     assert(noop_state == NOOP_RUNNING);
-    noop_state == newState;
+    noop_state = newState;
   }
 
 public:
@@ -145,10 +143,11 @@ public:
   uint32_t get_dut_gpr(uint32_t r);
 
   void noop_reset_ncycles(unsigned n);
-  bool noop_one_cycle();
   void noop_tame_nemu();
-  void nemu_one_instr();
-  void diff_one_instr();
+  bool run_noop_one_cycle();
+  void run_noop_one_instr();
+  void run_nemu_one_instr();
+  void run_diff_one_instr();
 
   bool can_log_now() const;
   void dump_registers();

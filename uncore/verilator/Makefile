@@ -15,7 +15,7 @@ ASAN_CFLAGS := -fsanitize=address,undefined -Wformat -Werror=format-security -We
 ASAN_LDFLAGS := -fsanitize=address,undefined
 endif
 
-EMU_CFLAGS := -I. -I $(MIPS32_NEMU_HOME)/include $(ASAN_CFLAGS)
+EMU_CFLAGS := -ggdb3 -I. -I $(MIPS32_NEMU_HOME)/include $(ASAN_CFLAGS)
 EMU_LDFLAGS := $(MIPS32_NEMU_LIB) -lpthread -lreadline -lSDL $(ASAN_LDFLAGS)
 
 $(EMU_BIN): $(EMU_MK) $(EMU_CXXFILES)
@@ -36,7 +36,7 @@ project: $(EMU_BIN)
 run-%: project compile-%
 	@cd $($*_OBJDIR) && \
 	  ln -sf $(abspath $(EMU_BIN)) emulator && \
-	  ./emulator -b -e ./$*.elf 2> npc.out
+	  ./emulator --enable-diff -e ./$*.elf 2> npc.out
 
 update: $(EMU_MK)
 	@rm -rf $(EMU_BIN)

@@ -126,9 +126,11 @@ void DiffTop::init_from_args(int argc, const char *argv[]) {
 
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-e") == 0 && i + 1 < argc)
-      napi_args[3] = argv[i + 1];
+      napi_args[3] = argv[(i++) + 1];
     else if (strcmp(argv[i], "--enable-bug") == 0)
       noop_enable_bug = true;
+    else if (strcmp(argv[i], "-b") == 0)
+      /* do nothing */;
     else if (strcmp(argv[i], "--enable-diff") == 0)
       noop_enable_diff = true;
     else {
@@ -189,12 +191,12 @@ DiffTop::DiffTop(int argc, const char *argv[])
 void DiffTop::noop_reset_ncycles(unsigned n) {
   for (int i = 0; i < n; i++) {
     dut_ptr->reset = 1;
-    noop_one_cycle();
+    run_noop_one_cycle();
     dut_ptr->reset = 0;
   }
 }
 
-void DiffTop::nemu_one_instr() {
+void DiffTop::run_nemu_one_instr() {
   /* launch timer interrupt */
   napi_set_irq(7, dut_ptr->io_commit_ip7);
   /* nemu executes one cycle */
@@ -202,6 +204,7 @@ void DiffTop::nemu_one_instr() {
   napi_exec(1);
   int ch = napi_ulite_get_data();
   if (ch != -1) dump_nemu_ulite_single(ch);
+  if (napi_cpu_is_end()) nemu_state = NEMU_END;
 }
 
 void DiffTop::dump_registers() {}
@@ -217,7 +220,7 @@ void DiffTop::noop_tame_nemu() {
   }
 }
 
-bool DiffTop::noop_one_cycle() {
+bool DiffTop::run_noop_one_cycle() {
   dut_ptr->clock = 0;
   dut_ptr->eval();
 
@@ -226,13 +229,16 @@ bool DiffTop::noop_one_cycle() {
   return dut_ptr->io_commit_valid;
 }
 
-void DiffTop::diff_one_instr() {
-  if (noop_state == NOOP_RUNNING)
-    while (!noop_one_cycle())
-      ;
+void DiffTop::run_noop_one_instr() {
+  while (!run_noop_one_cycle())
+    ;
+}
+
+void DiffTop::run_diff_one_instr() {
+  if (noop_state == NOOP_RUNNING) run_noop_one_instr();
 
   if (noop_enable_diff && nemu_state == NEMU_RUNNING) {
-    nemu_one_instr();
+    run_nemu_one_instr();
     noop_tame_nemu();
     check_states();
   }
@@ -246,7 +252,7 @@ int DiffTop::execute() {
          noop_state == NOOP_RUNNING) {
     dut_ptr->io_can_log_now = can_log_now();
     dut_ptr->io_enable_bug = noop_enable_bug;
-    diff_one_instr();
+    run_diff_one_instr();
     dump_registers();
   }
   return 0;
@@ -271,20 +277,29 @@ void DiffTop::device_io(int addr, int len, int data,
       }
     } else {
       if (addr == GPIO_TRAP) {
+        if (data == 0)
+          eprintf(
+              ESC_GREEN "[NOOP] HIT GOOD TRAP\n" ESC_RST);
+        else
+          eprintf(ESC_RED
+              "[NOOP] HIT BAD TRAP (%d)\n" ESC_RST,
+              data);
         updateNoopState(NOOP_TRAP);
         noop_trap_code = data;
       } else if (addr == ULITE_BASE + ULITE_Tx) {
         char ch = (char)data;
         dump_noop_ulite_single(ch);
-        if (*ulite_stop_string_ptr == ch) {
-          ulite_stop_string_ptr++;
-          if (*ulite_stop_string_ptr == 0) {
-            eprintf("ulite recv '%s', stop the cpu\n",
-                ulite_stop_string);
-            updateNoopState(NOOP_ULITE_END);
+        if (ulite_stop_string_ptr) {
+          if (*ulite_stop_string_ptr == ch) {
+            ulite_stop_string_ptr++;
+            if (*ulite_stop_string_ptr == 0) {
+              eprintf("ulite recv '%s', stop the cpu\n",
+                  ulite_stop_string);
+              updateNoopState(NOOP_ULITE_END);
+            }
+          } else {
+            ulite_stop_string_ptr = ulite_stop_string;
           }
-        } else {
-          ulite_stop_string_ptr = ulite_stop_string;
         }
       }
     }
