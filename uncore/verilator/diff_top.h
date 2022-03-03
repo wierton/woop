@@ -115,9 +115,10 @@ private:
     ELF_OTHER,
     ELF_VMLINUX,
     ELF_MICROBENCH,
-    ELF_PRINTF,
+    ELF_SIMPLEOS,
     ELF_CACHE_FLUSH,
   } elf_type = ELF_OTHER;
+  const char *elf_filename = nullptr;
 
   enum NemuState {
     NEMU_RUNNING,

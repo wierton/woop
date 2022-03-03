@@ -16,6 +16,7 @@ ASAN_LDFLAGS := -fsanitize=address,undefined
 endif
 
 EMU_CFLAGS := -ggdb3 -I. -I $(MIPS32_NEMU_HOME)/include $(ASAN_CFLAGS)
+EMU_CFLAGS += -DNEMU_BIN=\\\"$(abspath $(MIPS32_NEMU))\\\"
 EMU_LDFLAGS := $(MIPS32_NEMU_LIB) -lpthread -lreadline -lSDL $(ASAN_LDFLAGS)
 
 $(EMU_BIN): $(EMU_MK) $(EMU_CXXFILES)

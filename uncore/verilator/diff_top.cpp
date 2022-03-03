@@ -1,6 +1,17 @@
 #include "common.h"
 #include "diff_top.h"
 
+#include <fcntl.h>
+#include <poll.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+#include <thread>
+
 /* clang-format off */
 #define GPRS(X) \
   X(0)  X(1)  X(2)  X(3)  X(4)  X(5)  X(6)  X(7)  \
@@ -8,6 +19,144 @@
   X(16) X(17) X(18) X(19) X(20) X(21) X(22) X(23) \
   X(24) X(25) X(26) X(27) X(28) X(29) X(30) X(31)
 /* clang-format on */
+
+class ProgIOs {
+  std::istream *_ins = nullptr;
+  std::ostream *_outs = nullptr;
+  std::ostream *_errs = nullptr;
+
+public:
+  ProgIOs() = default;
+  ProgIOs(std::istream &iss) : _ins(&iss) {}
+  ProgIOs(std::ostream &oss) : _outs(&oss) {}
+  ProgIOs(std::istream &iss, std::ostream &oss)
+      : _ins(&iss), _outs(&oss) {}
+  ProgIOs(std::istream &iss, std::ostream &oss,
+      std::ostream &ess)
+      : _ins(&iss), _outs(&oss), _errs(&ess) {}
+
+  void setInput(std::istream &iss) { _ins = &iss; }
+  void setOutput(std::ostream &oss) { _outs = &oss; }
+  void setError(std::ostream &ess) { _errs = &ess; }
+
+  std::istream &ins() { return *_ins; }
+  std::ostream &outs() { return *_outs; }
+  std::ostream &errs() { return *_errs; }
+
+  bool hasInput() const { return _ins; }
+  bool hasOutput() const { return _outs; }
+  bool hasError() const { return _errs; }
+};
+
+uint64_t getMilliseconds() {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (tv.tv_usec + tv.tv_sec * 1000000) / 1000;
+}
+
+int execute(ProgIOs io, const std::string &prog,
+    const std::vector<std::string> &args,
+    unsigned timeout) {
+  std::string output;
+
+  const char **uArgs = new const char *[args.size() + 1];
+  for (auto i = 0u; i < args.size(); i++) {
+    uArgs[i] = args[i].c_str();
+  }
+  uArgs[args.size()] = nullptr;
+
+  int infds[2], outfds[2], errfds[2];
+  if (io.hasInput()) pipe(infds);
+  if (io.hasOutput()) pipe(outfds);
+  if (io.hasError()) pipe(errfds);
+
+  const int R = 0, W = 1;
+
+  int pid = fork();
+  if (pid == 0) {
+    /* clang-format off */
+    if (io.hasInput()) { dup2(infds[R], 0); close(infds[R]); close(infds[W]); }
+    if (io.hasOutput()) { dup2(outfds[W], 1); close(outfds[R]); close(outfds[W]); }
+    if (io.hasError()) { dup2(errfds[W], 2); close(errfds[R]); close(errfds[W]); }
+    /* clang-format on */
+
+    execve(prog.c_str(), (char *const *)uArgs, environ);
+    exit(-1);
+  } else {
+    if (io.hasInput()) close(infds[R]);
+    if (io.hasOutput()) close(outfds[W]);
+    if (io.hasError()) close(errfds[W]);
+    delete[] uArgs;
+  }
+
+  auto process_output_or_error = [](int fd,
+                                     std::ostream &os) {
+    int nbytes = 0;
+    std::string buffer;
+    ioctl(fd, FIONREAD, &nbytes);
+    buffer.resize(nbytes);
+    int len = read(fd, &buffer[0], nbytes);
+    if (len > 0) os.write(&buffer[0], len);
+    return len;
+  };
+
+  int status = -1;
+  uint64_t st = getMilliseconds();
+
+  std::thread inpoll;
+  if (io.hasInput()) {
+    inpoll = std::thread([&io, pid, infds]() {
+      /* process input */
+      std::string buffer;
+      int nbytes = 1024;
+      io.ins().peek();
+      buffer.resize(nbytes);
+      while (io.hasInput() && io.ins().good()) {
+        io.ins().read(&buffer[0], nbytes);
+        int len =
+            write(infds[W], &buffer[0], io.ins().gcount());
+        if (len < 0) break;
+        io.ins().peek();
+
+        int status = -1;
+        waitpid(pid, &status, WNOHANG);
+        if (WIFEXITED(status) || WIFSIGNALED(status)) break;
+      }
+
+      close(infds[W]);
+    });
+  }
+
+  while (1) {
+    if (io.hasOutput())
+      process_output_or_error(outfds[R], io.outs());
+    if (io.hasError())
+      process_output_or_error(errfds[R], io.errs());
+
+    waitpid(pid, &status, WNOHANG);
+
+    if (WIFEXITED(status) || WIFSIGNALED(status)) { break; }
+    if (getMilliseconds() > st + timeout) {
+      kill(pid, SIGKILL);
+    }
+  }
+
+  if (io.hasInput())
+    inpoll.join();
+  else
+    close(infds[W]);
+
+  if (io.hasOutput())
+    process_output_or_error(outfds[R], io.outs());
+  if (io.hasError())
+    process_output_or_error(errfds[R], io.errs());
+
+  if (io.hasOutput()) close(outfds[R]);
+  if (io.hasError()) close(errfds[R]);
+
+  if (WIFEXITED(status)) return WEXITSTATUS(status);
+  return 139;
+}
 
 bool DiffTop::check_states() {
   mips_instr_t instr = napi_get_instr();
@@ -112,13 +261,16 @@ void DiffTop::dump_registers() {
     switch (elf_type) {
     case ELF_VMLINUX: {
       if (noop_ninstr % 3000 == 0 ||
-          (noop_end_ninstr - 5000 < noop_ninstr &&
+          (noop_end_ninstr - 400 < noop_ninstr &&
               noop_ninstr < noop_end_ninstr + 20)) {
         dump_regs_single(noop_state != NOOP_CHKFAIL);
       }
     } break;
     default:
-      dump_regs_single(noop_state != NOOP_CHKFAIL);
+      if (noop_ninstr % ((noop_end_ninstr / 400) + 1) == 0 ||
+          (noop_end_ninstr - 400 < noop_ninstr &&
+              noop_ninstr < noop_end_ninstr + 20))
+        dump_regs_single(noop_state != NOOP_CHKFAIL);
       break;
     }
   }
@@ -129,7 +281,7 @@ bool DiffTop::can_log_now() const {
   case ELF_VMLINUX:
   case ELF_CACHE_FLUSH:
   case ELF_MICROBENCH:
-    return (noop_end_ninstr - 5000 < noop_ninstr &&
+    return (noop_end_ninstr - 200 < noop_ninstr &&
             noop_ninstr < noop_end_ninstr + 20);
   case ELF_OTHER: return true;
   }
@@ -164,7 +316,7 @@ void DiffTop::init_elf_file_type(const char *elf) {
   } else if (string_contains(elf, "microbench")) {
     elf_type = ELF_MICROBENCH;
   } else if (string_contains(elf, "SimpleOS")) {
-    elf_type = ELF_PRINTF;
+    elf_type = ELF_SIMPLEOS;
   } else if (string_contains(elf, "cache-flush")) {
     elf_type = ELF_CACHE_FLUSH;
   } else {
@@ -174,17 +326,18 @@ void DiffTop::init_elf_file_type(const char *elf) {
 
 void DiffTop::init_stop_condition() {
   switch (elf_type) {
-  case ELF_PRINTF:
+  case ELF_SIMPLEOS:
     if (noop_enable_bug) {
       if (noop_enable_diff) {
       } else {
-        stop_noop_when_ulite_send(
-            "0x01fe0000");
+        stop_noop_when_ulite_send("0x01fe0000");
       }
     } else {
-      stop_noop_when_ulite_send("starting process 0 now...");
+      stop_noop_when_ulite_send(
+          "starting process 0 now...");
     }
-    napi_stop_cpu_when_ulite_send("starting process 0 now...");
+    napi_stop_cpu_when_ulite_send(
+        "starting process 0 now...");
     break;
   case ELF_VMLINUX:
     if (noop_enable_bug) {
@@ -201,14 +354,27 @@ void DiffTop::init_stop_condition() {
     }
     napi_stop_cpu_when_ulite_send("activate this console.");
     break;
-  case ELF_CACHE_FLUSH:
-    noop_end_ninstr = 677551;
-    break;
-  case ELF_MICROBENCH:
-    noop_end_ninstr = 438808;
-    break;
-  default: break;
+  default: {
+    std::ostringstream oss;
+    ProgIOs io(oss);
+    std::vector<std::string> args{"nemu", "--print-ninstrs",
+        "-b", "-e", elf_filename};
+    ::execute(io, NEMU_BIN, args, 10000);
+
+    std::istringstream iss(oss.str());
+    while ((iss.peek(), iss.good())) {
+      std::string line;
+      std::getline(iss, line);
+      if (string_contains(line, "NEMU: ")) {
+        noop_end_ninstr =
+            std::stoll(line.substr(6, line.size() - 6));
+        break;
+      }
+    }
+  } break;
   }
+  printf("[noop, set noop_end_ninstr to %lu]\n",
+      noop_end_ninstr);
 }
 
 void DiffTop::init_from_args(int argc, const char *argv[]) {
@@ -234,7 +400,8 @@ void DiffTop::init_from_args(int argc, const char *argv[]) {
     exit(0);
   }
 
-  init_elf_file_type(napi_args[3]);
+  elf_filename = napi_args[3];
+  init_elf_file_type(elf_filename);
   init_stop_condition();
   napi_init(4, napi_args);
 }
