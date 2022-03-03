@@ -62,11 +62,6 @@ void DiffTop::dump_ulite_post(std::ostream &os) {
 }
 
 void DiffTop::dump_nemu_regs_single(std::ostream &os) {
-  if (!noop_enable_diff) {
-    os << "[]";
-    return;
-  }
-
   os << "[";
   os << "0x" << std::hex << napi_get_pc() << ", ";
   os << "0x" << std::hex << napi_get_instr() << ", ";
@@ -109,8 +104,25 @@ void DiffTop::dump_regs_single(bool chkflag) {
 }
 
 void DiffTop::dump_registers() {
-  dump_regs_single(noop_state != NOOP_CHKFAIL);
+  static bool isFirstChkfail = true;
+  if (isFirstChkfail && noop_state == NOOP_CHKFAIL) {
+    dump_regs_single(noop_state != NOOP_CHKFAIL);
+    isFirstChkfail = false;
+  } else {
+    switch (elf_type) {
+    case ELF_VMLINUX: {
+      uint32_t bug_ninstr = 29949902;
+      if (noop_ninstr % 3000 == 0 ||
+          (bug_ninstr - 2000 < noop_ninstr &&
+              noop_ninstr < bug_ninstr + 2000)) {
+        dump_regs_single(noop_state != NOOP_CHKFAIL);
+      }
+    } break;
+    default: break;
+    }
+  }
 }
+
 bool DiffTop::can_log_now() const { return false; }
 
 void DiffTop::dump_nemu_ulite_single(int data) {
@@ -159,12 +171,43 @@ void DiffTop::init_from_args(int argc, const char *argv[]) {
   }
 
   std::string elf = napi_args[3];
-  if (string_contains(elf, "linux"))
-    elf_type = VMLINUX;
-  else if (string_contains(elf, "microbench"))
-    elf_type = MICROBENCH;
-  else
-    elf_type = OTHER;
+  if (string_contains(elf, "linux")) {
+    elf_type = ELF_VMLINUX;
+  } else if (string_contains(elf, "microbench")) {
+    elf_type = ELF_MICROBENCH;
+  } else if (string_contains(elf, "printf")) {
+    elf_type = ELF_PRINTF;
+  } else {
+    elf_type = ELF_OTHER;
+  }
+
+  switch (elf_type) {
+  case ELF_PRINTF:
+    if (noop_enable_bug) {
+      if (noop_enable_diff) {
+      } else {
+        stop_noop_when_ulite_send(
+            "really trigger the bug!");
+      }
+    } else {
+      stop_noop_when_ulite_send("it seems no bug.");
+    }
+    napi_stop_cpu_when_ulite_send("it seems no bug.");
+    break;
+  case ELF_VMLINUX:
+    if (noop_enable_bug) {
+      if (noop_enable_diff) {
+      } else {
+        stop_noop_when_ulite_send(
+            "kill the idle task! ]---");
+      }
+    } else {
+      stop_noop_when_ulite_send("activate this console.");
+    }
+    napi_stop_cpu_when_ulite_send("activate this console.");
+    break;
+  default: break;
+  }
 
   napi_init(4, napi_args);
 }
@@ -253,9 +296,9 @@ bool DiffTop::run_diff_one_instr() {
   else
     noop_cycles++;
 
-  if (noop_enable_diff && nemu_state == NEMU_RUNNING) {
+  if (nemu_state == NEMU_RUNNING) {
     run_nemu_one_instr();
-    if (noop_state == NOOP_RUNNING) {
+    if (noop_enable_diff && noop_state == NOOP_RUNNING) {
       noop_tame_nemu();
       chkflag = check_states();
     }
@@ -266,19 +309,18 @@ bool DiffTop::run_diff_one_instr() {
 }
 
 int DiffTop::execute() {
-  if (!noop_enable_diff) nemu_state = NEMU_END;
   while (nemu_state == NEMU_RUNNING ||
          noop_state == NOOP_RUNNING) {
     eprintf("<$pc: %08x %08x %d %d\n",
-        dut_ptr->io_commit_pc, napi_get_pc(), nemu_state,
-        noop_state);
+        dut_ptr->io_commit_pc, napi_get_pc(), noop_state,
+        nemu_state);
     dut_ptr->io_can_log_now = can_log_now();
     dut_ptr->io_enable_bug = noop_enable_bug;
     run_diff_one_instr();
     dump_registers();
     eprintf(">$pc: %08x %08x %d %d\n",
-        dut_ptr->io_commit_pc, napi_get_pc(), nemu_state,
-        noop_state);
+        dut_ptr->io_commit_pc, napi_get_pc(), noop_state,
+        nemu_state);
   }
   return 0;
 }
@@ -318,9 +360,14 @@ void DiffTop::device_io(int addr, int len, int data,
           if (*ulite_stop_string_ptr == ch) {
             ulite_stop_string_ptr++;
             if (*ulite_stop_string_ptr == 0) {
-              eprintf("ulite recv '%s', stop the cpu\n",
+              eprintf(
+                  "noop ulite recv '%s', stop the cpu\n",
                   ulite_stop_string);
               updateNoopState(NOOP_ULITE_END);
+              printf(
+                  "[noop ulite-end, cycles: %ld, ninstr: "
+                  "%ld]\n",
+                  noop_cycles, noop_ninstr);
             }
           } else {
             ulite_stop_string_ptr = ulite_stop_string;

@@ -107,8 +107,16 @@ private:
 
   const char *ulite_stop_string = nullptr;
   const char *ulite_stop_string_ptr;
+  void stop_noop_when_ulite_send(const char *data) {
+    ulite_stop_string = ulite_stop_string_ptr = data;
+  }
 
-  enum ElfType { VMLINUX, MICROBENCH, OTHER } elf_type;
+  enum ElfType {
+    ELF_VMLINUX,
+    ELF_MICROBENCH,
+    ELF_PRINTF,
+    ELF_OTHER,
+  } elf_type;
 
   enum NemuState {
     NEMU_RUNNING,
