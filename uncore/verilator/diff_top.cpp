@@ -15,7 +15,7 @@ bool DiffTop::check_states() {
 
 #define check_eq(a, b, ...)        \
   if ((a) != (b)) {                \
-    eprintf(__VA_ARGS__);          \
+    printf(__VA_ARGS__);           \
     updateNoopState(NOOP_CHKFAIL); \
     return false;                  \
   }
@@ -218,13 +218,13 @@ void DiffTop::init_from_args(int argc, const char *argv[]) {
     else if (strcmp(argv[i], "--enable-diff") == 0)
       noop_enable_diff = true;
     else {
-      eprintf("unknown args '%s'\n", argv[i]);
+      printf("unknown args '%s'\n", argv[i]);
       exit(0);
     }
   }
 
   if (!napi_args[3]) {
-    eprintf("need '-e <elf>' as options\n");
+    printf("need '-e <elf>' as options\n");
     exit(0);
   }
 
@@ -325,6 +325,11 @@ bool DiffTop::run_diff_one_instr() {
     }
   }
 
+  if (!chkflag) {
+    printf("[noop chkfail, cycles: %ld, ninstr: %ld]\n",
+        noop_cycles, noop_ninstr);
+  }
+
   noop_ninstr++;
   return chkflag;
 }
@@ -332,16 +337,10 @@ bool DiffTop::run_diff_one_instr() {
 int DiffTop::execute() {
   while (nemu_state == NEMU_RUNNING ||
          noop_state == NOOP_RUNNING) {
-    eprintf("<$pc: %08x %08x %d %d\n",
-        dut_ptr->io_commit_pc, napi_get_pc(), noop_state,
-        nemu_state);
     dut_ptr->io_can_log_now = can_log_now();
     dut_ptr->io_enable_bug = noop_enable_bug;
     run_diff_one_instr();
     dump_registers();
-    eprintf(">$pc: %08x %08x %d %d\n",
-        dut_ptr->io_commit_pc, napi_get_pc(), noop_state,
-        nemu_state);
   }
   return 0;
 }
@@ -359,17 +358,16 @@ void DiffTop::device_io(int addr, int len, int data,
         *resp = napi_mmio_peek(addr, len + 1);
       } else {
         napi_dump_states();
-        eprintf(
-            "bad addr 0x%08x received from SOC\n", addr);
+        printf("bad addr 0x%08x received from SOC\n", addr);
         abort();
       }
     } else {
       if (addr == GPIO_TRAP) {
         if (data == 0)
-          eprintf(
+          printf(
               ESC_GREEN "[NOOP] HIT GOOD TRAP\n" ESC_RST);
         else
-          eprintf(ESC_RED
+          printf(ESC_RED
               "[NOOP] HIT BAD TRAP (%d)\n" ESC_RST,
               data);
         updateNoopState(NOOP_TRAP);
@@ -381,9 +379,6 @@ void DiffTop::device_io(int addr, int len, int data,
           if (*ulite_stop_string_ptr == ch) {
             ulite_stop_string_ptr++;
             if (*ulite_stop_string_ptr == 0) {
-              eprintf(
-                  "noop ulite recv '%s', stop the cpu\n",
-                  ulite_stop_string);
               updateNoopState(NOOP_ULITE_END);
               printf(
                   "[noop ulite-end, cycles: %ld, ninstr: "
