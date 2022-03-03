@@ -111,10 +111,9 @@ void DiffTop::dump_registers() {
   } else {
     switch (elf_type) {
     case ELF_VMLINUX: {
-      uint32_t bug_ninstr = 29949902;
       if (noop_ninstr % 3000 == 0 ||
-          (bug_ninstr - 2000 < noop_ninstr &&
-              noop_ninstr < bug_ninstr + 2000)) {
+          (noop_end_ninstr - 5000 < noop_ninstr &&
+              noop_ninstr < noop_end_ninstr + 20)) {
         dump_regs_single(noop_state != NOOP_CHKFAIL);
       }
     } break;
@@ -125,11 +124,9 @@ void DiffTop::dump_registers() {
 
 bool DiffTop::can_log_now() const {
   switch (elf_type) {
-  case ELF_VMLINUX: {
-    uint32_t bug_ninstr = 29949902;
-    return (bug_ninstr - 2000 < noop_ninstr &&
-            noop_ninstr < bug_ninstr + 2000);
-  } break;
+  case ELF_VMLINUX:
+    return (noop_end_ninstr - 5000 < noop_ninstr &&
+            noop_ninstr < noop_end_ninstr + 20);
   default: break;
   }
   return false;
@@ -205,6 +202,15 @@ void DiffTop::init_from_args(int argc, const char *argv[]) {
     napi_stop_cpu_when_ulite_send("it seems no bug.");
     break;
   case ELF_VMLINUX:
+    if (noop_enable_bug) {
+      if (noop_enable_diff)
+        noop_end_ninstr = 33258878;
+      else
+        noop_end_ninstr = 34909125;
+    } else {
+      noop_end_ninstr = 33258878;
+    }
+
     if (noop_enable_bug) {
       if (noop_enable_diff) {
       } else {
