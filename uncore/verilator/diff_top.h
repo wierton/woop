@@ -161,6 +161,8 @@ public:
   bool can_log_now() const;
   void dump_registers();
 
+  void init_elf_file_type(const char *file);
+  void init_stop_condition();
   void init_from_args(int argc, const char *argv[]);
 
 public:

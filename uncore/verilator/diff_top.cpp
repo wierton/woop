@@ -154,6 +154,57 @@ DiffTop::~DiffTop() {
   dump_ulite_post(noop_ulite_fs);
 }
 
+void DiffTop::init_elf_file_type(const char *elf) {
+  if (string_contains(elf, "linux")) {
+    elf_type = ELF_VMLINUX;
+  } else if (string_contains(elf, "microbench")) {
+    elf_type = ELF_MICROBENCH;
+  } else if (string_contains(elf, "printf")) {
+    elf_type = ELF_PRINTF;
+  } else {
+    elf_type = ELF_OTHER;
+  }
+}
+
+void DiffTop::init_stop_condition() {
+  switch (elf_type) {
+  case ELF_PRINTF:
+    if (noop_enable_bug) {
+      if (noop_enable_diff) {
+      } else {
+        stop_noop_when_ulite_send(
+            "really trigger the bug!");
+      }
+    } else {
+      stop_noop_when_ulite_send("it seems no bug.");
+    }
+    napi_stop_cpu_when_ulite_send("it seems no bug.");
+    break;
+  case ELF_VMLINUX:
+    if (noop_enable_bug) {
+      if (noop_enable_diff)
+        noop_end_ninstr = 31955420;
+      else
+        noop_end_ninstr = 34909125;
+    } else {
+      noop_end_ninstr = 33258878;
+    }
+
+    if (noop_enable_bug) {
+      if (noop_enable_diff) {
+      } else {
+        stop_noop_when_ulite_send(
+            "kill the idle task! ]---");
+      }
+    } else {
+      stop_noop_when_ulite_send("activate this console.");
+    }
+    napi_stop_cpu_when_ulite_send("activate this console.");
+    break;
+  default: break;
+  }
+}
+
 void DiffTop::init_from_args(int argc, const char *argv[]) {
   const char *napi_args[4] = {"nemu", "-b", "-e", nullptr};
 
@@ -177,54 +228,8 @@ void DiffTop::init_from_args(int argc, const char *argv[]) {
     exit(0);
   }
 
-  std::string elf = napi_args[3];
-  if (string_contains(elf, "linux")) {
-    elf_type = ELF_VMLINUX;
-  } else if (string_contains(elf, "microbench")) {
-    elf_type = ELF_MICROBENCH;
-  } else if (string_contains(elf, "printf")) {
-    elf_type = ELF_PRINTF;
-  } else {
-    elf_type = ELF_OTHER;
-  }
-
-  switch (elf_type) {
-  case ELF_PRINTF:
-    if (noop_enable_bug) {
-      if (noop_enable_diff) {
-      } else {
-        stop_noop_when_ulite_send(
-            "really trigger the bug!");
-      }
-    } else {
-      stop_noop_when_ulite_send("it seems no bug.");
-    }
-    napi_stop_cpu_when_ulite_send("it seems no bug.");
-    break;
-  case ELF_VMLINUX:
-    if (noop_enable_bug) {
-      if (noop_enable_diff)
-        noop_end_ninstr = 33258878;
-      else
-        noop_end_ninstr = 34909125;
-    } else {
-      noop_end_ninstr = 33258878;
-    }
-
-    if (noop_enable_bug) {
-      if (noop_enable_diff) {
-      } else {
-        stop_noop_when_ulite_send(
-            "kill the idle task! ]---");
-      }
-    } else {
-      stop_noop_when_ulite_send("activate this console.");
-    }
-    napi_stop_cpu_when_ulite_send("activate this console.");
-    break;
-  default: break;
-  }
-
+  init_elf_file_type(napi_args[3]);
+  init_stop_condition();
   napi_init(4, napi_args);
 }
 
