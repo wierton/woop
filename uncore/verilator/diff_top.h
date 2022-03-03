@@ -112,11 +112,12 @@ private:
   }
 
   enum ElfType {
+    ELF_OTHER,
     ELF_VMLINUX,
     ELF_MICROBENCH,
     ELF_PRINTF,
-    ELF_OTHER,
-  } elf_type;
+    ELF_CACHE_FLUSH,
+  } elf_type = ELF_OTHER;
 
   enum NemuState {
     NEMU_RUNNING,

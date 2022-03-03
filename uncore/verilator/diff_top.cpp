@@ -127,6 +127,8 @@ void DiffTop::dump_registers() {
 bool DiffTop::can_log_now() const {
   switch (elf_type) {
   case ELF_VMLINUX:
+  case ELF_CACHE_FLUSH:
+  case ELF_MICROBENCH:
     return (noop_end_ninstr - 5000 < noop_ninstr &&
             noop_ninstr < noop_end_ninstr + 20);
   case ELF_OTHER: return true;
@@ -161,8 +163,10 @@ void DiffTop::init_elf_file_type(const char *elf) {
     elf_type = ELF_VMLINUX;
   } else if (string_contains(elf, "microbench")) {
     elf_type = ELF_MICROBENCH;
-  } else if (string_contains(elf, "printf")) {
+  } else if (string_contains(elf, "SimpleOS")) {
     elf_type = ELF_PRINTF;
+  } else if (string_contains(elf, "cache-flush")) {
+    elf_type = ELF_CACHE_FLUSH;
   } else {
     elf_type = ELF_OTHER;
   }
@@ -175,12 +179,12 @@ void DiffTop::init_stop_condition() {
       if (noop_enable_diff) {
       } else {
         stop_noop_when_ulite_send(
-            "really trigger the bug!");
+            "0x01fe0000");
       }
     } else {
-      stop_noop_when_ulite_send("it seems no bug.");
+      stop_noop_when_ulite_send("starting process 0 now...");
     }
-    napi_stop_cpu_when_ulite_send("it seems no bug.");
+    napi_stop_cpu_when_ulite_send("starting process 0 now...");
     break;
   case ELF_VMLINUX:
     if (noop_enable_bug) {
@@ -196,6 +200,12 @@ void DiffTop::init_stop_condition() {
       stop_noop_when_ulite_send("activate this console.");
     }
     napi_stop_cpu_when_ulite_send("activate this console.");
+    break;
+  case ELF_CACHE_FLUSH:
+    noop_end_ninstr = 677551;
+    break;
+  case ELF_MICROBENCH:
+    noop_end_ninstr = 438808;
     break;
   default: break;
   }

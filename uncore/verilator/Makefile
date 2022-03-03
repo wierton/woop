@@ -42,7 +42,7 @@ define getdata
 cd $($1_OBJDIR); mkdir -p $2; \
   cd $2; cp ../$1* .; \
   ln -sf $(abspath $(EMU_BIN)) emulator && \
-  ./emulator $3 -e ./$1.elf >terminal.txt 2>noop-signals.txt &
+  ./emulator $3 -e ./$1.elf 2>noop-signals.txt
 endef
 
 data-%: project compile-%
@@ -50,11 +50,25 @@ data-%: project compile-%
 	@$(call getdata,$*,has_bug_has_diff,--enable-bug --enable-diff)
 	@$(call getdata,$*,no_bug_has_diff,--enable-diff)
 
+data-cputests: $(foreach c,$(CPUTESTS),data-$(c))
+
 update: $(EMU_MK)
 	@rm -rf $(EMU_BIN)
 	@echo + $(EMU_BIN)
 	@cd $(dir $(EMU_BIN)) && make -s -f $(notdir $<)
 	@touch $<
+
+pack-data:
+	cd $(OBJ_DIR)/ && mkdir -p programs
+	cd $(OBJ_DIR)/cputests; \
+	  find . -name "*.txt" -exec \
+	  cp --parents \{\} $(abspath $(OBJ_DIR))/programs \;
+	cd $(OBJ_DIR)/; \
+	  find microbench/ -name "*.txt" -exec \
+	  cp --parents \{\} $(abspath $(OBJ_DIR))/programs \;
+	cd $(OBJ_DIR)/; \
+	  find linux/ -name "*.txt" -exec \
+	  cp --parents \{\} $(abspath $(OBJ_DIR))/programs \;
 
 clean:
 	rm -Irf $(OBJ_DIR)/$(UNCORE)
