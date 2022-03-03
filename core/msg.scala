@@ -251,7 +251,6 @@ class CP0_TLBW_PORT extends Bundle {
 }
 
 class TLB_PPORT extends Bundle {
-  val valid = Output(Bool())
   val entry_hi = Output(new CP0EntryHI)
   val index = Input(new CP0Index)
 }

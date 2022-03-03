@@ -262,7 +262,7 @@ void DiffTop::dump_registers() {
     switch (elf_type) {
     case ELF_VMLINUX: {
       if (noop_ninstr % 3000 == 0 ||
-          (noop_end_ninstr - 400 < noop_ninstr &&
+          (noop_end_ninstr - 1600 < noop_ninstr &&
               noop_ninstr < noop_end_ninstr + 20)) {
         dump_regs_single(noop_state != NOOP_CHKFAIL);
       }
@@ -270,7 +270,7 @@ void DiffTop::dump_registers() {
     default:
       if (noop_ninstr % ((noop_end_ninstr / 400) + 1) ==
               0 ||
-          (noop_end_ninstr - 400 < noop_ninstr &&
+          (noop_end_ninstr - 1600 < noop_ninstr &&
               noop_ninstr < noop_end_ninstr + 20))
         dump_regs_single(noop_state != NOOP_CHKFAIL);
       break;
@@ -284,7 +284,7 @@ bool DiffTop::can_log_now() const {
   case ELF_CACHE_FLUSH:
   case ELF_MICROBENCH:
   case ELF_OTHER:
-    return (noop_end_ninstr - 200 < noop_ninstr &&
+    return (noop_end_ninstr - 800 < noop_ninstr &&
             noop_ninstr < noop_end_ninstr + 20);
   }
   return true;
@@ -351,7 +351,7 @@ void DiffTop::init_stop_condition() {
             "kill the idle task! ]---");
       }
     } else {
-      noop_end_ninstr = 33258878;
+      noop_end_ninstr = 33705028;
       stop_noop_when_ulite_send("activate this console.");
     }
     napi_stop_cpu_when_ulite_send("activate this console.");
@@ -489,7 +489,6 @@ void DiffTop::run_noop_one_instr() {
 }
 
 bool DiffTop::run_diff_one_instr() {
-  noop_end_ninstr = -1000;
   bool chkflag = true;
   if (noop_state == NOOP_RUNNING)
     run_noop_one_instr();
@@ -503,9 +502,6 @@ bool DiffTop::run_diff_one_instr() {
       chkflag = check_states();
     }
   }
-
-  if (napi_get_instr() == 0x42000008)
-    eprintf("\n-------------\n");
 
   if (!chkflag) {
     printf("[noop chkfail, cycles: %ld, ninstr: %ld]\n",

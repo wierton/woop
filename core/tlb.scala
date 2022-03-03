@@ -209,18 +209,6 @@ class TLB extends Module {
   io.pport.index._0 := 0.U
   io.pport.index.p := !matches.orR
   io.pport.index.index := Mux1H(for (i <- 0 until conf.tlbsz) yield matches(i) -> i.U)
-  when (io.pport.valid) {
-    printf("NOOP.tlbp: %d\n", io.pport.index.index);
-    for (i <- 0 until 32) {
-      printf(
-        "NOOP.tlb[%d] pagemask=%x vpn=%x g=%x asid=%x "
-        +"p0={pfn=%x, c=%x d=%x v=%x} "
-        +"p1={pfn=%x, c=%x d=%x v=%x}\n",
-        i.U, tlb_entries(i).pagemask, tlb_entries(i).vpn, tlb_entries(i).g, tlb_entries(i).asid,
-        tlb_entries(i).p0.pfn, tlb_entries(i).p0.c, tlb_entries(i).p0.d, tlb_entries(i).p0.v,
-        tlb_entries(i).p1.pfn, tlb_entries(i).p1.c, tlb_entries(i).p1.d, tlb_entries(i).p1.v);
-    }
-  }
 
   if (conf.log_TLB) {
     when (io.can_log_now) { dump() }
