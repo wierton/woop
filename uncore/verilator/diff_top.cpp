@@ -11,7 +11,7 @@
 
 bool DiffTop::check_states() {
   mips_instr_t instr = napi_get_instr();
-  if (!instr.is_syscall() && !instr.is_eret()) return true;
+  if (instr.is_syscall() || instr.is_eret()) return true;
 
 #define check_eq(a, b, ...)        \
   if ((a) != (b)) {                \
@@ -226,6 +226,7 @@ bool DiffTop::run_noop_one_cycle() {
 
   dut_ptr->clock = 1;
   dut_ptr->eval();
+  noop_cycles ++;
   return dut_ptr->io_commit_valid;
 }
 
@@ -250,10 +251,12 @@ int DiffTop::execute() {
   if (!noop_enable_diff) nemu_state == NEMU_END;
   while (nemu_state == NEMU_RUNNING ||
          noop_state == NOOP_RUNNING) {
+    eprintf("<$pc: %08x %08x %d %d\n", dut_ptr->io_commit_pc, napi_get_pc(), nemu_state, noop_state);
     dut_ptr->io_can_log_now = can_log_now();
     dut_ptr->io_enable_bug = noop_enable_bug;
     run_diff_one_instr();
     dump_registers();
+    eprintf(">$pc: %08x %08x %d %d\n", dut_ptr->io_commit_pc, napi_get_pc(), nemu_state, noop_state);
   }
   return 0;
 }
