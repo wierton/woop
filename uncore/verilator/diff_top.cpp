@@ -123,7 +123,17 @@ void DiffTop::dump_registers() {
   }
 }
 
-bool DiffTop::can_log_now() const { return false; }
+bool DiffTop::can_log_now() const {
+  switch (elf_type) {
+  case ELF_VMLINUX: {
+    uint32_t bug_ninstr = 29949902;
+    return (bug_ninstr - 2000 < noop_ninstr &&
+            noop_ninstr < bug_ninstr + 2000);
+  } break;
+  default: break;
+  }
+  return false;
+}
 
 void DiffTop::dump_nemu_ulite_single(int data) {
   static bool isFirstTime = true;
