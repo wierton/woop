@@ -266,7 +266,7 @@ bool DiffTop::run_diff_one_instr() {
 }
 
 int DiffTop::execute() {
-  if (!noop_enable_diff) nemu_state == NEMU_END;
+  if (!noop_enable_diff) nemu_state = NEMU_END;
   while (nemu_state == NEMU_RUNNING ||
          noop_state == NOOP_RUNNING) {
     eprintf("<$pc: %08x %08x %d %d\n",
