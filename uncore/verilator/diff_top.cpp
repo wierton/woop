@@ -447,6 +447,8 @@ void DiffTop::noop_reset_ncycles(unsigned n) {
     run_noop_one_cycle();
     dut_ptr->reset = 0;
   }
+
+  this->noop_cycles = 0;
 }
 
 void DiffTop::run_nemu_one_instr() {
