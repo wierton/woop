@@ -245,7 +245,7 @@ void DiffTop::dump_regs_single(bool chkflag) {
   isFirstTime = false;
 
   regs_fs << "  (";
-  regs_fs << std::dec << noop_cycles << ", "
+  regs_fs << std::dec << (noop_cycles - 1) << ", "
           << (chkflag ? "true" : "false") << ", ";
   dump_noop_regs_single(regs_fs);
   regs_fs << ", ";
