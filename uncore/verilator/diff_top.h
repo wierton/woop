@@ -55,41 +55,54 @@ public:
 };
 
 class DiffTop {
+private:
   std::unique_ptr<verilator_top> dut_ptr;
 
-  uint32_t seed;
-  uint64_t ninstr = 0;
-  uint64_t cycles = 0, silent_cycles = 0;
+public:
+  int64_t noop_ninstr = 0;
+  int64_t noop_cycles = 0;
+  int noop_trap_code = 0;
 
-  bool finished = false;
-  int ret_code = -1;
+  enum noop_state_t {
+    NS_Running,
+    NS_Trap,
+    NS_Chkfail,
+  } noop_state;
+
+  void update_noop_state(noop_state_t new_state) {
+    assert(noop_state == NS_Running);
+    noop_state = new_state;
+  }
+
+  /* lsu check */
+  bool last_instr_is_store = false;
+  uint32_t ls_addr = 0, ls_data = 0;
+
   static constexpr uint32_t ddr_size = 128 * 1024 * 1024;
   uint8_t ddr[ddr_size];
 
-  /* record last memory store */
-  bool last_instr_is_store = false;
-  uint32_t ls_addr, ls_data;
-
-  void check_states();
+  bool check_states();
   uint32_t get_dut_gpr(uint32_t r);
-  void single_cycle();
-  void abort_prologue();
-  void cycle_epilogue();
-  void reset_ncycles(unsigned n);
 
-  bool can_log_now() const {
-    // return cycles >= 456643 - 1000;
-    return false;
-  }
+  void noop_reset_ncycles(unsigned n);
+  void noop_tame_nemu();
+  bool run_noop_one_cycle();
+  void run_noop_one_instr();
+  void run_nemu_one_instr();
+  bool run_diff_one_instr();
+
+  bool can_log_now() const;
+
+  void init_from_args(int argc, const char *argv[]);
 
 public:
   // argv decay to the secondary pointer
   DiffTop(int argc, const char *argv[]);
-  int execute(uint64_t n = -1ull);
+  virtual ~DiffTop() = default;
+
+  int execute();
   void device_io(int addr, int len, int data, char func,
       char wstrb, int *resp);
-
-  uint64_t get_cycles() const { return cycles; }
 };
 
 #endif

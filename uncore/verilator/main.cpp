@@ -34,16 +34,15 @@ int main(int argc, const char **argv) {
   signal(SIGINT, difftop_epilogue);
 
   diff_top.reset(new DiffTop(argc, argv));
-  auto ret = diff_top->execute();
+  int trap_code = diff_top->execute();
 
-  if (ret == -1) {
-    eprintf(ESC_RED "Timeout\n" ESC_RST);
-  } else if (ret == 0) {
+  if (trap_code == 0) {
     eprintf(ESC_GREEN "HIT GOOD TRAP\n" ESC_RST);
   } else {
-    eprintf(ESC_RED "HIT BAD TRAP (%d)\n" ESC_RST, ret);
+    eprintf(
+        ESC_RED "HIT BAD TRAP (%d)\n" ESC_RST, trap_code);
   }
 
-  syscall(__NR_exit, ret);
-  return ret;
+  syscall(__NR_exit, trap_code);
+  return trap_code;
 }
