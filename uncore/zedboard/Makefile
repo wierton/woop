@@ -17,7 +17,7 @@ sim-%: compile-%
 
 project: $(ZB_XPR) $(ZB_TOP_V)
 update: $(ZB_TOP_V)
-vivado: $(ZB_XPR)
+vivado: project
 	@cd $(dir $(ZB_XPR)) && nohup $(VIVADO) $(ZB_XPR) &
 bitstream: project
 	@SOC_XPR=mycpu.xpr SOC_DIR=$(dir $(ZB_XPR)) \
