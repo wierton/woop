@@ -23,5 +23,9 @@ bitstream: project
 	@SOC_XPR=mycpu.xpr SOC_DIR=$(dir $(ZB_XPR)) \
 	  $(VIVADO) -mode batch -source $(UNCORE_DIR)/mk.tcl
 
+program:
+	@echo "FIXME"
+	@cd $(ZYNQ_SW) && echo "source noop.tcl" | xsdb
+
 clean:
 	rm -rf $(ZB_OBJDIR)
