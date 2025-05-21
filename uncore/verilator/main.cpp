@@ -44,6 +44,6 @@ int main(int argc, const char **argv) {
     eprintf(ESC_RED "HIT BAD TRAP (%d)\n" ESC_RST, ret);
   }
 
-  syscall(__NR_exit, ret);
+  _exit(ret);
   return ret;
 }
